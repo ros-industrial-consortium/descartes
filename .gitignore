@@ -19,3 +19,11 @@
 *.exe
 *.out
 *.app
+
+# eclipse
+.cproject
+.project
+
+# build
+devel/
+
