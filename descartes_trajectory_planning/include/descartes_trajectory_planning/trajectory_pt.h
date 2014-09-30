@@ -29,7 +29,7 @@
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include "descartes_path_planning/trajectory_transition.h"
+#include "descartes_trajectory_planning/trajectory_transition.h"
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;

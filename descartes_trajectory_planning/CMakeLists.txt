@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(descartes_path_planning)
+project(descartes_trajectory_planning)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -59,7 +59,7 @@ target_link_libraries(descartes_trajectory
 ## Testing ##
 #############
 
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_path_planning.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_trajectory_planning.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

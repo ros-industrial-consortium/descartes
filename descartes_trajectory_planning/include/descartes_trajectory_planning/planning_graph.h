@@ -26,7 +26,7 @@
 #define PLANNING_GRAPH_H_
 
 #include <boost/graph/adjacency_list.hpp>
-//#include "descartes_path_planning/Planning_path.h"
+//#include "descartes_trajectory_planning/trajectory.h"
 
 namespace descartes
 {

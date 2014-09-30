@@ -22,7 +22,7 @@
  *      Author: Dan Solomon
  */
 
-#include "descartes_path_planning/trajectory_transition.h"
+#include "descartes_trajectory_planning/trajectory_transition.h"
 
 namespace descartes
 {
