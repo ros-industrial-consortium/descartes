@@ -17,7 +17,7 @@ message("Eigen includes:" ${Eigen_INCLUDE_DIRS})
 
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES descartes_path_planning
+#  LIBRARIES descartes_trajectory_planning
 #  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -31,27 +31,27 @@ include_directories(include
                     ${Eigen_INCLUDE_DIRS}
 )
 
-## ProcessPt lib
-add_library(descartes_process_pt
-            src/process_pt.cpp
+## TrajectoryPt lib
+add_library(descartes_trajectory_pt
+            src/trajectory_pt.cpp
 )
-target_link_libraries(descartes_process_pt
+target_link_libraries(descartes_trajectory_pt
                       ${catkin_LIBRARIES}
 )
 
-## ProcessTransition lib
-add_library(descartes_process_transition
-            src/process_transition.cpp
+## TrajectoryTransition lib
+add_library(descartes_trajectory_transition
+            src/trajectory_transition.cpp
 )
-target_link_libraries(descartes_process_transition
+target_link_libraries(descartes_trajectory_transition
                       ${catkin_LIBRARIES}
 )
 
-## ProcessPath lib
-add_library(descartes_process_path
-            src/process_path.cpp
+## Trajectory lib
+add_library(descartes_trajectory
+            src/trajectory.cpp
 )
-target_link_libraries(descartes_process_path
+target_link_libraries(descartes_trajectory
                       ${catkin_LIBRARIES}
 )
 
