@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 /*
- * process_transition.cpp
+ * trajectory_transition.cpp
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#include "descartes_path_planning/process_transition.h"
+#include "descartes_trajectory_planning/trajectory_transition.h"
 
 namespace descartes
 {

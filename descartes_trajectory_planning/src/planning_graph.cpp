@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 /*
- * process_graph.cpp
+ * planning_graph.cpp
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#include "descartes_path_planning/process_graph.h"
+#include "descartes_trajectory_planning/trajectory_graph.h"
 
 namespace descartes
 {

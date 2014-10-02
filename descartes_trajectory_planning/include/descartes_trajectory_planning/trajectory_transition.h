@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 /*
- * process_transition.h
+ * trajectory_transition.h
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#ifndef PROCESS_TRANSITION_H_
-#define PROCESS_TRANSITION_H_
+#ifndef TRAJECTORY_TRANSITION_H_
+#define TRAJECTORY_TRANSITION_H_
 
 #include <boost/shared_ptr.hpp>
 
@@ -42,7 +42,7 @@ struct VelocityConstraint
 
   double lower, desired, upper;
   /**@brief Check if values are all positive and assigned appropriate value.
-   * @return True if all values are positive, lowe<=desired && desired <=upper.
+   * @return True if all values are positive, lower<=desired && desired <=upper.
    */
   bool check() {return lower>=0. && lower<=desired && desired<=upper;}
 };
@@ -56,16 +56,16 @@ enum Interpolation
 }       /* namespace interpolations */
 typedef Interpolations::Interpolation Interpolation;
 
-/**@brief ProcessTransition describes how a state or point is reached from another state/pt.
+/**@brief TrajectoryTransition describes how a state or point is reached from another state/pt.
  * Each point can contain a linear/rotational velocity. (acceleration/jerk are left for future implementation).
  * The velocity is specified AT the point.
  * An interpolation method can be specified that defines how this point is to be reached from the previous point.
  */
-class ProcessTransition
+class TrajectoryTransition
 {
 public:
-  ProcessTransition() {};
-  virtual ~ProcessTransition() {};
+  TrajectoryTransition() {};
+  virtual ~TrajectoryTransition() {};
 
 private:
   VelocityConstraint            lin_vel_;               // Constraint on linear velocity
@@ -74,7 +74,7 @@ private:
 
 };
 
-typedef boost::shared_ptr<ProcessTransition> ProcessTransitionPtr;
+typedef boost::shared_ptr<TrajectoryTransition> TrajectoryTransitionPtr;
 
 } /* namespace descartes */
-#endif /* PROCESS_TRANSITION_H_ */
+#endif /* TRAJECTORY_TRANSITION_H_ */

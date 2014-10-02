@@ -16,31 +16,31 @@
  * limitations under the License.
  */
 /*
- * process_path.h
+ * trajectory.h
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#ifndef PROCESS_PATH_H_
-#define PROCESS_PATH_H_
+#ifndef TRAJECTORY_PATH_H_
+#define TRAJECTORY_PATH_H_
 
-#include "descartes_path_planning/process_pt.h"
+#include "descartes_trajectory_planning/trajectory_pt.h"
 
 namespace descartes
 {
 
-typedef std::vector<ProcessPt> ProcessPtVector;
+typedef std::vector<TrajectoryPt> TrajectoryPtVector;
 
-class ProcessPath
+class TrajectoryPath
 {
 public:
-  ProcessPath() {};
-  virtual ~ProcessPath() {};
+  TrajectoryPath() {};
+  virtual ~TrajectoryPath() {};
 
 protected:
-  ProcessPtVector pts_;
+  TrajectoryPtVector pts_;
 };
 
 } /* namespace descartes */
-#endif /* PROCESS_PATH_H_ */
+#endif /* TRAJECTORY_PATH_H_ */

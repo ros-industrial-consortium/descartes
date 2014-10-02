@@ -16,15 +16,14 @@
  * limitations under the License.
  */
 /*
- * process_pt.cpp
+ * trajectory_path.cpp
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#include "descartes_path_planning/process_pt.h"
+#include "descartes_trajectory_planning/trajectory.h"
 
 namespace descartes
 {
-
 } /* namespace descartes */

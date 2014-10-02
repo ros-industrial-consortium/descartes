@@ -16,20 +16,20 @@
  * limitations under the License.
  */
 /*
- * process_pt.h
+ * trajectory_pt.h
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#ifndef PROCESS_PT_H_
-#define PROCESS_PT_H_
+#ifndef TRAJECTORY_PT_H_
+#define TRAJECTORY_PT_H_
 
 #include <string>
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include "descartes_path_planning/process_transition.h"
+#include "descartes_trajectory_planning/trajectory_transition.h"
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;
@@ -85,7 +85,7 @@ struct TolerancedFrame: public Frame
   OrientationConstraintPtr      orientation_constraint;
 };
 
-/**@brief A ProcessPt describes how a TOOL may interact with a PART to perform an automated process.
+/**@brief A TrajectoryPt describes how a TOOL may interact with a PART to perform an automated trajectory.
  * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
  * TOOL pose can change (e.g. robot holding workpiece) or be fixed (e.g. robot holding MIG torch).
  * Tool pose is described by fixed transform from wrist to tool_base, and variable transform from tool_base to tool_point.
@@ -96,21 +96,21 @@ struct TolerancedFrame: public Frame
  * Optionally, additional constraints can be placed on position and orientation that can limit, but not expand, existing tolerances.
  * Each point can also contain information relating linear/rotational velocity and movement interpolation method in transition_.
  */
-class ProcessPt
+class TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 public:
-  ProcessPt() {};
-  virtual ~ProcessPt() {};
+  TrajectoryPt() {};
+  virtual ~TrajectoryPt() {};
 
 private:
   Frame                         tool_base_;             // Fixed transform from wrist/tool_plate to tool base.
   TolerancedFrame               tool_pt_;               // Underconstrained transform from tool_base to effective pt on tool.
   Frame                         object_base_;           // Fixed transform from WCS to base of object.
   TolerancedFrame               object_pt_;             // Underconstrained transform from object base to goal point on object.
-  ProcessTransitionPtr          transition_;            // Velocities at, and interpolation method to reach this point
+  TrajectoryTransitionPtr          transition_;            // Velocities at, and interpolation method to reach this point
 };
 
 } /* namespace descartes */
-#endif /* PROCESS_PT_H_ */
+#endif /* TRAJECTORY_PT_H_ */

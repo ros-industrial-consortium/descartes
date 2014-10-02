@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(descartes_path_planning)
+project(descartes_trajectory_planning)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -17,7 +17,7 @@ message("Eigen includes:" ${Eigen_INCLUDE_DIRS})
 
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES descartes_path_planning
+#  LIBRARIES descartes_trajectory_planning
 #  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -31,27 +31,27 @@ include_directories(include
                     ${Eigen_INCLUDE_DIRS}
 )
 
-## ProcessPt lib
-add_library(descartes_process_pt
-            src/process_pt.cpp
+## TrajectoryPt lib
+add_library(descartes_trajectory_pt
+            src/trajectory_pt.cpp
 )
-target_link_libraries(descartes_process_pt
+target_link_libraries(descartes_trajectory_pt
                       ${catkin_LIBRARIES}
 )
 
-## ProcessTransition lib
-add_library(descartes_process_transition
-            src/process_transition.cpp
+## TrajectoryTransition lib
+add_library(descartes_trajectory_transition
+            src/trajectory_transition.cpp
 )
-target_link_libraries(descartes_process_transition
+target_link_libraries(descartes_trajectory_transition
                       ${catkin_LIBRARIES}
 )
 
-## ProcessPath lib
-add_library(descartes_process_path
-            src/process_path.cpp
+## Trajectory lib
+add_library(descartes_trajectory
+            src/trajectory.cpp
 )
-target_link_libraries(descartes_process_path
+target_link_libraries(descartes_trajectory
                       ${catkin_LIBRARIES}
 )
 
@@ -59,7 +59,7 @@ target_link_libraries(descartes_process_path
 ## Testing ##
 #############
 
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_path_planning.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_trajectory_planning.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -16,34 +16,34 @@
  * limitations under the License.
  */
 /*
- * process_graph.h
+ * Planning_graph.h
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#ifndef PROCESS_GRAPH_H_
-#define PROCESS_GRAPH_H_
+#ifndef PLANNING_GRAPH_H_
+#define PLANNING_GRAPH_H_
 
 #include <boost/graph/adjacency_list.hpp>
-//#include "descartes_path_planning/process_path.h"
+//#include "descartes_trajectory_planning/trajectory.h"
 
 namespace descartes
 {
 
-struct ProcessGraphState
+struct PlanningGraphState
 {
-  int state_id;    // Reference to State object in process path
+  int state_id;    // Reference to State object in Planning path
 };
 
-struct ProcessGraphTransition
+struct PlanningGraphTransition
 {
   double transition_cost;
   double total_edge_cost;
 };
 
-typedef ProcessGraphState Vertex;
-typedef ProcessGraphTransition Edge;
+typedef PlanningGraphState Vertex;
+typedef PlanningGraphTransition Edge;
 
 typedef boost::adjacency_list< boost::listS,            /*edge container*/
                                boost::vecS,             /*vertex_container*/
@@ -52,24 +52,24 @@ typedef boost::adjacency_list< boost::listS,            /*edge container*/
                                Edge,                    /*edge structure*/
                                boost::no_property,      /*graph property?*/
                                boost::listS             /*edge container (not used for directed graphs)*/
-                             > ProcessGraph;
-typedef ProcessGraph Graph;     // TODO this can probably go away and we will call everything ProcessGraph
+                             > PlanningGraph;
+typedef PlanningGraph Graph;     // TODO this can probably go away and we will call everything PlanningGraph
 typedef boost::graph_traits<Graph>::vertex_descriptor   VertexDescriptor;
 typedef boost::graph_traits<Graph>::vertex_iterator     VertexIterator;
 typedef boost::graph_traits<Graph>::edge_descriptor     EdgeDescriptor;
 typedef boost::graph_traits<Graph>::edge_iterator       EdgeIterator;
 typedef boost::property_map<Graph, boost::vertex_index_t>::type IndexMap;
 typedef boost::property_map<Graph, boost::vertex_index_t>::const_type IndexMapC;
-//typedef boost::property_map<Graph, int>::type           ProcessStateIdMap;
-typedef std::map<size_t, std::set<VertexDescriptor> > ProcessPtIdMap;   /**<All vertices that correspond to a particular pt in process path*/
+//typedef boost::property_map<Graph, int>::type           PlanningStateIdMap;
+typedef std::map<size_t, std::set<VertexDescriptor> > PlanningPtIdMap;   /**<All vertices that correspond to a particular pt in Planning path*/
 //TODO should this be a path iterator?
 
-class ProcessGraph: public Graph
+class PlanningGraph: public Graph
 {
 public:
-  ProcessGraph() {};
-  virtual ~ProcessGraph() {};
+  PlanningGraph() {};
+  virtual ~PlanningGraph() {};
 };
 
 } /* namespace descartes */
-#endif /* PROCESS_GRAPH_H_ */
+#endif /* PLANNING_GRAPH_H_ */
