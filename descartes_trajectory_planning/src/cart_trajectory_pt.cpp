@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (Apache License)
  *
- * Copyright (c) 2014, Southwest Research Institute
+ * Copyright (c) 2014, ROS-Industrial Consortium
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,26 @@
  * limitations under the License.
  */
 /*
- * trajectory_transition.cpp
+ * cart_trajectory_pt.cpp
  *
- *  Created on: Jun 5, 2014
- *      Author: Dan Solomon
+ *  Created on: Oct 3, 2014
+ *      Author: dpsolomon
  */
 
-#include "descartes_trajectory_planning/trajectory_transition.h"
+#include "descartes_trajectory_planning/cart_trajectory_pt.h"
 
 namespace descartes
 {
+
+CartTrajectoryPt::CartTrajectoryPt()
+{
+  // TODO Auto-generated constructor stub
+
+}
+
+CartTrajectoryPt::~CartTrajectoryPt()
+{
+  // TODO Auto-generated destructor stub
+}
 
 } /* namespace descartes */

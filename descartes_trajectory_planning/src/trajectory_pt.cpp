@@ -27,4 +27,14 @@
 namespace descartes
 {
 
+  TrajectoryPt::TrajectoryPt()
+  {
+
+  }
+
+  TrajectoryPt::~TrajectoryPt()
+  {
+
+  }
+
 } /* namespace descartes */

@@ -16,10 +16,20 @@ message("Eigen includes:" ${Eigen_INCLUDE_DIRS})
 
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES descartes_trajectory_planning
-#  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    trajectory_pt_transition
+    trajectory_pt
+    cart_trajectory_pt
+    joint_trajectory_pt
+    trajectory
+  CATKIN_DEPENDS
+    roscpp
+    moveit_core
+  DEPENDS
+    Boost
+    Eigen
 )
 
 ###########
@@ -31,27 +41,47 @@ include_directories(include
                     ${Eigen_INCLUDE_DIRS}
 )
 
-## TrajectoryPt lib
-add_library(descartes_trajectory_pt
-            src/trajectory_pt.cpp
+## TrajectoryTransition lib
+add_library(trajectory_pt_transition
+            src/trajectory_pt_transition.cpp
 )
-target_link_libraries(descartes_trajectory_pt
+target_link_libraries(trajectory_pt_transition
                       ${catkin_LIBRARIES}
 )
 
-## TrajectoryTransition lib
-add_library(descartes_trajectory_transition
-            src/trajectory_transition.cpp
+## TrajectoryPt lib
+add_library(trajectory_pt
+            src/trajectory_pt.cpp
 )
-target_link_libraries(descartes_trajectory_transition
+target_link_libraries(trajectory_pt
+                      trajectory_pt_transition
+                      ${catkin_LIBRARIES}
+)
+
+## CartTrajectoryPt lib
+add_library(cart_trajectory_pt
+            src/cart_trajectory_pt.cpp
+)
+target_link_libraries(cart_trajectory_pt
+                      trajectory_pt
+                      ${catkin_LIBRARIES}
+)
+
+## JointTrajectoryPt lib
+add_library(joint_trajectory_pt
+            src/joint_trajectory_pt.cpp
+)
+target_link_libraries(joint_trajectory_pt
+                      trajectory_pt
                       ${catkin_LIBRARIES}
 )
 
 ## Trajectory lib
-add_library(descartes_trajectory
+add_library(trajectory
             src/trajectory.cpp
 )
-target_link_libraries(descartes_trajectory
+target_link_libraries(trajectory
+                      trajectory_pt
                       ${catkin_LIBRARIES}
 )
 

@@ -16,32 +16,24 @@
  * limitations under the License.
  */
 /*
- * trajectory.h
+ * trajectory_pt_transition.cpp
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#ifndef TRAJECTORY_PATH_H_
-#define TRAJECTORY_PATH_H_
-
-#include <vector>
-#include "descartes_trajectory_planning/trajectory_pt.h"
+#include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
 namespace descartes
 {
+  TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
+  {
 
-typedef std::vector<TrajectoryPt> TrajectoryPtVector;
+  }
 
-class TrajectoryPath
-{
-public:
-  TrajectoryPath() {};
-  virtual ~TrajectoryPath() {};
+  TrajectoryPtTransition::~TrajectoryPtTransition()
+  {
 
-protected:
-  TrajectoryPtVector pts_;
-};
+  }
 
 } /* namespace descartes */
-#endif /* TRAJECTORY_PATH_H_ */
