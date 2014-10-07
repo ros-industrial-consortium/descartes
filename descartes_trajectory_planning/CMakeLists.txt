@@ -2,17 +2,13 @@ cmake_minimum_required(VERSION 2.8.3)
 project(descartes_trajectory_planning)
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
+  console_bridge
   moveit_core
+  roscpp
 )
 
 find_package(Boost REQUIRED)
-message("Boost libraries:" ${Boost_LIBRARIES})
-message("Boost includes:" ${Boost_INCLUDE_DIRS})
-
 find_package(Eigen REQUIRED)
-message("Eigen libraries:" ${Eigen_LIBRARIES})
-message("Eigen includes:" ${Eigen_INCLUDE_DIRS})
 
 
 catkin_package(
@@ -29,6 +25,7 @@ catkin_package(
     moveit_core
   DEPENDS
     Boost
+    console_bridge
     Eigen
 )
 

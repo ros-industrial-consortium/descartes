@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (Apache License)
  *
- * Copyright (c) 2014, ROS-Industrial Consortium
+ * Copyright (c) 2014, Dan Solomon
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  * joint_trajectory_pt.h
  *
  *  Created on: Oct 3, 2014
- *      Author: dpsolomon
+ *      Author: Dan Solomon
  */
 
 #ifndef JOINT_TRAJECTORY_PT_H_
@@ -41,6 +41,22 @@ struct TolerancedJointValue
   {
     *this = TolerancedJointValue(_nominal, 0., 0.);
   }
+
+  double upperBound() const
+  {
+    return nominal+tol_above;
+  }
+
+  double lowerBound() const
+  {
+    return nominal-tol_below;
+  }
+
+  double range() const
+  {
+    return upperBound() - lowerBound();
+  }
+
   double nominal;
   double tol_above, tol_below;
 };
@@ -54,15 +70,82 @@ struct TolerancedJointValue
 class JointTrajectoryPt: public TrajectoryPt
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-public:
   JointTrajectoryPt();
   virtual ~JointTrajectoryPt();
 
+  /**@name Getters for Cartesian pose(s)
+   * @{
+   */
+
+  //TODO complete
+  /**@brief Get single Cartesian pose associated with closest position of this point to seed_state.
+   * (Pose of TOOL point expressed in WORLD frame).
+   * @param pose If successful, affine pose of this state.
+   * @param seed_state RobotState used for kinematic calculations and joint_position seed.
+   * @return True if calculation successful. pose untouched if return false.
+   */
+  virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+
+  //TODO complete
+  /**@brief Get single Cartesian pose associated with nominal of this point.
+    * (Pose of TOOL point expressed in WORLD frame).
+    * @param pose If successful, affine pose of this state.
+    * @param seed_state RobotState used for kinematic calculations and joint_position seed.
+    * @return True if calculation successful. pose untouched if return false.
+    */
+  virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+
+  //TODO complete
+  /**@brief Get "all" Cartesian poses that satisfy this point. Use RobotState for performing kinematic calculations.
+   * @param poses Note: Number of poses returned may be subject to discretization used.
+   * @param state RobotState used for kinematic calculations.
+   */
+  virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const;
+  /** @} (end section) */
+
+  /**@name Getters for joint pose(s)
+   * @{
+   */
+
+  //TODO complete
+  /**@brief Get single Joint pose closest to seed_state.
+   * @param joint_pose Solution (if function successful).
+   * @param seed_state RobotState used for kinematic calculations and joint position seed.
+   * @return True if calculation successful. joint_pose untouched if return is false.
+   */
+  virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+
+  //TODO complete
+  /**@brief Get single Joint pose closest to seed_state.
+   * @param joint_pose Solution (if function successful).
+   * @param seed_state RobotState used kinematic calculations and joint position seed.
+   * @return True if calculation successful. joint_pose untouched if return is false.
+   */
+  virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+
+  //TODO complete
+  /**@brief Get "all" joint poses that satisfy this point.
+   * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
+   * @param seed_state RobotState used for kinematic calculations.
+   */
+  virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const;
+  /** @} (end section) */
+
+  //TODO complete
+  /**@brief Check if state satisfies trajectory point requirements. */
+  virtual bool isValid(const moveit::core::RobotState &state) const;
+
+  //TODO complete
+  /**@brief Set discretization. Each joint can have a different discretization.
+   * @param discretization Vector of discretization values. If length=1, set all elements of discretization_ are set to value.
+   * @return True if vector is length 1 or length(joint_position_) and value[ii] are within 0-range(joint_position[ii]).
+   */
+  virtual bool setDiscretization(const std::vector<double> &discretization);
+
+
 protected:
-  std::vector<TolerancedJointValue> joint_position_;  /* Fixed joint position with tolerance */
-  Frame tool_;
-  Frame object_;
+  std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
+  std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
 
 };
 

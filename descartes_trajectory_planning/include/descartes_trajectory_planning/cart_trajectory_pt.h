@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (Apache License)
  *
- * Copyright (c) 2014, ROS-Industrial Consortium
+ * Copyright (c) 2014, Dan Solomon
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
  * cart_trajectory_pt.h
  *
  *  Created on: Oct 3, 2014
- *      Author: dpsolomon
+ *      Author: Dan Solomon
  */
 
 #ifndef CART_TRAJECTORY_PT_H_
 #define CART_TRAJECTORY_PT_H_
 
-#include <descartes_trajectory_planning/trajectory_pt.h>
+#include "descartes_trajectory_planning/trajectory_pt.h"
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
@@ -90,6 +90,70 @@ public:
 public:
   CartTrajectoryPt();
   virtual ~CartTrajectoryPt();
+
+
+  /**@name Getters for Cartesian pose(s)
+   * @{
+   */
+
+  /**@brief Get single Cartesian pose associated with closest position of this point to seed_state.
+   * (Pose of TOOL point expressed in WORLD frame).
+   * @param pose If successful, affine pose of this state.
+   * @param seed_state RobotState used for kinematic calculations and joint_position seed.
+   * @return True if calculation successful. pose untouched if return false.
+   */
+  virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+
+  /**@brief Get single Cartesian pose associated with nominal of this point.
+    * (Pose of TOOL point expressed in WORLD frame).
+    * @param pose If successful, affine pose of this state.
+    * @param seed_state RobotState used for kinematic calculations and joint_position seed.
+    * @return True if calculation successful. pose untouched if return false.
+    */
+  virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+
+  /**@brief Get "all" Cartesian poses that satisfy this point. Use RobotState for performing kinematic calculations.
+   * @param poses Note: Number of poses returned may be subject to discretization used.
+   * @param state RobotState used for kinematic calculations.
+   */
+  virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const;
+  /** @} (end section) */
+
+  /**@name Getters for joint pose(s)
+   * @{
+   */
+
+  /**@brief Get single Joint pose closest to seed_state.
+   * @param joint_pose Solution (if function successful).
+   * @param seed_state RobotState used for kinematic calculations and joint position seed.
+   * @return True if calculation successful. joint_pose untouched if return is false.
+   */
+  virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+
+  /**@brief Get single Joint pose closest to seed_state.
+   * @param joint_pose Solution (if function successful).
+   * @param seed_state RobotState used kinematic calculations and joint position seed.
+   * @return True if calculation successful. joint_pose untouched if return is false.
+   */
+  virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+
+  /**@brief Get "all" joint poses that satisfy this point.
+   * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
+   * @param seed_state RobotState used for kinematic calculations.
+   */
+  virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const;
+  /** @} (end section) */
+
+  /**@brief Check if state satisfies trajectory point requirements. */
+  virtual bool isValid(const moveit::core::RobotState &state) const;
+
+  /**@brief Set discretization. Cartesian points can have position and angular discretization.
+   * @param discretization Vector of discretization values. Must be length 2 or 6 (position/orientation or separate xyzrpy).
+   * @return True if vector is valid length/values. TODO what are valid values?
+   */
+  virtual bool setDiscretization(const std::vector<double> &discretization);
+
+
 
 protected:
   Frame                         tool_base_;             // Fixed transform from wrist/tool_plate to tool base.
