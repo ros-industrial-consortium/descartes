@@ -42,9 +42,18 @@ namespace descartes
  */
 struct Frame
 {
+  Frame(){};
+  Frame(const Eigen::Affine3d &a):
+    frame(a), frame_inv(a.inverse()) {};
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   Eigen::Affine3d frame;
   Eigen::Affine3d frame_inv;
+
+  static const Frame Identity()
+  {
+    return Frame(Eigen::Affine3d::Identity());
+  }
 };
 
 /**@brief A TrajectoryPt describes how a TOOL may interact with a PART to perform an automated trajectory.
@@ -57,6 +66,7 @@ class TrajectoryPt
 {
 public:
   TrajectoryPt();
+  TrajectoryPt(const Eigen::Affine3d &tool, const Eigen::Affine3d &wobj);
   virtual ~TrajectoryPt();
 
   /**@name Getters for Cartesian pose(s)
@@ -147,7 +157,7 @@ protected:
    *  @{
    */
   Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
-  Frame                         object_;                /**<@brief Transform from world to active object pt. */
+  Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
   /** @} (end section) */
 
 };

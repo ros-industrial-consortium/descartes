@@ -31,16 +31,15 @@
 namespace descartes
 {
 
-CartTrajectoryPt::CartTrajectoryPt()
-{
-  // TODO Auto-generated constructor stub
-
-}
+CartTrajectoryPt::CartTrajectoryPt():
+    tool_base_(Eigen::Affine3d::Identity()),
+    tool_pt_(Eigen::Affine3d::Identity()),
+    wobj_base_(Eigen::Affine3d::Identity()),
+    wobj_pt_(Eigen::Affine3d::Identity())
+{}
 
 CartTrajectoryPt::~CartTrajectoryPt()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 bool CartTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
 {

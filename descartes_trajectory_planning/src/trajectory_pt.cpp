@@ -27,14 +27,14 @@
 namespace descartes
 {
 
-  TrajectoryPt::TrajectoryPt()
-  {
-
-  }
-
-  TrajectoryPt::~TrajectoryPt()
-  {
-
-  }
+TrajectoryPt::TrajectoryPt():
+    id_(0)
+{}
+TrajectoryPt::TrajectoryPt(const Eigen::Affine3d &tool, const Eigen::Affine3d &wobj):
+    id_(0),
+    tool_(tool), wobj_(wobj)
+{}
+TrajectoryPt::~TrajectoryPt()
+{}
 
 } /* namespace descartes */

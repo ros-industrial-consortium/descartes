@@ -31,7 +31,8 @@
 namespace descartes
 {
 
-JointTrajectoryPt::JointTrajectoryPt()
+JointTrajectoryPt::JointTrajectoryPt():
+    TrajectoryPt(Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity())
 {
   // TODO Auto-generated constructor stub
 

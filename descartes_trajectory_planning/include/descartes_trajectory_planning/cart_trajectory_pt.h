@@ -66,6 +66,10 @@ struct OrientationTolerance
  */
 struct TolerancedFrame: public Frame
 {
+  TolerancedFrame(){};
+  TolerancedFrame(const Eigen::Affine3d &a):
+    Frame(a){}
+
   PositionTolerance             position_tolerance;
   OrientationTolerance          orientation_tolerance;
   PositionConstraintPtr         position_constraint;
@@ -158,8 +162,8 @@ public:
 protected:
   Frame                         tool_base_;             // Fixed transform from wrist/tool_plate to tool base.
   TolerancedFrame               tool_pt_;               // Underconstrained transform from tool_base to effective pt on tool.
-  Frame                         object_base_;           // Fixed transform from WCS to base of object.
-  TolerancedFrame               object_pt_;             // Underconstrained transform from object base to goal point on object. */
+  Frame                         wobj_base_;             // Fixed transform from WCS to base of object.
+  TolerancedFrame               wobj_pt_;               // Underconstrained transform from object base to goal point on object. */
 };
 
 } /* namespace descartes */
