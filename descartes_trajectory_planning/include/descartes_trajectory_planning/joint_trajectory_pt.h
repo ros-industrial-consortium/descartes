@@ -32,11 +32,20 @@ namespace descartes
 {
 
 //TODO add warning if non-zero tolerances are specified because initial implementation will only allow fixed joints
+struct JointTolerance
+{
+  JointTolerance(): lower(0.), upper(0.) {};
+  JointTolerance(double low, double high):
+    lower(std::abs(low)), upper(std::abs(high)) {};
+
+  double lower, upper;
+};
+
 struct TolerancedJointValue
 {
-  TolerancedJointValue():tol_above(0.), tol_below(0.) {};
+  TolerancedJointValue() {};
   TolerancedJointValue(double _nominal, double _tol_above, double _tol_below):
-    nominal(_nominal), tol_above(_tol_above), tol_below(_tol_below) {};
+    nominal(_nominal), tolerance(_tol_above, _tol_below) {};
   TolerancedJointValue(double _nominal)
   {
     *this = TolerancedJointValue(_nominal, 0., 0.);
@@ -44,12 +53,12 @@ struct TolerancedJointValue
 
   double upperBound() const
   {
-    return nominal+tol_above;
+    return nominal+tolerance.upper;
   }
 
   double lowerBound() const
   {
-    return nominal-tol_below;
+    return nominal-tolerance.lower;
   }
 
   double range() const
@@ -58,14 +67,16 @@ struct TolerancedJointValue
   }
 
   double nominal;
-  double tol_above, tol_below;
+  JointTolerance tolerance;
 };
 
 /**@brief Joint Trajectory Point used to describe a joint goal for a robot trajectory.
- * (see TrajectoryPt class documentation for background on terms).
- * For a JointTrajectoryPt, the transform from wrist to tool, and base to object, are defined by fixed frames.
+ * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
+ * The WOBJ is something that exists in the world/global environment that is not held by robot.
+ *
+ * For a JointTrajectoryPt, the transform from wrist to tool, and base to workobject, are defined by fixed frames.
  * These transforms are important when calculating interpolation.
- * The joint position is specified as a nominal with upper/lower bounds.
+ * The joint position is specified as a nominal with upper/lower tolerances.
  */
 class JointTrajectoryPt: public TrajectoryPt
 {
@@ -80,28 +91,12 @@ public:
    */
 
   //TODO complete
-  /**@brief Get single Cartesian pose associated with closest position of this point to seed_state.
-   * (Pose of TOOL point expressed in WORLD frame).
-   * @param pose If successful, affine pose of this state.
-   * @param seed_state RobotState used for kinematic calculations and joint_position seed.
-   * @return True if calculation successful. pose untouched if return false.
-   */
   virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
 
   //TODO complete
-  /**@brief Get single Cartesian pose associated with nominal of this point.
-    * (Pose of TOOL point expressed in WORLD frame).
-    * @param pose If successful, affine pose of this state.
-    * @param seed_state RobotState used for kinematic calculations and joint_position seed.
-    * @return True if calculation successful. pose untouched if return false.
-    */
   virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
 
   //TODO complete
-  /**@brief Get "all" Cartesian poses that satisfy this point. Use RobotState for performing kinematic calculations.
-   * @param poses Note: Number of poses returned may be subject to discretization used.
-   * @param state RobotState used for kinematic calculations.
-   */
   virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const;
   /** @} (end section) */
 
@@ -110,31 +105,16 @@ public:
    */
 
   //TODO complete
-  /**@brief Get single Joint pose closest to seed_state.
-   * @param joint_pose Solution (if function successful).
-   * @param seed_state RobotState used for kinematic calculations and joint position seed.
-   * @return True if calculation successful. joint_pose untouched if return is false.
-   */
   virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
 
   //TODO complete
-  /**@brief Get single Joint pose closest to seed_state.
-   * @param joint_pose Solution (if function successful).
-   * @param seed_state RobotState used kinematic calculations and joint position seed.
-   * @return True if calculation successful. joint_pose untouched if return is false.
-   */
   virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
 
   //TODO complete
-  /**@brief Get "all" joint poses that satisfy this point.
-   * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
-   * @param seed_state RobotState used for kinematic calculations.
-   */
   virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const;
   /** @} (end section) */
 
   //TODO complete
-  /**@brief Check if state satisfies trajectory point requirements. */
   virtual bool isValid(const moveit::core::RobotState &state) const;
 
   //TODO complete

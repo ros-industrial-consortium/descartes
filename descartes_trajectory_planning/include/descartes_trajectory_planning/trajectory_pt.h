@@ -56,11 +56,14 @@ struct Frame
 };
 
 
-/**@brief A TrajectoryPt describes how a TOOL may interact with a PART to perform an automated trajectory.
- * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
- * The PART is something that exists in the world/global environment that is not held by robot.
- * Particular descriptions of TOOL and PART are left to the derived classes.
- * Each point can also contain information relating linear/rotational velocity and movement interpolation method in transition_.
+/**@brief A TrajectoryPt is the basis for a Trajectory describing the desired path a robot should execute.
+ * The desired robot motion spans both Cartesian and Joint space, and so the TrajectoryPt must have capability
+ * to report on both these properties.
+ *
+ * In practice, an application will create a series of process points,
+ * and use these process points to create a Trajectory that can be solved for a robot path.
+ * In order to implement this easily, each process point should keep track of the TrajectoryPt id, and
+ * provide an interpolation method between points.
  */
 class TrajectoryPt
 {
@@ -73,7 +76,7 @@ public:
    */
 
   /**@brief Get single Cartesian pose associated with closest position of this point to seed_state.
-   * (Pose of TOOL point expressed in WORLD frame).
+   * (Pose of TOOL point expressed in WOBJ frame).
    * @param pose If successful, affine pose of this state.
    * @param seed_state RobotState used for kinematic calculations and joint_position seed.
    * @return True if calculation successful. pose untouched if return false.
@@ -81,7 +84,7 @@ public:
   virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const = 0;
 
   /**@brief Get single Cartesian pose associated with nominal of this point.
-    * (Pose of TOOL point expressed in WORLD frame).
+    * (Pose of TOOL point expressed in WOBJ frame).
     * @param pose If successful, affine pose of this state.
     * @param seed_state RobotState used for kinematic calculations and joint_position seed.
     * @return True if calculation successful. pose untouched if return false.
@@ -123,7 +126,7 @@ public:
   /**@brief Check if state satisfies trajectory point requirements. */
   virtual bool isValid(const moveit::core::RobotState &state) const = 0;
 
-  /**@brief Set discretization. Derived classes interpret and use discretization differently.
+  /**@brief Set discretization. Note: derived classes interpret and use discretization differently.
    * @param discretization Vector of discretization values.
    * @return True if vector is valid length/values.
    */

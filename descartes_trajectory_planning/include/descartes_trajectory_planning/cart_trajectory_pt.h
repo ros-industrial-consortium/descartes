@@ -78,14 +78,13 @@ struct TolerancedFrame: public Frame
 
 
 /**@brief Cartesian Trajectory Point used to describe a Cartesian goal for a robot trajectory.
- * (see TrajectoryPt class documentation for background on terms).
  * For CartTrajectoryPt, TOOL pose can be variable (e.g. robot holding workpiece) or fixed (e.g. robot holding MIG torch).
- * Similarly, the PART pose can be variable (e.g. robot riveting a workpiece) or fixed (e.g. stationary grinder that robot moves a tool against).
- * For a CartTrajectoryPt, tool pose is described by fixed transform from wrist to tool_base, and variable transform from tool_base to tool_point.
+ * Similarly, the WORKOBJECT pose can be variable (e.g. robot riveting a workpiece) or fixed (e.g. stationary grinder that robot moves a tool against).
+ * For a CartTrajectoryPt, TOOL pose is described by fixed transform from wrist to TOOL_BASE, and variable transform from TOOL_BASE to TOOL_PT.
  * This allows the tolerances on tool pose to be easily expressed in a local tool frame.
- * Similarly, PART is located relative to world coordinate system, and is described by
- * fixed transform from world to part_base, and variable transform from part base to specific point on part.
- * Variable transforms of both TOOL and PART have tolerances on both position and orientation.
+ * Similarly, WOBJ is located relative to world coordinate system, and is described by
+ * fixed transform from world to WOBJ_BASE, and variable transform from WOBJ_BASE to specific point on part (WOBJ_PT).
+ * Variable transforms of both TOOL and WOBJ have tolerances on both position and orientation.
  * Optionally, additional constraints can be placed on position and orientation that can limit, but not expand, existing tolerances.
  */
 class CartTrajectoryPt : public TrajectoryPt
@@ -101,26 +100,10 @@ public:
    * @{
    */
 
-  /**@brief Get single Cartesian pose associated with closest position of this point to seed_state.
-   * (Pose of TOOL point expressed in WORLD frame).
-   * @param pose If successful, affine pose of this state.
-   * @param seed_state RobotState used for kinematic calculations and joint_position seed.
-   * @return True if calculation successful. pose untouched if return false.
-   */
   virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
 
-  /**@brief Get single Cartesian pose associated with nominal of this point.
-    * (Pose of TOOL point expressed in WORLD frame).
-    * @param pose If successful, affine pose of this state.
-    * @param seed_state RobotState used for kinematic calculations and joint_position seed.
-    * @return True if calculation successful. pose untouched if return false.
-    */
   virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
 
-  /**@brief Get "all" Cartesian poses that satisfy this point. Use RobotState for performing kinematic calculations.
-   * @param poses Note: Number of poses returned may be subject to discretization used.
-   * @param state RobotState used for kinematic calculations.
-   */
   virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const;
   /** @} (end section) */
 
@@ -128,28 +111,13 @@ public:
    * @{
    */
 
-  /**@brief Get single Joint pose closest to seed_state.
-   * @param joint_pose Solution (if function successful).
-   * @param seed_state RobotState used for kinematic calculations and joint position seed.
-   * @return True if calculation successful. joint_pose untouched if return is false.
-   */
   virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
 
-  /**@brief Get single Joint pose closest to seed_state.
-   * @param joint_pose Solution (if function successful).
-   * @param seed_state RobotState used kinematic calculations and joint position seed.
-   * @return True if calculation successful. joint_pose untouched if return is false.
-   */
   virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
 
-  /**@brief Get "all" joint poses that satisfy this point.
-   * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
-   * @param seed_state RobotState used for kinematic calculations.
-   */
   virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const;
   /** @} (end section) */
 
-  /**@brief Check if state satisfies trajectory point requirements. */
   virtual bool isValid(const moveit::core::RobotState &state) const;
 
   /**@brief Set discretization. Cartesian points can have position and angular discretization.
@@ -161,10 +129,10 @@ public:
 
 
 protected:
-  Frame                         tool_base_;             // Fixed transform from wrist/tool_plate to tool base.
-  TolerancedFrame               tool_pt_;               // Underconstrained transform from tool_base to effective pt on tool.
-  Frame                         wobj_base_;             // Fixed transform from WCS to base of object.
-  TolerancedFrame               wobj_pt_;               // Underconstrained transform from object base to goal point on object. */
+  Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */
+  TolerancedFrame               tool_pt_;       /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
+  Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
+  TolerancedFrame               wobj_pt_;       /**<@brief Underconstrained transform from object base to goal point on object. */
 };
 
 } /* namespace descartes */
