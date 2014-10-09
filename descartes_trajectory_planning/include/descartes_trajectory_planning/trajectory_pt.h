@@ -25,7 +25,6 @@
 #ifndef TRAJECTORY_PT_H_
 #define TRAJECTORY_PT_H_
 
-//#include <string>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <eigen_stl_containers/eigen_stl_vector_container.h>
@@ -56,6 +55,7 @@ struct Frame
   }
 };
 
+
 /**@brief A TrajectoryPt describes how a TOOL may interact with a PART to perform an automated trajectory.
  * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
  * The PART is something that exists in the world/global environment that is not held by robot.
@@ -65,9 +65,8 @@ struct Frame
 class TrajectoryPt
 {
 public:
-  TrajectoryPt();
-  TrajectoryPt(const Eigen::Affine3d &tool, const Eigen::Affine3d &wobj);
-  virtual ~TrajectoryPt();
+  TrajectoryPt() {};
+  virtual ~TrajectoryPt() {};
 
   /**@name Getters for Cartesian pose(s)
    * @{
@@ -152,13 +151,6 @@ public:
 protected:
   size_t                        id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
   TrajectoryPtTransitionPtr     transition_;            /**<@brief Velocities at, and interpolation method to reach this point **/
-
-  /** @name TrajectoryPt transforms. Note that base class does not include any method to set these members, as derived classes may have specific implementations.
-   *  @{
-   */
-  Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
-  Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
-  /** @} (end section) */
 
 };
 

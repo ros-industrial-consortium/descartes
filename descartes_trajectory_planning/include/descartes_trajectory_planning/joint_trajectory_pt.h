@@ -70,8 +70,10 @@ struct TolerancedJointValue
 class JointTrajectoryPt: public TrajectoryPt
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;      //TODO is this needed when Frame already has it?
+public:
   JointTrajectoryPt();
-  virtual ~JointTrajectoryPt();
+  virtual ~JointTrajectoryPt() {};
 
   /**@name Getters for Cartesian pose(s)
    * @{
@@ -146,6 +148,13 @@ public:
 protected:
   std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
   std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
+
+  /** @name JointTrajectoryPt transforms. Used in get*CartPose() methods and for interpolation.
+   *  @{
+   */
+  Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
+  Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
+  /** @} (end section) */
 
 };
 

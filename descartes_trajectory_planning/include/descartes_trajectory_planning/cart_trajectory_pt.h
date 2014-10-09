@@ -25,8 +25,8 @@
 #ifndef CART_TRAJECTORY_PT_H_
 #define CART_TRAJECTORY_PT_H_
 
-#include "descartes_trajectory_planning/trajectory_pt.h"
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
+#include "descartes_trajectory_planning/trajectory_pt.h"
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;
@@ -76,6 +76,7 @@ struct TolerancedFrame: public Frame
   OrientationConstraintPtr      orientation_constraint;
 };
 
+
 /**@brief Cartesian Trajectory Point used to describe a Cartesian goal for a robot trajectory.
  * (see TrajectoryPt class documentation for background on terms).
  * For CartTrajectoryPt, TOOL pose can be variable (e.g. robot holding workpiece) or fixed (e.g. robot holding MIG torch).
@@ -93,7 +94,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 public:
   CartTrajectoryPt();
-  virtual ~CartTrajectoryPt();
+  virtual ~CartTrajectoryPt() {};
 
 
   /**@name Getters for Cartesian pose(s)

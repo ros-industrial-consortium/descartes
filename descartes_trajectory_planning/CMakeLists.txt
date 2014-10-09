@@ -15,11 +15,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    trajectory_pt_transition
-    trajectory_pt
-    cart_trajectory_pt
-    joint_trajectory_pt
-    trajectory
+    descartes_trajectory
   CATKIN_DEPENDS
     roscpp
     moveit_core
@@ -38,49 +34,17 @@ include_directories(include
                     ${Eigen_INCLUDE_DIRS}
 )
 
-## TrajectoryTransition lib
-add_library(trajectory_pt_transition
+## DescartesTrajectoryPt lib
+add_library(descartes_trajectory
             src/trajectory_pt_transition.cpp
-)
-target_link_libraries(trajectory_pt_transition
-                      ${catkin_LIBRARIES}
-)
-
-## TrajectoryPt lib
-add_library(trajectory_pt
-            src/trajectory_pt.cpp
-)
-target_link_libraries(trajectory_pt
-                      trajectory_pt_transition
-                      ${catkin_LIBRARIES}
-)
-
-## CartTrajectoryPt lib
-add_library(cart_trajectory_pt
             src/cart_trajectory_pt.cpp
-)
-target_link_libraries(cart_trajectory_pt
-                      trajectory_pt
-                      ${catkin_LIBRARIES}
-)
-
-## JointTrajectoryPt lib
-add_library(joint_trajectory_pt
             src/joint_trajectory_pt.cpp
-)
-target_link_libraries(joint_trajectory_pt
-                      trajectory_pt
-                      ${catkin_LIBRARIES}
-)
-
-## Trajectory lib
-add_library(trajectory
             src/trajectory.cpp
 )
-target_link_libraries(trajectory
-                      trajectory_pt
+target_link_libraries(descartes_trajectory
                       ${catkin_LIBRARIES}
 )
+
 
 #############
 ## Testing ##

@@ -32,16 +32,9 @@ namespace descartes
 {
 
 JointTrajectoryPt::JointTrajectoryPt():
-    TrajectoryPt(Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity())
-{
-  // TODO Auto-generated constructor stub
-
-}
-
-JointTrajectoryPt::~JointTrajectoryPt()
-{
-  // TODO Auto-generated destructor stub
-}
+    tool_(Eigen::Affine3d::Identity()),
+    wobj_(Eigen::Affine3d::Identity())
+{}
 
 bool JointTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
 {

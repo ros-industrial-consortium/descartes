@@ -38,9 +38,6 @@ CartTrajectoryPt::CartTrajectoryPt():
     wobj_pt_(Eigen::Affine3d::Identity())
 {}
 
-CartTrajectoryPt::~CartTrajectoryPt()
-{}
-
 bool CartTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
 {
   NOT_IMPLEMENTED_ERR;
