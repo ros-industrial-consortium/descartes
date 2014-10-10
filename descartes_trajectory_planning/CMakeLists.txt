@@ -40,6 +40,7 @@ add_library(descartes_trajectory
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
+            src/planning_graph.cpp
 )
 target_link_libraries(descartes_trajectory
                       ${catkin_LIBRARIES}
