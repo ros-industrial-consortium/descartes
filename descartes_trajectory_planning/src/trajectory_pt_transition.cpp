@@ -16,15 +16,24 @@
  * limitations under the License.
  */
 /*
- * trajectory_transition.cpp
+ * trajectory_pt_transition.cpp
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#include "descartes_trajectory_planning/trajectory_transition.h"
+#include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
 namespace descartes
 {
+  TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
+  {
+
+  }
+
+  TrajectoryPtTransition::~TrajectoryPtTransition()
+  {
+
+  }
 
 } /* namespace descartes */

@@ -25,6 +25,7 @@
 #ifndef TRAJECTORY_PATH_H_
 #define TRAJECTORY_PATH_H_
 
+#include <vector>
 #include "descartes_trajectory_planning/trajectory_pt.h"
 
 namespace descartes

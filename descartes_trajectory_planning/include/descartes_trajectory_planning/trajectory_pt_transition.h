@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 /*
- * trajectory_transition.h
+ * trajectory_pt_transition.h
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#ifndef TRAJECTORY_TRANSITION_H_
-#define TRAJECTORY_TRANSITION_H_
+#ifndef TRAJECTORY_PT_TRANSITION_H_
+#define TRAJECTORY_PT_TRANSITION_H_
 
 #include <boost/shared_ptr.hpp>
 
@@ -56,16 +56,16 @@ enum Interpolation
 }       /* namespace interpolations */
 typedef Interpolations::Interpolation Interpolation;
 
-/**@brief TrajectoryTransition describes how a state or point is reached from another state/pt.
+/**@brief TrajectoryPtTransition describes how a state or point is reached from another state/pt.
  * Each point can contain a linear/rotational velocity. (acceleration/jerk are left for future implementation).
  * The velocity is specified AT the point.
  * An interpolation method can be specified that defines how this point is to be reached from the previous point.
  */
-class TrajectoryTransition
+class TrajectoryPtTransition
 {
 public:
-  TrajectoryTransition() {};
-  virtual ~TrajectoryTransition() {};
+  TrajectoryPtTransition();
+  virtual ~TrajectoryPtTransition();
 
 private:
   VelocityConstraint            lin_vel_;               // Constraint on linear velocity
@@ -74,7 +74,7 @@ private:
 
 };
 
-typedef boost::shared_ptr<TrajectoryTransition> TrajectoryTransitionPtr;
+typedef boost::shared_ptr<TrajectoryPtTransition> TrajectoryPtTransitionPtr;
 
 } /* namespace descartes */
-#endif /* TRAJECTORY_TRANSITION_H_ */
+#endif /* TRAJECTORY_PT_TRANSITION_H_ */
