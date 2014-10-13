@@ -25,7 +25,7 @@
 #include <console_bridge/console.h>
 #include "descartes_trajectory_planning/cart_trajectory_pt.h"
 
-#define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
+#define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
 namespace descartes
@@ -40,48 +40,42 @@ CartTrajectoryPt::CartTrajectoryPt():
 
 bool CartTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false)
 }
 
 bool CartTrajectoryPt::getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-void CartTrajectoryPt::getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const
-{
-  NOT_IMPLEMENTED_ERR;
+  /* Simply return wobj_pt expressed in world */
+  pose = wobj_base_.frame * wobj_pt_.frame;
+  return true;  //TODO can this ever return false?
 }
 
 bool CartTrajectoryPt::getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false)
 }
 
 bool CartTrajectoryPt::getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-void CartTrajectoryPt::getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const
-{
-  NOT_IMPLEMENTED_ERR;
+  moveit::core::RobotState state(seed_state);
+  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame * tool_pt_.frame_inv * tool_base_.frame_inv;
+  std::string group_name("manipulator");        //TODO get from somewhere
+  if (!state.setFromIK(state.getJointModelGroup(group_name), robot_pose))
+  {
+    logError("Could not set Cartesian pose.");
+    return false;
+  }
+  joint_pose.resize(state.getVariableCount());
+  for (size_t ii=0; ii<state.getVariableCount(); ++ii)
+  {
+    joint_pose[ii] = state.getVariablePosition(ii);
+  }
+  return true;
 }
 
 bool CartTrajectoryPt::isValid(const moveit::core::RobotState &state) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
-{
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false)
 }
 
 } /* namespace descartes */
