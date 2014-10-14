@@ -37,49 +37,52 @@ namespace descartes
 
 struct JointVertex
 {
-	int index;
+  int id;
 };
 struct JointEdge
 {
-	int joint_start;
-	int joint_end;
-	double transition_cost;
+  int joint_start;
+  int joint_end;
+  double transition_cost;
 };
 
 struct CartesianPointRelationship
 {
-	int id;
-	int id_previous;
-	int id_next;
+  int id;
+  int id_previous;
+  int id_next;
 };
 
-typedef boost::adjacency_list< boost::listS,            /*edge container*/
-                               boost::vecS,             /*vertex_container*/
-                               boost::directedS,        /*graph type*/
-                               JointVertex,                  /*vertex structure*/
-                               JointEdge                    /*edge structure*/
-                             > DirectedGraph;
+typedef boost::adjacency_list<boost::listS, /*edge container*/
+boost::vecS, /*vertex_container*/
+boost::directedS, /*graph type*/
+JointVertex, /*vertex structure*/
+JointEdge /*edge structure*/
+> DirectedGraph;
 
 typedef boost::graph_traits<DirectedGraph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<DirectedGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<DirectedGraph>::out_edge_iterator OutEdgeIterator;
 
-
-
+typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
 
 class PlanningGraph
 {
 public:
-	// TODO: add constructor that takes RobotState as param
-  PlanningGraph() {};
-  virtual ~PlanningGraph() {};
+  // TODO: add constructor that takes RobotState as param
+  PlanningGraph()
+  {
+  }
+  ;
+  virtual ~PlanningGraph()
+  {
+  }
+  ;
 
   /** @brief initial population of graph trajectory elements
    * @param points list of trajectory points to be used to construct the graph
-   * @param cartesianPointLinks for each TrajectoryPt in the points list, a struct that indicates order of the points
    */
-  bool insertGraph(std::vector<CartTrajectoryPt> *points, std::vector<CartesianPointRelationship> *cartesianPointLinks);
-
+  bool insertGraph(std::vector<TrajectoryPtPtr> *points);
 
   // TODO: addTrajectory
   // TODO: modifyTrajectory
@@ -92,7 +95,7 @@ public:
    * @param path The sequence of points (joint solutions) for the path (TODO: change to JointTrajectoryPt?)
    * @return True if a valid path is found
    */
-  bool getShortestPathJointToJoint(int startIndex, int endIndex, double &cost, std::list<int> &path);
+  bool getShortestPathJointToJoint(int start_id, int end_id, double &cost, std::list<int> &path);
   // TODO: 'overloaded' requests depending on source and destination
   //bool GetShortestPathJointToCartesian(int startIndex, int endIndex, double &cost, std::vector<TrajectoryPt> &path);
   //bool GetShortestPathCartesianToCartesian(int startIndex, int endIndex, double &cost, std::vector<TrajectoryPt> &path);
@@ -102,7 +105,7 @@ public:
    */
   void printGraph();
 
-private:
+protected:
   moveit::core::RobotState *robot_state_;
 
   DirectedGraph dg_;
@@ -114,11 +117,11 @@ private:
   //       and include an accessor to both formats
 
   // maintains an order to the Cartesian points list
-  std::map<int, CartesianPointRelationship> cartesian_point_link_;
+  std::map<int, CartesianPointRelationship> *cartesian_point_link_;
 
   // map from ID to Cartesian Coordinate point (these can be joint solutions also?)
   // NOTE: if this can be JointTrajectoryPt, make this a map to pointers (cannot create a map to the abstract TrajectoryPt object type)
-  std::map<int, CartTrajectoryPt> trajectory_point_map_;
+  std::map<int, TrajectoryPtPtr> trajectory_point_map_;
 
   // each JointSolution is a vertex in the graph, one or more of these will exist for each element in trajectory_point_map
   std::map<int, std::vector<double> > joint_solutions_map_;
