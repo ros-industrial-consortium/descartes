@@ -62,10 +62,10 @@ public:
    * "All" is determined by each implementation (In the worst case, this means at least getIK).
    * "Distributed" is determined by each implementation.
    * @param pose Affine pose of TOOL in WOBJ frame
-   * @param joint_pose Solution (if function successful).
+   * @param joint_poses Solution (if function successful).
    * @return True if successful
    */
-  virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<double> &joint_pose) const;
+  virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const;
 
   /**
    * @brief Returns the affine pose
@@ -80,14 +80,14 @@ public:
    * @param joint_pose Pose to check
    * @return True if valid
    */
-  virtual bool isValid(const std::vector<double> &joint_pose);
+  virtual bool isValid(const std::vector<double> &joint_pose) = 0;
 
   /**
    * @brief Performs all necessary checks to determine affine pose is valid
    * @param pose Affine pose of TOOL in WOBJ frame
    * @return True if valid
    */
-  virtual bool isValid(const Eigen::Affine3d &pose);
+  virtual bool isValid(const Eigen::Affine3d &pose) = 0;
 
 };
 
