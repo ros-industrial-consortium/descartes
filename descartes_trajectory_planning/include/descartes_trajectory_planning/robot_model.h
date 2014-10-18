@@ -80,14 +80,14 @@ public:
    * @param joint_pose Pose to check
    * @return True if valid
    */
-  virtual bool isValid(const std::vector<double> &joint_pose) = 0;
+  virtual bool isValid(const std::vector<double> &joint_pose) const = 0;
 
   /**
    * @brief Performs all necessary checks to determine affine pose is valid
    * @param pose Affine pose of TOOL in WOBJ frame
    * @return True if valid
    */
-  virtual bool isValid(const Eigen::Affine3d &pose) = 0;
+  virtual bool isValid(const Eigen::Affine3d &pose) const = 0;
 
 };
 
