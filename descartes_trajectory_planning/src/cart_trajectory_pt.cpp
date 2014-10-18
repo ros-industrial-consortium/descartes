@@ -38,41 +38,48 @@ CartTrajectoryPt::CartTrajectoryPt():
     wobj_pt_(Eigen::Affine3d::Identity())
 {}
 
-bool CartTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
+bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
+                                          const RobotModel &model, Eigen::Affine3d &pose) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;
 }
 
-bool CartTrajectoryPt::getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
+bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
+                                          const RobotModel &model, Eigen::Affine3d &pose) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;
 }
 
-void CartTrajectoryPt::getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const
+void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
 {
   NOT_IMPLEMENTED_ERR;
 }
 
-bool CartTrajectoryPt::getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
-{
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-bool CartTrajectoryPt::getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
+bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
+                                           const RobotModel &model,
+                                           std::vector<double> &joint_pose) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;
 }
 
-void CartTrajectoryPt::getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const
+bool CartTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
+                                           const RobotModel &model,
+                                           std::vector<double> &joint_pose) const
+{
+  NOT_IMPLEMENTED_ERR;
+  return false;
+}
+
+void CartTrajectoryPt::getJointPoses(const RobotModel &model,
+                                     std::vector<std::vector<double> > &joint_poses) const
 {
   NOT_IMPLEMENTED_ERR;
 }
 
-bool CartTrajectoryPt::isValid(const moveit::core::RobotState &state) const
+bool CartTrajectoryPt::isValid(const RobotModel &model) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;

@@ -36,42 +36,51 @@ JointTrajectoryPt::JointTrajectoryPt():
     wobj_(Eigen::Affine3d::Identity())
 {}
 
-bool JointTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
+bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
+                                           const RobotModel &model, Eigen::Affine3d &pose) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;
 }
 
-bool JointTrajectoryPt::getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
+bool JointTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
+                                           const RobotModel &model, Eigen::Affine3d &pose) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;
 }
 
-void JointTrajectoryPt::getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const
+void JointTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
 {
   NOT_IMPLEMENTED_ERR;
 }
 
-bool JointTrajectoryPt::getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
-{
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-bool JointTrajectoryPt::getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
+bool JointTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
+                                            const RobotModel &model,
+                                            std::vector<double> &joint_pose) const
 {
   NOT_IMPLEMENTED_ERR;
   return false;
 }
 
-void JointTrajectoryPt::getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const
+bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
+                                            const RobotModel &model,
+                                            std::vector<double> &joint_pose) const
+{
+  NOT_IMPLEMENTED_ERR;
+  return false;
+}
+
+void JointTrajectoryPt::getJointPoses(const RobotModel &model,
+                                      std::vector<std::vector<double> > &joint_poses) const
 {
   NOT_IMPLEMENTED_ERR;
 }
 
-bool JointTrajectoryPt::isValid(const moveit::core::RobotState &state) const
+bool JointTrajectoryPt::isValid(const RobotModel &model) const
 {
+  //TODO: Re-impliment this for robot model
+  /*
   if (joint_position_.size() > state.getVariableCount())
   {
     logError("Variables in RobotState must be >= joints listed in JointTrajectoryPt.");
@@ -87,6 +96,9 @@ bool JointTrajectoryPt::isValid(const moveit::core::RobotState &state) const
     }
   }
   return true;
+  */
+  NOT_IMPLEMENTED_ERR;
+  return false;
 }
 
 bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretization)

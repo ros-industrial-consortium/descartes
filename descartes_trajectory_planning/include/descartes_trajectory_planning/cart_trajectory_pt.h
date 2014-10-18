@@ -97,29 +97,41 @@ public:
 
 
   /**@name Getters for Cartesian pose(s)
-   * @{
-   */
+     * @{
+     */
 
-  virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+    //TODO complete
+    virtual bool getClosestCartPose(const std::vector<double> &seed_state,
+                                      const RobotModel &model, Eigen::Affine3d &pose) const;
 
-  virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+    //TODO complete
+    virtual bool getNominalCartPose(const std::vector<double> &seed_state,
+                                      const RobotModel &model, Eigen::Affine3d &pose) const;
 
-  virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const;
-  /** @} (end section) */
+    //TODO complete
+    virtual void getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
+    /** @} (end section) */
 
-  /**@name Getters for joint pose(s)
-   * @{
-   */
+    /**@name Getters for joint pose(s)
+     * @{
+     */
 
-  virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+    //TODO complete
+    virtual bool getClosestJointPose(const std::vector<double> &seed_state,
+                                       const RobotModel &model,
+                                       std::vector<double> &joint_pose) const;
+    //TODO complete
+    virtual bool getNominalJointPose(const std::vector<double> &seed_state,
+                                       const RobotModel &model,
+                                       std::vector<double> &joint_pose) const;
 
-  virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+    //TODO complete
+    virtual void getJointPoses(const RobotModel &model,
+                                 std::vector<std::vector<double> > &joint_poses) const;
+    /** @} (end section) */
 
-  virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const;
-  /** @} (end section) */
-
-  virtual bool isValid(const moveit::core::RobotState &state) const;
-
+    //TODO complete
+    virtual bool isValid(const RobotModel &model) const;
   /**@brief Set discretization. Cartesian points can have position and angular discretization.
    * @param discretization Vector of discretization values. Must be length 2 or 6 (position/orientation or separate xyzrpy).
    * @return True if vector is valid length/values. TODO what are valid values?

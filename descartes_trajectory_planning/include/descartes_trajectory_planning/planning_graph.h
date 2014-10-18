@@ -106,7 +106,7 @@ public:
   void printGraph();
 
 protected:
-  moveit::core::RobotState *robot_state_;
+  RobotModelConstPtr robot_model_;
 
   DirectedGraph dg_;
 

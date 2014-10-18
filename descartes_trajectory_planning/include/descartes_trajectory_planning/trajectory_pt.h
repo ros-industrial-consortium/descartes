@@ -28,8 +28,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <eigen_stl_containers/eigen_stl_vector_container.h>
-#include <moveit/robot_state/robot_state.h>
 #include <vector>
+#include "descartes_trajectory_planning/robot_model.h"
 #include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
 
@@ -77,25 +77,29 @@ public:
 
   /**@brief Get single Cartesian pose associated with closest position of this point to seed_state.
    * (Pose of TOOL point expressed in WOBJ frame).
+   * @param seed_state Joint_position seed.
+   * @param kinematics Kinematics object used to calculate pose
    * @param pose If successful, affine pose of this state.
-   * @param seed_state RobotState used for kinematic calculations and joint_position seed.
    * @return True if calculation successful. pose untouched if return false.
    */
-  virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const = 0;
+  virtual bool getClosestCartPose(const std::vector<double> &seed_state,
+                                  const RobotModel &kinematics, Eigen::Affine3d &pose) const = 0;
 
   /**@brief Get single Cartesian pose associated with nominal of this point.
     * (Pose of TOOL point expressed in WOBJ frame).
-    * @param pose If successful, affine pose of this state.
-    * @param seed_state RobotState used for kinematic calculations and joint_position seed.
+   * @param seed_state Joint_position seed.
+   * @param kinematics Kinematics object used to calculate pose
+   * @param pose If successful, affine pose of this state.
     * @return True if calculation successful. pose untouched if return false.
     */
-  virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const = 0;
+  virtual bool getNominalCartPose(const std::vector<double> &seed_state,
+                                  const RobotModel &kinematics, Eigen::Affine3d &pose) const = 0;
 
-  /**@brief Get "all" Cartesian poses that satisfy this point. Use RobotState for performing kinematic calculations.
+  /**@brief Get "all" Cartesian poses that satisfy this point.
+   * @param kinematics Kinematics object used to calculate pose
    * @param poses Note: Number of poses returned may be subject to discretization used.
-   * @param state RobotState used for kinematic calculations.
    */
-  virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const = 0;
+  virtual void getCartesianPoses(const RobotModel &kinematics, EigenSTL::vector_Affine3d &poses) const = 0;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
@@ -103,28 +107,37 @@ public:
    */
 
   /**@brief Get single Joint pose closest to seed_state.
+   * @param seed_state Joint_position seed.
+   * @param model Robot mode object used to calculate pose
    * @param joint_pose Solution (if function successful).
-   * @param seed_state RobotState used for kinematic calculations and joint position seed.
    * @return True if calculation successful. joint_pose untouched if return is false.
    */
-  virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const = 0;
+  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
+                                   const RobotModel &model,
+                                   std::vector<double> &joint_pose) const = 0;
 
   /**@brief Get single Joint pose closest to seed_state.
-   * @param joint_pose Solution (if function successful).
+   * @param seed_state Joint_position seed.
+   * @param model Robot model object used to calculate pose
    * @param seed_state RobotState used kinematic calculations and joint position seed.
    * @return True if calculation successful. joint_pose untouched if return is false.
    */
-  virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const = 0;
+  virtual bool getNominalJointPose(const std::vector<double> &seed_state,
+                                   const RobotModel &model,
+                                   std::vector<double> &joint_pose) const = 0;
 
   /**@brief Get "all" joint poses that satisfy this point.
+   * @param model Robot model  object used to calculate pose
    * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
-   * @param seed_state RobotState used for kinematic calculations.
    */
-  virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const = 0;
+  virtual void getJointPoses(const RobotModel &model,
+                             std::vector<std::vector<double> > &joint_poses) const = 0;
   /** @} (end section) */
 
-  /**@brief Check if state satisfies trajectory point requirements. */
-  virtual bool isValid(const moveit::core::RobotState &state) const = 0;
+  /**@brief Check if state satisfies trajectory point requirements.
+   * @param model Robot model  object used to determine validity
+   */
+  virtual bool isValid(const RobotModel &model) const = 0;
 
   /**@brief Set discretization. Note: derived classes interpret and use discretization differently.
    * @param discretization Vector of discretization values.
