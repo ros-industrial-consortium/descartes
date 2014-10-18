@@ -225,7 +225,7 @@ bool PlanningGraph::calculateJointSolutions()
   {
     std::list<int> *traj_solutions = new std::list<int>();
     std::vector<std::vector<double> > joint_poses;
-    trajectory_iter->second.get()->getJointPoses(joint_poses, *robot_state_);
+    trajectory_iter->second.get()->getJointPoses(*robot_model_, joint_poses);
 
     if (joint_poses.size() == 0)
     {

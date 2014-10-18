@@ -91,13 +91,15 @@ public:
    */
 
   //TODO complete
-  virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+  virtual bool getClosestCartPose(const std::vector<double> &seed_state,
+                                    const RobotModel &model, Eigen::Affine3d &pose) const;
 
   //TODO complete
-  virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
+  virtual bool getNominalCartPose(const std::vector<double> &seed_state,
+                                    const RobotModel &model, Eigen::Affine3d &pose) const;
 
   //TODO complete
-  virtual void getCartesianPoses(EigenSTL::vector_Affine3d &poses, const moveit::core::RobotState &state) const;
+  virtual void getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
@@ -105,17 +107,21 @@ public:
    */
 
   //TODO complete
-  virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
+                                     const RobotModel &model,
+                                     std::vector<double> &joint_pose) const;
+  //TODO complete
+  virtual bool getNominalJointPose(const std::vector<double> &seed_state,
+                                     const RobotModel &model,
+                                     std::vector<double> &joint_pose) const;
 
   //TODO complete
-  virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
-
-  //TODO complete
-  virtual void getJointPoses(std::vector<std::vector<double> > &joint_poses, const moveit::core::RobotState &state) const;
+  virtual void getJointPoses(const RobotModel &model,
+                               std::vector<std::vector<double> > &joint_poses) const;
   /** @} (end section) */
 
   //TODO complete
-  virtual bool isValid(const moveit::core::RobotState &state) const;
+  virtual bool isValid(const RobotModel &model) const;
 
   //TODO complete
   /**@brief Set discretization. Each joint can have a different discretization.
