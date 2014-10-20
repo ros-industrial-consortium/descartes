@@ -26,49 +26,117 @@
 #define PLANNING_GRAPH_H_
 
 #include <boost/graph/adjacency_list.hpp>
-//#include "descartes_trajectory_planning/trajectory.h"
+#include "descartes_trajectory_planning/trajectory_pt.h"
+#include "descartes_trajectory_planning/cart_trajectory_pt.h"
+
+#include <map>
+#include <vector>
 
 namespace descartes
 {
 
-struct PlanningGraphState
+struct JointVertex
 {
-  int state_id;    // Reference to State object in Planning path
+  int id;
 };
-
-struct PlanningGraphTransition
+struct JointEdge
 {
+  int joint_start;
+  int joint_end;
   double transition_cost;
-  double total_edge_cost;
 };
 
-typedef PlanningGraphState Vertex;
-typedef PlanningGraphTransition Edge;
+struct CartesianPointRelationship
+{
+  int id;
+  int id_previous;
+  int id_next;
+};
 
-typedef boost::adjacency_list< boost::listS,            /*edge container*/
-                               boost::vecS,             /*vertex_container*/
-                               boost::directedS,        /*graph type*/
-                               Vertex,                  /*vertex structure*/
-                               Edge,                    /*edge structure*/
-                               boost::no_property,      /*graph property?*/
-                               boost::listS             /*edge container (not used for directed graphs)*/
-                             > PlanningGraph;
-typedef PlanningGraph Graph;     // TODO this can probably go away and we will call everything PlanningGraph
-typedef boost::graph_traits<Graph>::vertex_descriptor   VertexDescriptor;
-typedef boost::graph_traits<Graph>::vertex_iterator     VertexIterator;
-typedef boost::graph_traits<Graph>::edge_descriptor     EdgeDescriptor;
-typedef boost::graph_traits<Graph>::edge_iterator       EdgeIterator;
-typedef boost::property_map<Graph, boost::vertex_index_t>::type IndexMap;
-typedef boost::property_map<Graph, boost::vertex_index_t>::const_type IndexMapC;
-//typedef boost::property_map<Graph, int>::type           PlanningStateIdMap;
-typedef std::map<size_t, std::set<VertexDescriptor> > PlanningPtIdMap;   /**<All vertices that correspond to a particular pt in Planning path*/
-//TODO should this be a path iterator?
+typedef boost::adjacency_list<boost::listS, /*edge container*/
+boost::vecS, /*vertex_container*/
+boost::directedS, /*graph type*/
+JointVertex, /*vertex structure*/
+JointEdge /*edge structure*/
+> DirectedGraph;
 
-class PlanningGraph: public Graph
+typedef boost::graph_traits<DirectedGraph>::vertex_iterator VertexIterator;
+typedef boost::graph_traits<DirectedGraph>::edge_iterator EdgeIterator;
+typedef boost::graph_traits<DirectedGraph>::out_edge_iterator OutEdgeIterator;
+
+typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
+
+class PlanningGraph
 {
 public:
-  PlanningGraph() {};
-  virtual ~PlanningGraph() {};
+  // TODO: add constructor that takes RobotState as param
+  PlanningGraph()
+  {
+  }
+  ;
+  virtual ~PlanningGraph()
+  {
+  }
+  ;
+
+  /** @brief initial population of graph trajectory elements
+   * @param points list of trajectory points to be used to construct the graph
+   */
+  bool insertGraph(std::vector<TrajectoryPtPtr> *points);
+
+  // TODO: addTrajectory
+  // TODO: modifyTrajectory
+  // TODO: removeTrajectory
+
+  /** @brief Calculate and return the shortest path from the given joint solution indices
+   * @param startIndex The index of the joint solution at which to start
+   * @param endIndex The index of the joint solution at which to end
+   * @param cost The cost of the returned path
+   * @param path The sequence of points (joint solutions) for the path (TODO: change to JointTrajectoryPt?)
+   * @return True if a valid path is found
+   */
+  bool getShortestPathJointToJoint(int start_id, int end_id, double &cost, std::list<int> &path);
+  // TODO: 'overloaded' requests depending on source and destination
+  //bool GetShortestPathJointToCartesian(int startIndex, int endIndex, double &cost, std::vector<TrajectoryPt> &path);
+  //bool GetShortestPathCartesianToCartesian(int startIndex, int endIndex, double &cost, std::vector<TrajectoryPt> &path);
+
+  /**@brief Utility function for printing the graph to the console
+   * NOTE: should add other formats for output
+   */
+  void printGraph();
+
+protected:
+  RobotModelConstPtr robot_model_;
+
+  DirectedGraph dg_;
+
+  /** @brief DEBUG function for getting edge weights */
+  double randomDouble(double min, double max);
+
+  // NOTE: both Cartesian Points and Joint Points/solutions extend a base TrajectoryPt type
+  //       and include an accessor to both formats
+
+  // maintains an order to the Cartesian points list
+  std::map<int, CartesianPointRelationship> *cartesian_point_link_;
+
+  // map from ID to Cartesian Coordinate point (these can be joint solutions also?)
+  // NOTE: if this can be JointTrajectoryPt, make this a map to pointers (cannot create a map to the abstract TrajectoryPt object type)
+  std::map<int, TrajectoryPtPtr> trajectory_point_map_;
+
+  // each JointSolution is a vertex in the graph, one or more of these will exist for each element in trajectory_point_map
+  std::map<int, std::vector<double> > joint_solutions_map_;
+
+  // map from Cartesian Point ID to applicable joint solutions per point
+  std::map<int, std::list<int> > trajectory_point_to_joint_solutions_map_;
+
+  /** @brief (Re)create the list of joint solutions from the given TrajectoryPt list */
+  bool calculateJointSolutions();
+
+  /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
+  bool calculateEdgeWeights(std::list<JointEdge> *edges);
+
+  /** @brief (Re)create the actual graph structure from the list of joint solutions (vertices) and transition costs (edges) */
+  bool populateGraph(std::list<JointEdge> *edges);
 };
 
 } /* namespace descartes */

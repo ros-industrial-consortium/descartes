@@ -30,6 +30,7 @@
 #include <eigen_stl_containers/eigen_stl_vector_container.h>
 #include <moveit/robot_state/robot_state.h>
 #include <vector>
+#include "descartes_trajectory_planning/robot_model.h"
 #include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
 
