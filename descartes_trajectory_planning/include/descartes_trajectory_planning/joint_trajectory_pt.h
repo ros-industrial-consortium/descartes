@@ -71,12 +71,16 @@ struct TolerancedJointValue
 };
 
 /**@brief Joint Trajectory Point used to describe a joint goal for a robot trajectory.
+ *
+ * Background:
  * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
  * The WOBJ is something that exists in the world/global environment that is not held by robot.
  *
  * For a JointTrajectoryPt, the transform from wrist to tool, and base to workobject, are defined by fixed frames.
  * These transforms are important when calculating interpolation.
  * The joint position is specified as a nominal with upper/lower tolerances.
+ *
+ * The get*Pose() methods of JointTrajectoryPt try to set joint positions of a robot such that @e tool_ is coincident with @e wobj_.
  */
 class JointTrajectoryPt: public TrajectoryPt
 {
@@ -130,7 +134,24 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+inline
+  void setJoints(const std::vector<TolerancedJointValue> &joints)
+  {
+    joint_position_ = joints;
+  }
 
+  inline
+  void setTool(const Frame &tool)
+  {
+    tool_ = tool;
+  }
+
+  inline
+  void setWobj(const Frame &wobj)
+  {
+    wobj_ = wobj;
+  }
+  /**@} (end Setters section) */
 protected:
   std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
   std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */

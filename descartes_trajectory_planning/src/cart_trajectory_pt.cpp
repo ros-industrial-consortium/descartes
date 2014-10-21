@@ -25,7 +25,7 @@
 #include <console_bridge/console.h>
 #include "descartes_trajectory_planning/cart_trajectory_pt.h"
 
-#define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
+#define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
 namespace descartes
@@ -41,54 +41,59 @@ CartTrajectoryPt::CartTrajectoryPt():
 bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
                                           const RobotModel &model, Eigen::Affine3d &pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false);
 }
 
 bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
                                           const RobotModel &model, Eigen::Affine3d &pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  /* Simply return wobj_pt expressed in world */
+  pose = wobj_base_.frame * wobj_pt_.frame;
+  return true;  //TODO can this ever return false?
 }
 
 void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
 {
-  NOT_IMPLEMENTED_ERR;
+  poses.clear();
 }
 
 bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
                                            const RobotModel &model,
                                            std::vector<double> &joint_pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false);
 }
 
 bool CartTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
                                            const RobotModel &model,
                                            std::vector<double> &joint_pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame *
+      tool_pt_.frame_inv * tool_base_.frame_inv;
+  return model.getIK(robot_pose, seed_state, joint_pose);
 }
 
 void CartTrajectoryPt::getJointPoses(const RobotModel &model,
                                      std::vector<std::vector<double> > &joint_poses) const
 {
-  NOT_IMPLEMENTED_ERR;
+  bool rtn = false;
+  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame *
+      tool_pt_.frame_inv * tool_base_.frame_inv;
+  if(model.getAllIK(robot_pose, joint_poses))
+  {
+    rtn = true;
+  }
+  else
+  {
+    logWarn("Call to get joint poses returned empty set");
+  }
 }
 
 bool CartTrajectoryPt::isValid(const RobotModel &model) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
-{
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame *
+      tool_pt_.frame_inv * tool_base_.frame_inv;
+  return model.isValid(robot_pose);
 }
 
 } /* namespace descartes */

@@ -68,7 +68,9 @@ struct TolerancedFrame: public Frame
 {
   TolerancedFrame(){};
   TolerancedFrame(const Eigen::Affine3d &a):
-    Frame(a){}
+    Frame(a) {};
+  TolerancedFrame(const Frame &a):
+    Frame(a) {};
 
   PositionTolerance             position_tolerance;
   OrientationTolerance          orientation_tolerance;
@@ -78,14 +80,19 @@ struct TolerancedFrame: public Frame
 
 
 /**@brief Cartesian Trajectory Point used to describe a Cartesian goal for a robot trajectory.
- * For CartTrajectoryPt, TOOL pose can be variable (e.g. robot holding workpiece) or fixed (e.g. robot holding MIG torch).
+ *
+ * Background:
+ * For a general robotic process, TOOL pose can be variable (e.g. robot holding workpiece) or fixed (e.g. robot holding MIG torch).
  * Similarly, the WORKOBJECT pose can be variable (e.g. robot riveting a workpiece) or fixed (e.g. stationary grinder that robot moves a tool against).
+ *
  * For a CartTrajectoryPt, TOOL pose is described by fixed transform from wrist to TOOL_BASE, and variable transform from TOOL_BASE to TOOL_PT.
  * This allows the tolerances on tool pose to be easily expressed in a local tool frame.
  * Similarly, WOBJ is located relative to world coordinate system, and is described by
  * fixed transform from world to WOBJ_BASE, and variable transform from WOBJ_BASE to specific point on part (WOBJ_PT).
  * Variable transforms of both TOOL and WOBJ have tolerances on both position and orientation.
  * Optionally, additional constraints can be placed on position and orientation that can limit, but not expand, existing tolerances.
+ *
+ * The get*Pose methods of CartTrajectoryPt try to set joint positions of a robot such that @e tool_pt_ is coincident with @e wobj_pt_.
  */
 class CartTrajectoryPt : public TrajectoryPt
 {
@@ -138,6 +145,19 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+  inline
+  void setTool(const Frame &base, const TolerancedFrame &pt)
+  {
+    tool_base_ = base;
+    tool_pt_ = pt;
+  }
+
+  inline
+  void setWobj(const Frame &base, const TolerancedFrame &pt)
+  {
+    wobj_base_ = base;
+    wobj_pt_ = pt;
+  }
 
 
 protected:
