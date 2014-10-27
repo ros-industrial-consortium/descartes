@@ -29,9 +29,10 @@ namespace descartes_moveit
 {
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                                     const std::string & tool_frame, const std::string & wobj_frame) :
+                                     const std::string & tool_frame, const std::string & wobj_frame,
+                                       const size_t sample_iterations) :
     robot_state_(new moveit::core::RobotState(robot_state)), group_name_(group_name),
-    tool_base_(tool_frame), wobj_base_(wobj_frame)
+  tool_base_(tool_frame), wobj_base_(wobj_frame), sample_iterations_(sample_iterations)
 {
 
   moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
@@ -69,11 +70,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
   bool rtn = false;
   if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), pose, tool_base_))
   {
-    joint_pose.resize(robot_state_->getVariableCount());
-    for (size_t ii = 0; ii < robot_state_->getVariableCount(); ++ii)
-    {
-      joint_pose[ii] = robot_state_->getVariablePosition(ii);
-    }
+    robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
   }
   else
@@ -86,6 +83,13 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
 
 bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const
 {
+  //The minimum difference between solutions should be greater than the search discretization
+  //used by the IK solver.  This value is multiplied by 2 to remove any chance that a solution
+  //in the middle of a discretization step could be double counted.  In reality, we'd like solutions
+  //to be further apart than this.
+  double epsilon = 2 * robot_state_->getRobotModel()->getJointModelGroup(group_name_)->getSolverInstance()->
+      getSearchDiscretization();
+  logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
   for (size_t sample_iter = 0; sample_iter < sample_iterations_; ++sample_iter)
   {
@@ -93,15 +97,37 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
-      std::vector<std::vector<double> >::iterator it;
-
-      it = find(joint_poses.begin(), joint_poses.end(), joint_pose);
-      if (it == joint_poses.end())
+      if( joint_poses.empty())
       {
         std::stringstream msg;
-        msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << *it;
+        msg << "Found *first* solution on " << sample_iter << " iteration, joint: " << joint_pose;
         logDebug(msg.str().c_str());
         joint_poses.push_back(joint_pose);
+      }
+      else
+      {
+        logDebug("Found joint solution, now checking for uniqueness");
+        std::vector<std::vector<double> >::iterator joint_pose_it;
+        for(joint_pose_it = joint_poses.begin(); joint_pose_it != joint_poses.end(); ++joint_pose_it)
+        {
+          bool new_joint_pose = false;
+          for(size_t joint_index = 0; joint_index < (*joint_pose_it).size(); ++joint_index)
+          {
+            if(fabs(joint_pose[joint_index]-(*joint_pose_it)[joint_index]) > epsilon)
+            {
+              new_joint_pose = true;
+              break;
+            }
+          }
+          if (new_joint_pose)
+          {
+            std::stringstream msg;
+            msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << *joint_pose_it;
+            logDebug(msg.str().c_str());
+            joint_poses.push_back(joint_pose);
+            break;
+          }
+        }
       }
     }
   }
@@ -119,7 +145,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
 bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const
 {
   bool rtn = false;
-  robot_state_->setVariablePositions(joint_pose);
+  robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if ( isValid(joint_pose) )
   {
   if (robot_state_->knowsFrameTransform(tool_base_))
@@ -146,7 +172,9 @@ bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
   bool rtn = false;
   if (robot_state_->getVariableCount() == joint_pose.size())
   {
-    robot_state_->setVariablePositions(joint_pose);
+    robot_state_->setJointGroupPositions(group_name_, joint_pose);
+    //TODO: At some point velocities and accelerations should be set for the group as
+    //well.
     robot_state_->setVariableVelocities(std::vector<double>(joint_pose.size(), 0.));
     robot_state_->setVariableAccelerations(std::vector<double>(joint_pose.size(), 0.));
     if (robot_state_->satisfiesBounds())

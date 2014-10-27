@@ -42,7 +42,8 @@ public:
    * @param wobj_frame work object frame name
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                    const std::string & tool_frame, const std::string & wobj_frame);
+                    const std::string & tool_frame, const std::string & wobj_frame,
+                     const size_t sample_iterations = 10);
   virtual ~MoveitStateAdapter()
   {
   }

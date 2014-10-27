@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   console_bridge
   moveit_core
   tf
+  cmake_modules
   descartes_trajectory_planning
 )
 
