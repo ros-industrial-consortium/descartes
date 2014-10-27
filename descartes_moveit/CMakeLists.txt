@@ -2,13 +2,12 @@ cmake_minimum_required(VERSION 2.8.3)
 project(descartes_moveit)
 
 find_package(catkin REQUIRED COMPONENTS
-  console_bridge
   moveit_core
   tf
   cmake_modules
   descartes_trajectory_planning
 )
-
+find_package(console_bridge REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 
@@ -20,9 +19,12 @@ catkin_package(
     descartes_moveit
   CATKIN_DEPENDS
     moveit_core
+    tf
+    cmake_modules
+    descartes_trajectory_planning
   DEPENDS
-    Boost
     console_bridge
+    Boost
     Eigen
 )
 

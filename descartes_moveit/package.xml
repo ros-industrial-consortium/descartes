@@ -45,10 +45,12 @@
   <build_depend>moveit_core</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>cmake_modules</build_depend>
+  <build_depend>  descartes_trajectory_planning</build_depend>
   <run_depend>console_bridge</run_depend>
   <run_depend>moveit_core</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>cmake_modules</run_depend>
+  <run_depend>  descartes_trajectory_planning</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
