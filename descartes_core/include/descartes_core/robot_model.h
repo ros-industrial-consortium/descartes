@@ -95,7 +95,7 @@ public:
 
 }//descartes_core
 
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 
 #endif /* ROBOT_KINEMATICS_H_ */

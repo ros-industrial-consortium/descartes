@@ -140,6 +140,6 @@ protected:
 };
 
 } /* namespace descartes_core */
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 #endif /* PLANNING_GRAPH_H_ */

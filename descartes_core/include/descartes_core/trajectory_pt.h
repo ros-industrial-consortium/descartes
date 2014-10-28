@@ -175,6 +175,6 @@ protected:
 };
 
 } /* namespace descartes_core */
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 #endif /* TRAJECTORY_PT_H_ */

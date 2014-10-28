@@ -30,7 +30,7 @@ namespace descartes_moveit
 /**@brief MoveitStateAdapter adapts the MoveIt RobotState to the Descartes RobotModel interface
  *
  */
-class MoveitStateAdapter : public descartes::RobotModel
+class MoveitStateAdapter : public descartes_core::RobotModel
 {
 public:
 
