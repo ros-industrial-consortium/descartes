@@ -170,7 +170,9 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
 bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
 {
   bool rtn = false;
-  if (robot_state_->getVariableCount() == joint_pose.size())
+
+  if (robot_state_->getJointModelGroup(group_name_)->getJointModels().size() ==
+      joint_pose.size())
   {
     robot_state_->setJointGroupPositions(group_name_, joint_pose);
     //TODO: At some point velocities and accelerations should be set for the group as
