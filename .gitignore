@@ -27,3 +27,6 @@
 # build
 devel/
 
+# temp files
+*~
+
