@@ -25,7 +25,7 @@
 #include <console_bridge/console.h>
 #include "descartes_trajectory_planning/joint_trajectory_pt.h"
 
-#define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
+#define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
 namespace descartes
@@ -36,55 +36,56 @@ JointTrajectoryPt::JointTrajectoryPt():
     wobj_(Eigen::Affine3d::Identity())
 {}
 
-bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
-                                           const RobotModel &model, Eigen::Affine3d &pose) const
+bool JointTrajectoryPt::getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
 {
-  NOT_IMPLEMENTED_ERR;
+  NOT_IMPLEMENTED_ERR(false)
+}
+
+bool JointTrajectoryPt::getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const
+{
+  NOT_IMPLEMENTED_ERR(false)
+}
+
+bool JointTrajectoryPt::getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
+{
+  NOT_IMPLEMENTED_ERR(false)
+}
+
+bool JointTrajectoryPt::getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const
+{
+  moveit::core::RobotState state(seed_state);
+  std::vector<double> nominal(getNominalJointPose());
+  state.setVariablePositions(nominal);
+  state.setVariableVelocities(std::vector<double>(nominal.size(), 0.));
+  state.setVariableAccelerations(std::vector<double>(nominal.size(), 0.));
+  if (state.satisfiesBounds())
+  {
+    joint_pose = nominal;
+    return true;
+  }
   return false;
 }
 
-bool JointTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
-                                           const RobotModel &model, Eigen::Affine3d &pose) const
+std::vector<double> JointTrajectoryPt::getNominalJointPose() const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  std::vector<double> nominal(joint_position_.size());
+  for (size_t ii=0; ii<joint_position_.size(); ++ii)
+  {
+    nominal[ii] = joint_position_[ii].nominal;
+  }
+  return nominal;
 }
 
-void JointTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
+bool JointTrajectoryPt::isValid(const moveit::core::RobotState &state) const
 {
-  NOT_IMPLEMENTED_ERR;
-}
-
-bool JointTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
-                                            const RobotModel &model,
-                                            std::vector<double> &joint_pose) const
-{
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
-                                            const RobotModel &model,
-                                            std::vector<double> &joint_pose) const
-{
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-void JointTrajectoryPt::getJointPoses(const RobotModel &model,
-                                      std::vector<std::vector<double> > &joint_poses) const
-{
-  NOT_IMPLEMENTED_ERR;
-}
-
-bool JointTrajectoryPt::isValid(const RobotModel &model) const
-{
-  //TODO: Re-impliment this for robot model
-  /*
   if (joint_position_.size() > state.getVariableCount())
   {
     logError("Variables in RobotState must be >= joints listed in JointTrajectoryPt.");
     return false;
+  }
+  if (joint_position_.size() != state.getVariableCount())
+  {
+    logWarn("Mismatched size between joint point and state.");
   }
 
   for (int ii=0; ii<joint_position_.size(); ++ii)
@@ -95,38 +96,6 @@ bool JointTrajectoryPt::isValid(const RobotModel &model) const
       return false;
     }
   }
-  return true;
-  */
-  NOT_IMPLEMENTED_ERR;
-  return false;
-}
-
-bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
-{
-  if (discretization.size() != 1 || discretization.size() != joint_position_.size())
-  {
-    logError("discretization must be size 1 or same size as joint count.");
-    return false;
-  }
-
-  if (discretization.size() == 1)
-  {
-    discretization_ = std::vector<double>(joint_position_.size(), discretization[0]);
-    return true;
-  }
-
-  /* Do not copy discretization values until all values are confirmed */
-  for (size_t ii=0; ii<discretization.size(); ++ii)
-  {
-    if (discretization[ii] < 0. || discretization[ii] > joint_position_[ii].range())
-    {
-      logError("discretization value out of range.");
-      return false;
-    }
-  }
-
-  discretization_ = discretization;
-
   return true;
 }
 

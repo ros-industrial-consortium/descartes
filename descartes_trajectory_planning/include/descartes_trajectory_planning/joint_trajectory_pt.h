@@ -71,12 +71,16 @@ struct TolerancedJointValue
 };
 
 /**@brief Joint Trajectory Point used to describe a joint goal for a robot trajectory.
+ *
+ * Background:
  * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
  * The WOBJ is something that exists in the world/global environment that is not held by robot.
  *
  * For a JointTrajectoryPt, the transform from wrist to tool, and base to workobject, are defined by fixed frames.
  * These transforms are important when calculating interpolation.
  * The joint position is specified as a nominal with upper/lower tolerances.
+ *
+ * The get*Pose() methods of JointTrajectoryPt try to set joint positions of a robot such that @e tool_ is coincident with @e wobj_.
  */
 class JointTrajectoryPt: public TrajectoryPt
 {
@@ -91,15 +95,10 @@ public:
    */
 
   //TODO complete
-  virtual bool getClosestCartPose(const std::vector<double> &seed_state,
-                                    const RobotModel &model, Eigen::Affine3d &pose) const;
+  virtual bool getClosestCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
 
   //TODO complete
-  virtual bool getNominalCartPose(const std::vector<double> &seed_state,
-                                    const RobotModel &model, Eigen::Affine3d &pose) const;
-
-  //TODO complete
-  virtual void getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
+  virtual bool getNominalCartPose(Eigen::Affine3d &pose, const moveit::core::RobotState &seed_state) const;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
@@ -107,33 +106,43 @@ public:
    */
 
   //TODO complete
-  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                     const RobotModel &model,
-                                     std::vector<double> &joint_pose) const;
-  //TODO complete
-  virtual bool getNominalJointPose(const std::vector<double> &seed_state,
-                                     const RobotModel &model,
-                                     std::vector<double> &joint_pose) const;
+  virtual bool getClosestJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
 
-  //TODO complete
-  virtual void getJointPoses(const RobotModel &model,
-                               std::vector<std::vector<double> > &joint_poses) const;
+  virtual bool getNominalJointPose(std::vector<double> &joint_pose, const moveit::core::RobotState &seed_state) const;
+
+  /**@brief Get nominal joint pose of this point. Does not check for validity.
+   * @return vector representing nominal joint pose.
+   */
+  std::vector<double> getNominalJointPose() const;
   /** @} (end section) */
 
-  //TODO complete
-  virtual bool isValid(const RobotModel &model) const;
+  virtual bool isValid(const moveit::core::RobotState &state) const;
 
-  //TODO complete
-  /**@brief Set discretization. Each joint can have a different discretization.
-   * @param discretization Vector of discretization values. If length=1, set all elements of discretization_ are set to value.
-   * @return True if vector is length 1 or length(joint_position_) and value[ii] are within 0-range(joint_position[ii]).
+  /**@name Setters
+   * @{
    */
-  virtual bool setDiscretization(const std::vector<double> &discretization);
 
+  inline
+  void setJoints(const std::vector<TolerancedJointValue> &joints)
+  {
+    joint_position_ = joints;
+  }
+
+  inline
+  void setTool(const Frame &tool)
+  {
+    tool_ = tool;
+  }
+
+  inline
+  void setWobj(const Frame &wobj)
+  {
+    wobj_ = wobj;
+  }
+  /**@} (end Setters section) */
 
 protected:
   std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
-  std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
 
   /** @name JointTrajectoryPt transforms. Used in get*CartPose() methods and for interpolation.
    *  @{
