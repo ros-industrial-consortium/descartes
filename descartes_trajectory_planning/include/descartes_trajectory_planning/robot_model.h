@@ -19,6 +19,8 @@
 #ifndef ROBOT_KINEMATICS_H_
 #define ROBOT_KINEMATICS_H_
 
+//TODO: The include below picks up Eigen::Affine3d, but there is probably a better way
+#include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_trajectory_planning/utils.h"
 
 namespace descartes
@@ -65,7 +67,7 @@ public:
    * @param joint_poses Solution (if function successful).
    * @return True if successful
    */
-  virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const;
+  virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const = 0;
 
   /**
    * @brief Returns the affine pose
