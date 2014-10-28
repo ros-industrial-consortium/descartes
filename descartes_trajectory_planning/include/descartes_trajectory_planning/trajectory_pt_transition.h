@@ -28,7 +28,7 @@
 #include <boost/shared_ptr.hpp>
 
 
-namespace descartes
+namespace descartes_core
 {
 
 /**@brief Description of a 1-D velocity constraint
@@ -76,5 +76,7 @@ private:
 
 typedef boost::shared_ptr<TrajectoryPtTransition> TrajectoryPtTransitionPtr;
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 #endif /* TRAJECTORY_PT_TRANSITION_H_ */

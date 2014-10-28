@@ -51,7 +51,10 @@ target_link_libraries(descartes_trajectory
 ## Testing ##
 #############
 
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_trajectory_planning.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+if(CATKIN_ENABLE_TESTING)
+  set(UTEST_SRC_FILES test/utest.cpp
+      test/cart_trajectory_pt.cpp
+      test/joint_trajectory_pt.cpp)
+  catkin_add_gtest(utest ${UTEST_SRC_FILES})
+  target_link_libraries(utest descartes_trajectory)
+endif()

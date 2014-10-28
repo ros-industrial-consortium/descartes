@@ -15,25 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * trajectory_pt_transition.cpp
- *
- *  Created on: Jun 5, 2014
- *      Author: Dan Solomon
- */
 
-#include "descartes_trajectory_planning/trajectory_pt_transition.h"
+#include <gtest/gtest.h>
 
-namespace descartes_core
+int main(int argc, char **argv)
 {
-  TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
-  {
-
-  }
-
-  TrajectoryPtTransition::~TrajectoryPtTransition()
-  {
-
-  }
-
-} /* namespace descartes_core */
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

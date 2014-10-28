@@ -33,7 +33,7 @@
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-namespace descartes
+namespace descartes_core
 {
 // TODO: add constructor that takes RobotState as param
 //PlanningGraph::PlanningGraph()
@@ -344,4 +344,4 @@ double PlanningGraph::randomDouble(double min, double max)
   double ret = (double)rand() / RAND_MAX;
   return min + ret * (max - min);
 }
-} /* namespace descartes */
+} /* namespace descartes_core */

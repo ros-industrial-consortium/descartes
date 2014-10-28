@@ -15,25 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * trajectory_pt_transition.cpp
- *
- *  Created on: Jun 5, 2014
- *      Author: Dan Solomon
- */
 
-#include "descartes_trajectory_planning/trajectory_pt_transition.h"
+#include "descartes_trajectory_planning/joint_trajectory_pt.h"
+#include <gtest/gtest.h>
 
-namespace descartes_core
+
+using namespace descartes_core;
+
+
+TEST(JointTrajPt, construction)
 {
-  TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
-  {
+JointTrajectoryPt def();
+}
 
-  }
-
-  TrajectoryPtTransition::~TrajectoryPtTransition()
-  {
-
-  }
-
-} /* namespace descartes_core */

@@ -28,7 +28,7 @@
 #include <vector>
 #include "descartes_trajectory_planning/trajectory_pt.h"
 
-namespace descartes
+namespace descartes_core
 {
 
 typedef std::vector<TrajectoryPt> TrajectoryPtVector;
@@ -43,5 +43,7 @@ protected:
   TrajectoryPtVector pts_;
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 #endif /* TRAJECTORY_PATH_H_ */

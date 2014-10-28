@@ -28,7 +28,7 @@
 #include <vector>
 #include "descartes_trajectory_planning/trajectory_pt.h"
 
-namespace descartes
+namespace descartes_core
 {
 
 //TODO add warning if non-zero tolerances are specified because initial implementation will only allow fixed joints
@@ -71,19 +71,50 @@ struct TolerancedJointValue
 };
 
 /**@brief Joint Trajectory Point used to describe a joint goal for a robot trajectory.
+ *
+ * Background:
  * The TOOL is something held by the robot. It is located relative to robot wrist/tool plate.
  * The WOBJ is something that exists in the world/global environment that is not held by robot.
  *
  * For a JointTrajectoryPt, the transform from wrist to tool, and base to workobject, are defined by fixed frames.
  * These transforms are important when calculating interpolation.
  * The joint position is specified as a nominal with upper/lower tolerances.
+ *
+ * The get*Pose() methods of JointTrajectoryPt try to set joint positions of a robot such that @e tool_ is coincident with @e wobj_.
  */
 class JointTrajectoryPt: public TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;      //TODO is this needed when Frame already has it?
 public:
+  /**
+    @brief Default joint trajectory point constructor.  All frames initialized to Identity, joint
+    values left empty
+    */
   JointTrajectoryPt();
+
+  /**
+    @brief Full joint trajectory point constructor
+    @param joints Fixed joint position with tolerance
+    @param tool Transform from robot wrist to active tool pt.
+    @param wobj Transform from world to active workobject pt.
+    */
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, const Frame &tool, const Frame &wobj);
+
+
+  /**
+    @brief Full joint trajectory point constructor
+    @param joints Fixed joint position with tolerance
+    */
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints);
+
+
+  /**
+    @brief Full joint trajectory point constructor
+    @param joints Fixed joint position
+    */
+  JointTrajectoryPt(const std::vector<double> &joints);
+
   virtual ~JointTrajectoryPt() {};
 
   /**@name Getters for Cartesian pose(s)
@@ -130,7 +161,24 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+inline
+  void setJoints(const std::vector<TolerancedJointValue> &joints)
+  {
+    joint_position_ = joints;
+  }
 
+  inline
+  void setTool(const Frame &tool)
+  {
+    tool_ = tool;
+  }
+
+  inline
+  void setWobj(const Frame &wobj)
+  {
+    wobj_ = wobj;
+  }
+  /**@} (end Setters section) */
 protected:
   std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
   std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
@@ -144,6 +192,8 @@ protected:
 
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 
 #endif /* JOINT_TRAJECTORY_PT_H_ */

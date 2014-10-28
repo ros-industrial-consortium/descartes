@@ -33,7 +33,7 @@
 #include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
 
-namespace descartes
+namespace descartes_core
 {
 
 /**@brief Frame is a wrapper for an affine frame transform.
@@ -72,6 +72,7 @@ public:
   virtual ~TrajectoryPt() {};
 
   /**@name Getters for Cartesian pose(s)
+   * References to "closest" position are decided by norm of joint-space distance.
    * @{
    */
 
@@ -103,6 +104,7 @@ public:
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
+   * References to "closest" position are decided by norm of joint-space distance.
    * @{
    */
 
@@ -170,5 +172,7 @@ protected:
 
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 #endif /* TRAJECTORY_PT_H_ */

@@ -25,10 +25,10 @@
 #include <console_bridge/console.h>
 #include "descartes_trajectory_planning/joint_trajectory_pt.h"
 
-#define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
+#define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
-namespace descartes
+namespace descartes_core
 {
 
 JointTrajectoryPt::JointTrajectoryPt():
@@ -36,69 +36,82 @@ JointTrajectoryPt::JointTrajectoryPt():
     wobj_(Eigen::Affine3d::Identity())
 {}
 
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints,
+                                     const Frame &tool, const Frame &wobj):
+  joint_position_(joints),
+  tool_(tool),
+  wobj_(wobj)
+{}
+
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints):
+  joint_position_(joints),
+  tool_(Eigen::Affine3d::Identity()),
+  wobj_(Eigen::Affine3d::Identity())
+{}
+
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<double> &joints):
+  tool_(Eigen::Affine3d::Identity()),
+  wobj_(Eigen::Affine3d::Identity())
+{
+  for (size_t ii = 0; ii < joints.size(); ++ii)
+  {
+    joint_position_.push_back(TolerancedJointValue(joints[ii]));
+  }
+}
+
+
 bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
                                            const RobotModel &model, Eigen::Affine3d &pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false)
 }
 
 bool JointTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
                                            const RobotModel &model, Eigen::Affine3d &pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false)
 }
 
 void JointTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
 {
-  NOT_IMPLEMENTED_ERR;
+  poses.clear();
 }
 
 bool JointTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
                                             const RobotModel &model,
                                             std::vector<double> &joint_pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  NOT_IMPLEMENTED_ERR(false);
 }
 
 bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
                                             const RobotModel &model,
                                             std::vector<double> &joint_pose) const
 {
-  NOT_IMPLEMENTED_ERR;
-  return false;
+  joint_pose.resize(joint_position_.size());
+  for (size_t ii=0; ii<joint_position_.size(); ++ii)
+  {
+    joint_pose[ii] = joint_position_[ii].nominal;
+  }
+  return true;
 }
 
 void JointTrajectoryPt::getJointPoses(const RobotModel &model,
                                       std::vector<std::vector<double> > &joint_poses) const
 {
-  NOT_IMPLEMENTED_ERR;
+  joint_poses.clear();
 }
 
 bool JointTrajectoryPt::isValid(const RobotModel &model) const
 {
-  //TODO: Re-impliment this for robot model
-  /*
-  if (joint_position_.size() > state.getVariableCount())
+  std::vector<double> lower(joint_position_.size());
+  std::vector<double> upper(joint_position_.size());
+  for (size_t ii = 0; ii < joint_position_.size(); ++ii)
   {
-    logError("Variables in RobotState must be >= joints listed in JointTrajectoryPt.");
-    return false;
+    lower[ii] = joint_position_[ii].tolerance.lower;
+    upper[ii] = joint_position_[ii].tolerance.upper;
   }
-
-  for (int ii=0; ii<joint_position_.size(); ++ii)
-  {
-    const double &state_joint = state.getVariablePosition(ii);
-    if (state_joint > joint_position_[ii].upperBound() || state_joint < joint_position_[ii].lowerBound())
-    {
-      return false;
-    }
-  }
-  return true;
-  */
-  NOT_IMPLEMENTED_ERR;
-  return false;
+return model.isValid(lower) && model.isValid(upper);
 }
 
 bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
@@ -130,4 +143,4 @@ bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretizat
   return true;
 }
 
-} /* namespace descartes */
+} /* namespace descartes_core */

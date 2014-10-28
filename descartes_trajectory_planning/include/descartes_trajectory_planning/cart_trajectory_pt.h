@@ -31,8 +31,7 @@
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;
 
-
-namespace descartes
+namespace descartes_core
 {
 
 /**@brief Description of a per-cartesian-axis linear tolerance on position
@@ -68,7 +67,9 @@ struct TolerancedFrame: public Frame
 {
   TolerancedFrame(){};
   TolerancedFrame(const Eigen::Affine3d &a):
-    Frame(a){}
+    Frame(a) {};
+  TolerancedFrame(const Frame &a):
+    Frame(a) {};
 
   PositionTolerance             position_tolerance;
   OrientationTolerance          orientation_tolerance;
@@ -78,21 +79,60 @@ struct TolerancedFrame: public Frame
 
 
 /**@brief Cartesian Trajectory Point used to describe a Cartesian goal for a robot trajectory.
- * For CartTrajectoryPt, TOOL pose can be variable (e.g. robot holding workpiece) or fixed (e.g. robot holding MIG torch).
+ *
+ * Background:
+ * For a general robotic process, TOOL pose can be variable (e.g. robot holding workpiece) or fixed (e.g. robot holding MIG torch).
  * Similarly, the WORKOBJECT pose can be variable (e.g. robot riveting a workpiece) or fixed (e.g. stationary grinder that robot moves a tool against).
+ *
  * For a CartTrajectoryPt, TOOL pose is described by fixed transform from wrist to TOOL_BASE, and variable transform from TOOL_BASE to TOOL_PT.
  * This allows the tolerances on tool pose to be easily expressed in a local tool frame.
  * Similarly, WOBJ is located relative to world coordinate system, and is described by
  * fixed transform from world to WOBJ_BASE, and variable transform from WOBJ_BASE to specific point on part (WOBJ_PT).
  * Variable transforms of both TOOL and WOBJ have tolerances on both position and orientation.
  * Optionally, additional constraints can be placed on position and orientation that can limit, but not expand, existing tolerances.
+ *
+ * The get*Pose methods of CartTrajectoryPt try to set joint positions of a robot such that @e tool_pt_ is coincident with @e wobj_pt_.
  */
 class CartTrajectoryPt : public TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 public:
+
+  /**
+    @brief Default cartesian trajectory point constructor.  All frames initialized to Identity
+    */
   CartTrajectoryPt();
+
+  /**
+    @brief Full constructor of cartesian trajectory point
+    @param wobj_base Fixed transform from WCS to base of object
+    @param wobj_pt Underconstrained transform from object base to goal point on object.
+    @param tool_base Fixed transform from wrist/tool_plate to tool base
+    @param tool_pt Underconstrained transform from tool_base to effective pt on tool.
+    */
+  CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool_base,
+                   const TolerancedFrame &tool_pt);
+
+
+  /**
+    @brief Partial constructor of cartesian trajectory point (all frames not specified by parameters
+    are initialized to Identity).  This constructor should be utilized to specify the robot tip (toleranced)
+    point relative to the robot base.
+    @param wobj_pt Underconstrained transform from object base to goal point on object.
+    */
+  CartTrajectoryPt(const TolerancedFrame &wobj_pt);
+
+
+  /**
+    @brief Partial constructor of cartesian trajectory point (all frames not specified by parameters
+    are initialized to Identity).  This constructor should be utilized to specify the robot tip (NOT toleranced)
+    point relative to the robot base.
+    @param wobj_pt Underconstrained transform from object base to goal point on object.
+    */
+  CartTrajectoryPt(const Frame &wobj_pt);
+
+
   virtual ~CartTrajectoryPt() {};
 
 
@@ -138,6 +178,19 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+  inline
+  void setTool(const Frame &base, const TolerancedFrame &pt)
+  {
+    tool_base_ = base;
+    tool_pt_ = pt;
+  }
+
+  inline
+  void setWobj(const Frame &base, const TolerancedFrame &pt)
+  {
+    wobj_base_ = base;
+    wobj_pt_ = pt;
+  }
 
 
 protected:
@@ -145,8 +198,12 @@ protected:
   TolerancedFrame               tool_pt_;       /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
   Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
   TolerancedFrame               wobj_pt_;       /**<@brief Underconstrained transform from object base to goal point on object. */
+
+
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 
 #endif /* CART_TRAJECTORY_PT_H_ */
