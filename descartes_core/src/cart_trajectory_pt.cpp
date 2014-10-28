@@ -23,7 +23,7 @@
  */
 
 #include <console_bridge/console.h>
-#include "descartes_trajectory_planning/cart_trajectory_pt.h"
+#include "descartes_core/cart_trajectory_pt.h"
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 

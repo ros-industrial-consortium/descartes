@@ -5,7 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   tf
   cmake_modules
-  descartes_trajectory_planning
+  descartes_core
 )
 find_package(console_bridge REQUIRED)
 find_package(Boost REQUIRED)
@@ -21,7 +21,7 @@ catkin_package(
     moveit_core
     tf
     cmake_modules
-    descartes_trajectory_planning
+    descartes_core
   DEPENDS
     console_bridge
     Boost
@@ -50,7 +50,7 @@ target_link_libraries(descartes_moveit
 ## Testing ##
 #############
 
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_trajectory_planning.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_core.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

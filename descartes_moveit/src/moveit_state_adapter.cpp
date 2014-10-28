@@ -20,7 +20,7 @@
 #include "descartes_moveit/moveit_state_adapter.h"
 #include "eigen_conversions/eigen_msg.h"
 #include "random_numbers/random_numbers.h"
-#include "descartes_trajectory_planning/pretty_print.hpp"
+#include "descartes_core/pretty_print.hpp"
 #include <sstream>
 
 #define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)

@@ -19,7 +19,7 @@
 #ifndef MOVEIT_STATE_ADPATER_H_
 #define MOVEIT_STATE_ADPATER_H_
 
-#include "descartes_trajectory_planning/robot_model.h"
+#include "descartes_core/robot_model.h"
 #include "moveit/robot_model/robot_model.h"
 #include "moveit/kinematics_base/kinematics_base.h"
 #include <string>

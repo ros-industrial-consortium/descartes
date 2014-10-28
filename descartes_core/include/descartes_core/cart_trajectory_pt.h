@@ -26,7 +26,7 @@
 #define CART_TRAJECTORY_PT_H_
 
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
-#include "descartes_trajectory_planning/trajectory_pt.h"
+#include "descartes_core/trajectory_pt.h"
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;

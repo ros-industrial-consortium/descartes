@@ -21,7 +21,7 @@
 
 //TODO: The include below picks up Eigen::Affine3d, but there is probably a better way
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
-#include "descartes_trajectory_planning/utils.h"
+#include "descartes_core/utils.h"
 
 namespace descartes_core
 {
