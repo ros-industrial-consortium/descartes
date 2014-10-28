@@ -28,7 +28,7 @@
 #include <vector>
 #include "descartes_trajectory_planning/trajectory_pt.h"
 
-namespace descartes
+namespace descartes_core
 {
 
 //TODO add warning if non-zero tolerances are specified because initial implementation will only allow fixed joints
@@ -192,6 +192,8 @@ protected:
 
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 
 #endif /* JOINT_TRAJECTORY_PT_H_ */

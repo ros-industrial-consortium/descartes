@@ -33,7 +33,7 @@
 #include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
 
-namespace descartes
+namespace descartes_core
 {
 
 /**@brief Frame is a wrapper for an affine frame transform.
@@ -174,5 +174,7 @@ protected:
 
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 #endif /* TRAJECTORY_PT_H_ */

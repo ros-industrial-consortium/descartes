@@ -24,7 +24,7 @@
 
 #include "descartes_trajectory_planning/trajectory_pt_transition.h"
 
-namespace descartes
+namespace descartes_core
 {
   TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
   {
@@ -36,4 +36,4 @@ namespace descartes
 
   }
 
-} /* namespace descartes */
+} /* namespace descartes_core */

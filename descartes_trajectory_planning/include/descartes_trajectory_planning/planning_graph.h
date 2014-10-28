@@ -32,7 +32,7 @@
 #include <map>
 #include <vector>
 
-namespace descartes
+namespace descartes_core
 {
 
 struct JointVertex
@@ -139,5 +139,7 @@ protected:
   bool populateGraph(std::list<JointEdge> *edges);
 };
 
-} /* namespace descartes */
+} /* namespace descartes_core */
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 #endif /* PLANNING_GRAPH_H_ */

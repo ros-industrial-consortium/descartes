@@ -24,6 +24,6 @@
 
 #include "descartes_trajectory_planning/trajectory.h"
 
-namespace descartes
+namespace descartes_core
 {
-} /* namespace descartes */
+} /* namespace descartes_core */

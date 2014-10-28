@@ -23,7 +23,7 @@
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_trajectory_planning/utils.h"
 
-namespace descartes
+namespace descartes_core
 {
 
 DESCARTES_CLASS_FORWARD(RobotModel);
@@ -93,6 +93,9 @@ public:
 
 };
 
-}//descartes
+}//descartes_core
+
+// For backwards namespace compatability
+namespace descartes = descartes_core;
 
 #endif /* ROBOT_KINEMATICS_H_ */

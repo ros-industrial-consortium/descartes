@@ -28,7 +28,7 @@
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
-namespace descartes
+namespace descartes_core
 {
 
 JointTrajectoryPt::JointTrajectoryPt():
@@ -143,4 +143,4 @@ bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretizat
   return true;
 }
 
-} /* namespace descartes */
+} /* namespace descartes_core */

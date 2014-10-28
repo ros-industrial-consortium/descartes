@@ -28,7 +28,7 @@
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
-namespace descartes
+namespace descartes_core
 {
 
 CartTrajectoryPt::CartTrajectoryPt():
@@ -126,4 +126,4 @@ bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretizati
   NOT_IMPLEMENTED_ERR(false);
 }
 
-} /* namespace descartes */
+} /* namespace descartes_core */
