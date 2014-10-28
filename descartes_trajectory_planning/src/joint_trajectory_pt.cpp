@@ -113,4 +113,34 @@ bool JointTrajectoryPt::isValid(const RobotModel &model) const
   }
 return model.isValid(lower) && model.isValid(upper);
 }
+
+bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
+{
+  if (discretization.size() != 1 || discretization.size() != joint_position_.size())
+  {
+    logError("discretization must be size 1 or same size as joint count.");
+    return false;
+  }
+
+  if (discretization.size() == 1)
+  {
+    discretization_ = std::vector<double>(joint_position_.size(), discretization[0]);
+    return true;
+  }
+
+  /* Do not copy discretization values until all values are confirmed */
+  for (size_t ii=0; ii<discretization.size(); ++ii)
+  {
+    if (discretization[ii] < 0. || discretization[ii] > joint_position_[ii].range())
+    {
+      logError("discretization value out of range.");
+      return false;
+    }
+  }
+
+  discretization_ = discretization;
+
+  return true;
+}
+
 } /* namespace descartes */
