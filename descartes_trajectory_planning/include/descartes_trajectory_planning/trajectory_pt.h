@@ -44,8 +44,6 @@ struct Frame
   Frame(){};
   Frame(const Eigen::Affine3d &a):
     frame(a), frame_inv(a.inverse()) {};
-  Frame(const Frame &a):
-    frame(a.frame), frame_inv(a.frame_inv) {};
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   Eigen::Affine3d frame;
