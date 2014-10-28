@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_core)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 find_package(catkin REQUIRED COMPONENTS
   console_bridge
   moveit_core
@@ -15,7 +17,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    descartes_trajectory
+    descartes_core
   CATKIN_DEPENDS
     roscpp
     moveit_core
