@@ -38,6 +38,30 @@ CartTrajectoryPt::CartTrajectoryPt():
     wobj_pt_(Eigen::Affine3d::Identity())
 {}
 
+CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool,
+                 const TolerancedFrame &tool_pt):
+  tool_base_(tool),
+  tool_pt_(tool_pt),
+  wobj_base_(wobj_base),
+  wobj_pt_(wobj_pt)
+{}
+
+
+CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt):
+  tool_base_(Eigen::Affine3d::Identity()),
+  tool_pt_(Eigen::Affine3d::Identity()),
+  wobj_base_(Eigen::Affine3d::Identity()),
+  wobj_pt_(wobj_pt)
+{}
+
+
+CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt):
+tool_base_(Eigen::Affine3d::Identity()),
+tool_pt_(Eigen::Affine3d::Identity()),
+wobj_base_(Eigen::Affine3d::Identity()),
+wobj_pt_(wobj_pt)
+{}
+
 bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
                                           const RobotModel &model, Eigen::Affine3d &pose) const
 {
@@ -94,6 +118,12 @@ bool CartTrajectoryPt::isValid(const RobotModel &model) const
   Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame *
       tool_pt_.frame_inv * tool_base_.frame_inv;
   return model.isValid(robot_pose);
+}
+
+
+bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
+{
+  NOT_IMPLEMENTED_ERR(false);
 }
 
 } /* namespace descartes */

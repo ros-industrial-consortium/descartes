@@ -87,7 +87,34 @@ class JointTrajectoryPt: public TrajectoryPt
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;      //TODO is this needed when Frame already has it?
 public:
+  /**
+    @brief Default joint trajectory point constructor.  All frames initialized to Identity, joint
+    values left empty
+    */
   JointTrajectoryPt();
+
+  /**
+    @brief Full joint trajectory point constructor
+    @param joints Fixed joint position with tolerance
+    @param tool Transform from robot wrist to active tool pt.
+    @param wobj Transform from world to active workobject pt.
+    */
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, const Frame &tool, const Frame &wobj);
+
+
+  /**
+    @brief Full joint trajectory point constructor
+    @param joints Fixed joint position with tolerance
+    */
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints);
+
+
+  /**
+    @brief Full joint trajectory point constructor
+    @param joints Fixed joint position
+    */
+  JointTrajectoryPt(const std::vector<double> &joints);
+
   virtual ~JointTrajectoryPt() {};
 
   /**@name Getters for Cartesian pose(s)

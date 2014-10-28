@@ -99,7 +99,41 @@ class CartTrajectoryPt : public TrajectoryPt
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 public:
+
+  /**
+    @brief Default cartesian trajectory point constructor.  All frames initialized to Identity
+    */
   CartTrajectoryPt();
+
+  /**
+    @brief Full constructor of cartesian trajectory point
+    @param wobj_base Fixed transform from WCS to base of object
+    @param wobj_pt Underconstrained transform from object base to goal point on object.
+    @param tool_base Fixed transform from wrist/tool_plate to tool base
+    @param tool_pt Underconstrained transform from tool_base to effective pt on tool.
+    */
+  CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool_base,
+                   const TolerancedFrame &tool_pt);
+
+
+  /**
+    @brief Partial constructor of cartesian trajectory point (all frames not specified by parameters
+    are initialized to Identity).  This constructor should be utilized to specify the robot tip (toleranced)
+    point relative to the robot base.
+    @param wobj_pt Underconstrained transform from object base to goal point on object.
+    */
+  CartTrajectoryPt(const TolerancedFrame &wobj_pt);
+
+
+  /**
+    @brief Partial constructor of cartesian trajectory point (all frames not specified by parameters
+    are initialized to Identity).  This constructor should be utilized to specify the robot tip (NOT toleranced)
+    point relative to the robot base.
+    @param wobj_pt Underconstrained transform from object base to goal point on object.
+    */
+  CartTrajectoryPt(const Frame &wobj_pt);
+
+
   virtual ~CartTrajectoryPt() {};
 
 
@@ -165,6 +199,8 @@ protected:
   TolerancedFrame               tool_pt_;       /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
   Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
   TolerancedFrame               wobj_pt_;       /**<@brief Underconstrained transform from object base to goal point on object. */
+
+
 };
 
 } /* namespace descartes */

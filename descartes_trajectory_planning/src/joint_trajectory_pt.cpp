@@ -36,6 +36,30 @@ JointTrajectoryPt::JointTrajectoryPt():
     wobj_(Eigen::Affine3d::Identity())
 {}
 
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints,
+                                     const Frame &tool, const Frame &wobj):
+  joint_position_(joints),
+  tool_(tool),
+  wobj_(wobj)
+{}
+
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints):
+  joint_position_(joints),
+  tool_(Eigen::Affine3d::Identity()),
+  wobj_(Eigen::Affine3d::Identity())
+{}
+
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<double> &joints):
+  tool_(Eigen::Affine3d::Identity()),
+  wobj_(Eigen::Affine3d::Identity())
+{
+  for (size_t ii = 0; ii < joints.size(); ++ii)
+  {
+    joint_position_.push_back(TolerancedJointValue(joints[ii]));
+  }
+}
+
+
 bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
                                            const RobotModel &model, Eigen::Affine3d &pose) const
 {
