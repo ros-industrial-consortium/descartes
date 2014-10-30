@@ -26,7 +26,7 @@
 #define JOINT_TRAJECTORY_PT_H_
 
 #include <vector>
-#include "descartes_trajectory_planning/trajectory_pt.h"
+#include "descartes_core/trajectory_pt.h"
 
 namespace descartes_core
 {
@@ -193,7 +193,7 @@ protected:
 };
 
 } /* namespace descartes_core */
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 
 #endif /* JOINT_TRAJECTORY_PT_H_ */

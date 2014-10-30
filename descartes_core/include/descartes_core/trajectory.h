@@ -16,14 +16,34 @@
  * limitations under the License.
  */
 /*
- * trajectory_path.cpp
+ * trajectory.h
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
  */
 
-#include "descartes_trajectory_planning/trajectory.h"
+#ifndef TRAJECTORY_PATH_H_
+#define TRAJECTORY_PATH_H_
+
+#include <vector>
+#include "descartes_core/trajectory_pt.h"
 
 namespace descartes_core
 {
+
+typedef std::vector<TrajectoryPt> TrajectoryPtVector;
+
+class TrajectoryPath
+{
+public:
+  TrajectoryPath() {};
+  virtual ~TrajectoryPath() {};
+
+protected:
+  TrajectoryPtVector pts_;
+};
+
 } /* namespace descartes_core */
+
+
+#endif /* TRAJECTORY_PATH_H_ */

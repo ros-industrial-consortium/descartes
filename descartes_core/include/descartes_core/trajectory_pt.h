@@ -29,8 +29,8 @@
 #include <Eigen/Geometry>
 #include <eigen_stl_containers/eigen_stl_vector_container.h>
 #include <vector>
-#include "descartes_trajectory_planning/robot_model.h"
-#include "descartes_trajectory_planning/trajectory_pt_transition.h"
+#include "descartes_core/robot_model.h"
+#include "descartes_core/trajectory_pt_transition.h"
 
 
 namespace descartes_core
@@ -173,6 +173,6 @@ protected:
 };
 
 } /* namespace descartes_core */
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 #endif /* TRAJECTORY_PT_H_ */

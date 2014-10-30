@@ -77,6 +77,6 @@ private:
 typedef boost::shared_ptr<TrajectoryPtTransition> TrajectoryPtTransitionPtr;
 
 } /* namespace descartes_core */
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 #endif /* TRAJECTORY_PT_TRANSITION_H_ */

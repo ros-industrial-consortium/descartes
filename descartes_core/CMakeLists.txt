@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(descartes_trajectory_planning)
+project(descartes_core)
+
+set(CMAKE_BUILD_TYPE Debug)
 
 find_package(catkin REQUIRED COMPONENTS
   console_bridge
@@ -15,7 +17,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    descartes_trajectory
+    descartes_core
   CATKIN_DEPENDS
     roscpp
     moveit_core
@@ -35,14 +37,14 @@ include_directories(include
 )
 
 ## DescartesTrajectoryPt lib
-add_library(descartes_trajectory
+add_library(descartes_core
             src/trajectory_pt_transition.cpp
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
             src/planning_graph.cpp
 )
-target_link_libraries(descartes_trajectory
+target_link_libraries(descartes_core
                       ${catkin_LIBRARIES}
 )
 
@@ -56,5 +58,5 @@ if(CATKIN_ENABLE_TESTING)
       test/cart_trajectory_pt.cpp
       test/joint_trajectory_pt.cpp)
   catkin_add_gtest(utest ${UTEST_SRC_FILES})
-  target_link_libraries(utest descartes_trajectory)
+  target_link_libraries(utest descartes_core)
 endif()

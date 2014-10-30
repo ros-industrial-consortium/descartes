@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "descartes_trajectory_planning/joint_trajectory_pt.h"
+#include "descartes_core/joint_trajectory_pt.h"
 #include <gtest/gtest.h>
 
 

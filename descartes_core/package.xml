@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package>
-  <name>descartes_trajectory_planning</name>
+  <name>descartes_core</name>
   <version>0.0.0</version>
-  <description>The descartes_trajectory_planning package creates joint trajectories for trajectory plans. Trajectory plans are typically underdefined paths through space that allow for kinematic/dynamic tolerances, such as unspecified tool roll.</description>
+  <description>The descartes_core package creates joint trajectories for trajectory plans. Trajectory plans are typically underdefined paths through space that allow for kinematic/dynamic tolerances, such as unspecified tool roll.</description>
 
   <maintainer email="dpsolomon@gmail.com">Dan Solomon</maintainer>
 
   <license>Apache2.0</license>
-  <url type="website">https://github.com/industrial-moveit/descartes_trajectory_planning</url>
+  <url type="website">https://github.com/industrial-moveit/descartes_core</url>
 
   <author email="dpsolomon@gmail.com">Dan Solomon</author>
 

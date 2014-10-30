@@ -26,8 +26,8 @@
 #define PLANNING_GRAPH_H_
 
 #include <boost/graph/adjacency_list.hpp>
-#include "descartes_trajectory_planning/trajectory_pt.h"
-#include "descartes_trajectory_planning/cart_trajectory_pt.h"
+#include "descartes_core/trajectory_pt.h"
+#include "descartes_core/cart_trajectory_pt.h"
 
 #include <map>
 #include <vector>
@@ -140,6 +140,6 @@ protected:
 };
 
 } /* namespace descartes_core */
-// For backwards namespace compatability
-namespace descartes = descartes_core;
+
+
 #endif /* PLANNING_GRAPH_H_ */
