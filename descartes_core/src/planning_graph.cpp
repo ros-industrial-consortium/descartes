@@ -58,9 +58,9 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     return false;
   }
 
-  cartesian_point_link_ = new std::map<int, CartesianPointRelationship>();
+  cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointRelationship>();
 
-  int previous_id = -1;
+  TrajectoryPt::ID previous_id;
 
   // input is valid, copy to local maps that will be maintained by the planning graph
   for (std::vector<TrajectoryPtPtr>::iterator point_iter = points->begin(); point_iter != points->end(); point_iter++)
@@ -69,7 +69,7 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     CartesianPointRelationship *point_link = new CartesianPointRelationship();
     point_link->id = point_iter->get()->getID();
 
-    if(previous_id != 0)
+    if(!previous_id.is_nil())
     {
       (*cartesian_point_link_)[previous_id].id_next = point_link->id;
       point_link->id_previous = previous_id;
@@ -220,10 +220,10 @@ bool PlanningGraph::calculateJointSolutions()
 
   int counter_joint_solutions = 0;
   // for each TrajectoryPt, get the available joint solutions
-  for (std::map<int, TrajectoryPtPtr>::iterator trajectory_iter = trajectory_point_map_.begin();
+  for (std::map<TrajectoryPt::ID, TrajectoryPtPtr>::iterator trajectory_iter = trajectory_point_map_.begin();
       trajectory_iter != trajectory_point_map_.end(); trajectory_iter++)
   {
-    std::list<int> *traj_solutions = new std::list<int>();
+    std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.get()->getJointPoses(*robot_model_, joint_poses);
 
