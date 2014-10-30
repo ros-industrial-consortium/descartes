@@ -81,12 +81,19 @@ public:
 
   /** @brief initial population of graph trajectory elements
    * @param points list of trajectory points to be used to construct the graph
+   * @return True if the graph was successfully created
    */
   bool insertGraph(std::vector<TrajectoryPtPtr> *points);
 
-  // TODO: addTrajectory
-  // TODO: modifyTrajectory
-  // TODO: removeTrajectory
+  /** @brief adds a single trajectory point to the graph
+   * @param point The new point to add to the graph
+   * @return True if the point was successfully added
+   */
+  bool addTrajectory(TrajectoryPtPtr point, int previous_id, int next_id);
+
+  bool modifyTrajectory(TrajectoryPtPtr point);
+
+  bool removeTrajectory(TrajectoryPtPtr point);
 
   /** @brief Calculate and return the shortest path from the given joint solution indices
    * @param startIndex The index of the joint solution at which to start

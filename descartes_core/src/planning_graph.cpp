@@ -68,16 +68,22 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     trajectory_point_map_[point_iter->get()->getID()] = (*point_iter);
     CartesianPointRelationship *point_link = new CartesianPointRelationship();
     point_link->id = point_iter->get()->getID();
+    point_link->id_next = -1; // init to -1 as default
 
-    if(previous_id != 0)
+
+    // if the previous_id exists, set it's next_id to the new id
+    if(cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
     {
       (*cartesian_point_link_)[previous_id].id_next = point_link->id;
-      point_link->id_previous = previous_id;
     }
-    else
-    {
-      previous_id = point_link->id;
-    }
+
+    // set the new current point link
+    point_link->id_previous = previous_id;
+
+    // the new one becomes the previous_id
+    previous_id = point_link->id;
+
+    // save the point_link structure to the map
     (*cartesian_point_link_)[point_link->id] = *point_link;
   }
 
@@ -109,6 +115,115 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
 
   // SUCCESS! now go do something interesting with the graph
   return true;
+}
+
+bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, int previous_id, int next_id)
+{
+    if(previous_id == -1 && next_id == -1)
+    {
+        // unable to add a point with no forward or backward connections
+        logError("unable to add a point that is not connected to one or more existing points");
+        return false;
+    }
+
+    if(previous_id != -1 && cartesian_point_link_->find(previous_id) == cartesian_point_link_->end())
+    {
+        // unable to find referenced previous_id
+        logError("unable to find previous point");
+        return false;
+    }
+    if(next_id != -1 && cartesian_point_link_->find(next_id) == cartesian_point_link_->end())
+    {
+        // unable to find referenced next_id
+        logError("unable to find next point");
+    }
+
+    CartesianPointRelationship *point_link = new CartesianPointRelationship();
+    point_link->id = point->getID();
+    point_link->id_next = next_id;
+    point_link->id_previous = previous_id;
+
+    // remove graph edges from each joint at [id_previous] to joint at [id_next]
+    std::list<int> start_joint_ids = trajectory_point_to_joint_solutions_map_[previous_id];
+    std::list<int> end_joint_ids = trajectory_point_to_joint_solutions_map_[next_id];
+    for (std::list<int>::iterator start_joint_iter = start_joint_ids.begin(); start_joint_iter != start_joint_ids.end();
+        start_joint_iter++)
+    {
+      for (std::list<int>::iterator end_joint_iter = end_joint_ids.begin(); end_joint_iter != end_joint_ids.end();
+          end_joint_iter++)
+      {
+          boost::remove_edge(*start_joint_iter, *end_joint_iter, dg_);
+      }
+    }
+
+    // TODO: get joint poses from new trajectory point (unique id?) and
+    //      add to trajectory_point_to_joint_solutions_map_ and to joint_solutions_map_
+
+    // TODO: calculate weights from id_previous to id
+    // TODO: calculate weights from id to id_next
+    /*
+    for (std::list<int>::iterator start_joint_iter = start_joint_ids.begin(); start_joint_iter != start_joint_ids.end();
+        start_joint_iter++)
+    {
+      for (std::list<int>::iterator end_joint_iter = end_joint_ids.begin(); end_joint_iter != end_joint_ids.end();
+          end_joint_iter++)
+      {
+        double transition_cost;
+        // TODO: Make a call to somewhere that takes to JointTrajectoryPts (std::vector<double>) to get a single weight value back
+        std::vector<double> start_joint = joint_solutions_map_[*start_joint_iter];
+        std::vector<double> end_joint = joint_solutions_map_[*end_joint_iter];
+        transition_cost = randomDouble(.5, 5.0);
+        JointEdge *edge = new JointEdge();
+        edge->joint_start = *start_joint_iter;
+        edge->joint_end = *end_joint_iter;
+        edge->transition_cost = transition_cost;
+
+        edges->push_back(*edge);
+      }
+    }
+    */
+
+    // TODO: add new vertices to graph
+    /*
+    for (std::map<int, std::vector<double> >::iterator joint_iter = joint_solutions_map_.begin();
+        joint_iter != joint_solutions_map_.end(); joint_iter++)
+    {
+      DirectedGraph::vertex_descriptor v = boost::add_vertex(dg_);
+      dg_[v].id = joint_iter->first;
+    }
+    */
+
+    // TODO: add new weights/edges to graph
+    /*
+    for (std::list<JointEdge>::iterator edge_iter = edges->begin(); edge_iter != edges->end(); edge_iter++)
+    {
+      DirectedGraph::edge_descriptor e;
+      bool b;
+      // add graph links for structure
+      boost::tie(e, b) = boost::add_edge(edge_iter->joint_start, edge_iter->joint_end, dg_);
+      // populate edge fields
+      dg_[e].transition_cost = edge_iter->transition_cost;
+      dg_[e].joint_start = edge_iter->joint_start;
+      dg_[e].joint_end = edge_iter->joint_end;
+    }
+    */
+
+    // if not adding at the beginning, update the previous to point to the new point
+    if(cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
+    {
+        (*cartesian_point_link_)[previous_id].id_next = point_link->id;
+    }
+    // if not updating the end, update the next to point to the new point
+    if(cartesian_point_link_->find(next_id) != cartesian_point_link_->end())
+    {
+        (*cartesian_point_link_)[next_id].id_previous = point_link->id;
+    }
+    // save the new point_link structure to the map
+    (*cartesian_point_link_)[point_link->id] = *point_link;
+
+    // save the actual trajectory point into the map
+    trajectory_point_map_[point->getID()] = point;
+
 }
 
 bool PlanningGraph::getShortestPathJointToJoint(int start_id, int end_id, double &cost, std::list<int> &path)
@@ -223,6 +338,8 @@ bool PlanningGraph::calculateJointSolutions()
   for (std::map<int, TrajectoryPtPtr>::iterator trajectory_iter = trajectory_point_map_.begin();
       trajectory_iter != trajectory_point_map_.end(); trajectory_iter++)
   {
+      // TODO: copy this block to a function
+      /*************************/
     std::list<int> *traj_solutions = new std::list<int>();
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.get()->getJointPoses(*robot_model_, joint_poses);
@@ -243,6 +360,7 @@ bool PlanningGraph::calculateJointSolutions()
       }
     }
     trajectory_point_to_joint_solutions_map_[trajectory_iter->first] == *traj_solutions;
+    /*************************/
   }
 
   return true;
