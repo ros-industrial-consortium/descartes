@@ -28,6 +28,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include "descartes_core/trajectory_pt.h"
 #include "descartes_core/cart_trajectory_pt.h"
+#include "descartes_core/joint_trajectory_pt.h"
 
 #include <map>
 #include <vector>
@@ -37,12 +38,12 @@ namespace descartes_core
 
 struct JointVertex
 {
-  int id;
+  TrajectoryPt::ID id;
 };
 struct JointEdge
 {
-  int joint_start;
-  int joint_end;
+  TrajectoryPt::ID joint_start;
+  TrajectoryPt::ID joint_end;
   double transition_cost;
 };
 
@@ -65,6 +66,7 @@ typedef boost::graph_traits<DirectedGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<DirectedGraph>::out_edge_iterator OutEdgeIterator;
 
 typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
+typedef std::pair<JointTrajectoryPt, DirectedGraph::vertex_descriptor> JointGraphVertexPair;
 
 class PlanningGraph
 {
@@ -124,7 +126,7 @@ protected:
   std::map<TrajectoryPt::ID, TrajectoryPtPtr> trajectory_point_map_;
 
   // each JointSolution is a vertex in the graph, one or more of these will exist for each element in trajectory_point_map
-  std::map<TrajectoryPt::ID, std::vector<double> > joint_solutions_map_;
+  std::map<TrajectoryPt::ID, JointGraphVertexPair> joint_solutions_map_;
 
   // map from Cartesian Point ID to applicable joint solutions per point
   std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
@@ -140,6 +142,5 @@ protected:
 };
 
 } /* namespace descartes_core */
-
 
 #endif /* PLANNING_GRAPH_H_ */
