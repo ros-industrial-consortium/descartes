@@ -42,6 +42,7 @@ add_library(descartes_core
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
+            src/planning_graph.cpp
 )
 ##Disabling planning graph due to issues with
 ##Trajectory point ID
