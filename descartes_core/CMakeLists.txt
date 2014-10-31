@@ -44,6 +44,9 @@ add_library(descartes_core
             src/trajectory.cpp
             src/planning_graph.cpp
 )
+##Disabling planning graph due to issues with
+##Trajectory point ID
+##  src/planning_graph.cpp
 target_link_libraries(descartes_core
                       ${catkin_LIBRARIES}
 )
@@ -55,6 +58,7 @@ target_link_libraries(descartes_core
 
 if(CATKIN_ENABLE_TESTING)
   set(UTEST_SRC_FILES test/utest.cpp
+      test/trajectory_pt.cpp
       test/cart_trajectory_pt.cpp
       test/joint_trajectory_pt.cpp)
   catkin_add_gtest(utest ${UTEST_SRC_FILES})
