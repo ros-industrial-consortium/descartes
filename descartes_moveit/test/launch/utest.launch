@@ -5,6 +5,9 @@
   <!-- The name of the parameter under which the URDF is loaded -->
   <arg name="robot_description" default="robot_description"/>
 
+  <!-- Launch test node -->
+  <arg name="run_test_node" default="true"/>
+
   <!-- Load universal robot description format (URDF) -->
   <param name="$(arg robot_description)" textfile="$(find descartes_moveit)/test/resources/kuka_kr210/kr210l150.urdf"/>
 
@@ -22,6 +25,6 @@
   </group>
 
   <!-- Test Node -->
-  <test test-name="utest" pkg="descartes_moveit" type="descartes_moveit_utest"/>
+  <test test-name="utest" pkg="descartes_moveit" type="descartes_moveit_utest" if="$(arg run_test_node)"/>
   
 </launch>

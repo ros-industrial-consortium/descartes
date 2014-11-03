@@ -23,6 +23,7 @@
 #include "descartes_core/pretty_print.hpp"
 #include <sstream>
 
+
 #define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
 
 namespace descartes_moveit
@@ -37,23 +38,26 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
 
   moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
 
-  if (robot_model_->hasJointModel(group_name_))
+  if (robot_model_->getJointModelGroup(group_name_))
   {
-    std::vector<std::string> joint_names = robot_model_->getJointModelGroup(group_name_)->getJointModelNames();
+    std::vector<std::string> joint_names = robot_model_->getLinkModelNames();
     if (tool_base_ != joint_names.back())
     {
       logError("Tool: %s does not match group tool: %s, functionality will be implemented in the future",
-               tool_base_.c_str(), joint_names.front().c_str());
+               tool_base_.c_str(), joint_names.back().c_str());
     }
-    if (wobj_base_ != joint_names.back())
+    if (wobj_base_ != joint_names.front())
     {
       logError("Work object: %s does not match group base: %s, functionality will be implemented in the future",
-               wobj_base_.c_str(), joint_names.back().c_str());
+               wobj_base_.c_str(), joint_names.front().c_str());
     }
   }
   else
   {
-    logError("Joint group: %s does not exist in robot model");
+    logError("Joint group: %s does not exist in robot model", group_name_.c_str());
+    std::stringstream msg;
+    msg << "Possible group names: " << robot_state_->getRobotModel()->getJointModelGroupNames();
+    logError(msg.str().c_str());
   }
   return;
 }
@@ -68,7 +72,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, const std::vector<do
 bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> &joint_pose) const
 {
   bool rtn = false;
-  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), pose, tool_base_))
+  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), pose, tool_base_, 10, 10.0))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
@@ -94,6 +98,13 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
   for (size_t sample_iter = 0; sample_iter < sample_iterations_; ++sample_iter)
   {
     robot_state_->setToRandomPositions();
+    std::vector<double> joint_seed;
+    robot_state_->copyJointGroupPositions(group_name_, joint_seed);
+
+    std::stringstream msg;
+    msg << "Using random seed position " << sample_iter << " iteration, seed: "  << joint_seed;
+    logDebug(msg.str().c_str());
+
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
@@ -106,7 +117,10 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
       }
       else
       {
-        logDebug("Found joint solution, now checking for uniqueness");
+        std::stringstream msg;
+        msg << "Found *potential* solution on " << sample_iter << " iteration, joint: " << joint_pose;
+        logDebug(msg.str().c_str());
+
         std::vector<std::vector<double> >::iterator joint_pose_it;
         for(joint_pose_it = joint_poses.begin(); joint_pose_it != joint_poses.end(); ++joint_pose_it)
         {
@@ -148,22 +162,26 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if ( isValid(joint_pose) )
   {
-  if (robot_state_->knowsFrameTransform(tool_base_))
-  {
-    pose = robot_state_->getFrameTransform(tool_base_);
-    rtn = true;
-  }
-  else
-  {
-    logError("Robot state does not recognize tool frame: %s", tool_base_.c_str());
-    rtn = false;
-  }
+    if (robot_state_->knowsFrameTransform(tool_base_))
+    {
+      pose = robot_state_->getFrameTransform(tool_base_);
+      rtn = true;
+    }
+    else
+    {
+      logError("Robot state does not recognize tool frame: %s", tool_base_.c_str());
+      rtn = false;
+    }
   }
   else
   {
     logError("Invalid joint pose passed to get forward kinematics");
     rtn = false;
   }
+  std::stringstream msg;
+  msg << "Returning the pose " << std::endl << pose.matrix() << std::endl
+      << "For joint pose: " << joint_pose;
+  logInform(msg.str().c_str());
   return rtn;
 }
 
@@ -171,7 +189,7 @@ bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
 {
   bool rtn = false;
 
-  if (robot_state_->getJointModelGroup(group_name_)->getJointModels().size() ==
+  if (robot_state_->getJointModelGroup(group_name_)->getActiveJointModels().size() ==
       joint_pose.size())
   {
     robot_state_->setJointGroupPositions(group_name_, joint_pose);
@@ -193,7 +211,8 @@ bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
   else
   {
     logError("Size of joint pose: %d doesn't match robot state variable size: %d",
-             joint_pose.size(), robot_state_->getVariableCount());
+             joint_pose.size(),
+             robot_state_->getJointModelGroup(group_name_)->getActiveJointModels().size());
     rtn = false;
   }
   return rtn;
