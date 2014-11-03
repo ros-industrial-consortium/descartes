@@ -35,6 +35,15 @@ class MoveitStateAdapter : public descartes_core::RobotModel
 public:
 
   /**
+    * Compares two vectors for equality (within +/- tolerance).  abs(lhs - rhs) > tol
+    * @param lhs
+    * @param rhs
+    * @param tol +/- tolerance for floating point equality
+    */
+  static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
+                                        const double tol);
+
+  /**
    * Constructor for Moveit state adapters (implements Descartes robot model interface)
    * @param robot_state robot state object utilized for kinematic/dynamic state checking
    * @param group_name planning group name

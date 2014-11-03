@@ -23,6 +23,8 @@
   <run_depend>moveit_core</run_depend>
   <run_depend>roscpp</run_depend>
 
+  <test_depend>rosunit</test_depend>
+
   <export>
   </export>
 </package>
