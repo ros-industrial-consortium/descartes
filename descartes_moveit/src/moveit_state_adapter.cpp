@@ -29,6 +29,30 @@
 namespace descartes_moveit
 {
 
+bool MoveitStateAdapter::equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
+                               const double tol)
+{
+  bool rtn = false;
+  if( lhs.size() == rhs.size() )
+  {
+    rtn = true;
+    for(size_t ii = 0; ii < lhs.size(); ++ii)
+    {
+      if(std::fabs(lhs[ii]-rhs[ii]) > tol)
+      {
+        rtn = false;
+        break;
+      }
+    }
+
+  }
+  else
+  {
+    rtn = false;
+  }
+  return rtn;
+}
+
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & wobj_frame,
                                        const size_t sample_iterations) :
@@ -98,13 +122,6 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
   for (size_t sample_iter = 0; sample_iter < sample_iterations_; ++sample_iter)
   {
     robot_state_->setToRandomPositions();
-    std::vector<double> joint_seed;
-    robot_state_->copyJointGroupPositions(group_name_, joint_seed);
-
-    std::stringstream msg;
-    msg << "Using random seed position " << sample_iter << " iteration, seed: "  << joint_seed;
-    logDebug(msg.str().c_str());
-
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
@@ -122,25 +139,22 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
         logDebug(msg.str().c_str());
 
         std::vector<std::vector<double> >::iterator joint_pose_it;
+        bool match_found = false;
         for(joint_pose_it = joint_poses.begin(); joint_pose_it != joint_poses.end(); ++joint_pose_it)
         {
-          bool new_joint_pose = false;
-          for(size_t joint_index = 0; joint_index < (*joint_pose_it).size(); ++joint_index)
+          if( equal(joint_pose, (*joint_pose_it), epsilon) )
           {
-            if(fabs(joint_pose[joint_index]-(*joint_pose_it)[joint_index]) > epsilon)
-            {
-              new_joint_pose = true;
-              break;
-            }
-          }
-          if (new_joint_pose)
-          {
-            std::stringstream msg;
-            msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << *joint_pose_it;
-            logDebug(msg.str().c_str());
-            joint_poses.push_back(joint_pose);
+            logDebug("Found matching, potential solution is not new");
+            match_found = true;
             break;
           }
+        }
+        if (!match_found)
+        {
+          std::stringstream msg;
+          msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << joint_pose;
+          logDebug(msg.str().c_str());
+          joint_poses.push_back(joint_pose);
         }
       }
     }
@@ -181,7 +195,7 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
   std::stringstream msg;
   msg << "Returning the pose " << std::endl << pose.matrix() << std::endl
       << "For joint pose: " << joint_pose;
-  logInform(msg.str().c_str());
+  logDebug(msg.str().c_str());
   return rtn;
 }
 
