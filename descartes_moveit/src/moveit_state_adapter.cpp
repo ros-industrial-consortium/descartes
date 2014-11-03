@@ -64,16 +64,16 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
 
   if (robot_model_->getJointModelGroup(group_name_))
   {
-    std::vector<std::string> joint_names = robot_model_->getLinkModelNames();
-    if (tool_base_ != joint_names.back())
+    std::vector<std::string> link_names = robot_model_->getLinkModelNames();
+    if (tool_base_ != link_names.back())
     {
       logError("Tool: %s does not match group tool: %s, functionality will be implemented in the future",
-               tool_base_.c_str(), joint_names.back().c_str());
+               tool_base_.c_str(), link_names.back().c_str());
     }
-    if (wobj_base_ != joint_names.front())
+    if (wobj_base_ != link_names.front())
     {
       logError("Work object: %s does not match group base: %s, functionality will be implemented in the future",
-               wobj_base_.c_str(), joint_names.front().c_str());
+               wobj_base_.c_str(), link_names.front().c_str());
     }
   }
   else
