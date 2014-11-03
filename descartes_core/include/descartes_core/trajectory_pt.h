@@ -29,6 +29,9 @@
 #include <Eigen/Geometry>
 #include <eigen_stl_containers/eigen_stl_vector_container.h>
 #include <vector>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+
 #include "descartes_core/robot_model.h"
 #include "descartes_core/trajectory_pt_transition.h"
 
@@ -44,8 +47,6 @@ struct Frame
   Frame(){};
   Frame(const Eigen::Affine3d &a):
     frame(a), frame_inv(a.inverse()) {};
-  Frame(const Frame &a):
-    frame(a.frame), frame_inv(a.frame_inv) {};
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   Eigen::Affine3d frame;
@@ -70,8 +71,9 @@ struct Frame
 class TrajectoryPt
 {
 public:
-  TrajectoryPt() {};
-  virtual ~TrajectoryPt() {};
+  typedef boost::uuids::uuid ID;
+  TrajectoryPt() : id_(boost::uuids::random_generator()()) {}
+  virtual ~TrajectoryPt() {}
 
   /**@name Getters for Cartesian pose(s)
    * References to "closest" position are decided by norm of joint-space distance.
@@ -154,7 +156,7 @@ public:
 
   /**@brief Get ID associated with this point */
   inline
-  size_t getID() const
+  ID getID() const
   {
     return id_;
   }
@@ -162,14 +164,14 @@ public:
   /**@brief Set ID for this point.
    * @param id Number to set id_ to.
    */
-  void setID(size_t id)
+  void setID(const ID &id)
   {
     id_ = id;
   }
   /** @} (end section) */
 
 protected:
-  size_t                        id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
+  ID                            id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
   TrajectoryPtTransitionPtr     transition_;            /**<@brief Velocities at, and interpolation method to reach this point **/
 
 };
