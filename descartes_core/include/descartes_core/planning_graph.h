@@ -28,6 +28,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include "descartes_core/trajectory_pt.h"
 #include "descartes_core/cart_trajectory_pt.h"
+#include "descartes_core/joint_trajectory_pt.h"
 
 #include <map>
 #include <vector>
@@ -37,20 +38,20 @@ namespace descartes_core
 
 struct JointVertex
 {
-  int id;
+  TrajectoryPt::ID id;
 };
 struct JointEdge
 {
-  int joint_start;
-  int joint_end;
+  TrajectoryPt::ID joint_start;
+  TrajectoryPt::ID joint_end;
   double transition_cost;
 };
 
 struct CartesianPointRelationship
 {
-  int id;
-  int id_previous;
-  int id_next;
+  TrajectoryPt::ID id;
+  TrajectoryPt::ID id_previous;
+  TrajectoryPt::ID id_next;
 };
 
 typedef boost::adjacency_list<boost::listS, /*edge container*/
@@ -65,6 +66,7 @@ typedef boost::graph_traits<DirectedGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<DirectedGraph>::out_edge_iterator OutEdgeIterator;
 
 typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
+typedef std::pair<JointTrajectoryPt, DirectedGraph::vertex_descriptor> JointGraphVertexPair;
 
 class PlanningGraph
 {
@@ -124,17 +126,17 @@ protected:
   //       and include an accessor to both formats
 
   // maintains an order to the Cartesian points list
-  std::map<int, CartesianPointRelationship> *cartesian_point_link_;
+  std::map<TrajectoryPt::ID, CartesianPointRelationship> *cartesian_point_link_;
 
   // map from ID to Cartesian Coordinate point (these can be joint solutions also?)
   // NOTE: if this can be JointTrajectoryPt, make this a map to pointers (cannot create a map to the abstract TrajectoryPt object type)
-  std::map<int, TrajectoryPtPtr> trajectory_point_map_;
+  std::map<TrajectoryPt::ID, TrajectoryPtPtr> trajectory_point_map_;
 
   // each JointSolution is a vertex in the graph, one or more of these will exist for each element in trajectory_point_map
-  std::map<int, std::vector<double> > joint_solutions_map_;
+  std::map<TrajectoryPt::ID, JointGraphVertexPair> joint_solutions_map_;
 
   // map from Cartesian Point ID to applicable joint solutions per point
-  std::map<int, std::list<int> > trajectory_point_to_joint_solutions_map_;
+  std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
 
   /** @brief (Re)create the list of joint solutions from the given TrajectoryPt list */
   bool calculateJointSolutions();
@@ -147,6 +149,5 @@ protected:
 };
 
 } /* namespace descartes_core */
-
 
 #endif /* PLANNING_GRAPH_H_ */

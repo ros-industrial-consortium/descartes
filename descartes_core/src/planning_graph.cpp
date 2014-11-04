@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include <boost/uuid/uuid_io.hpp> // streaming operators
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 namespace descartes_core
@@ -41,7 +42,6 @@ namespace descartes_core
 //
 //}
 
-// TODO: optionally take these as params to the constructor
 bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
 {
   // validate input
@@ -58,9 +58,9 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     return false;
   }
 
-  cartesian_point_link_ = new std::map<int, CartesianPointRelationship>();
+  cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointRelationship>();
 
-  int previous_id = -1;
+  TrajectoryPt::ID previous_id;
 
   // input is valid, copy to local maps that will be maintained by the planning graph
   for (std::vector<TrajectoryPtPtr>::iterator point_iter = points->begin(); point_iter != points->end(); point_iter++)
@@ -68,13 +68,13 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     trajectory_point_map_[point_iter->get()->getID()] = (*point_iter);
     CartesianPointRelationship *point_link = new CartesianPointRelationship();
     point_link->id = point_iter->get()->getID();
-    point_link->id_next = -1; // init to -1 as default
 
 
     // if the previous_id exists, set it's next_id to the new id
     if(cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
     {
       (*cartesian_point_link_)[previous_id].id_next = point_link->id;
+      point_link->id_previous = previous_id;
     }
 
     // set the new current point link
@@ -282,6 +282,7 @@ void PlanningGraph::printGraph()
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
+
     std::cout << "Vertex: " << dg_[jv].id;
     std::pair<OutEdgeIterator, OutEdgeIterator> ei = out_edges(jv, dg_);
     std::cout << " -> {";
@@ -333,14 +334,13 @@ bool PlanningGraph::calculateJointSolutions()
     trajectory_point_to_joint_solutions_map_.clear();
   }
 
-  int counter_joint_solutions = 0;
   // for each TrajectoryPt, get the available joint solutions
-  for (std::map<int, TrajectoryPtPtr>::iterator trajectory_iter = trajectory_point_map_.begin();
+  for (std::map<TrajectoryPt::ID, TrajectoryPtPtr>::iterator trajectory_iter = trajectory_point_map_.begin();
       trajectory_iter != trajectory_point_map_.end(); trajectory_iter++)
   {
       // TODO: copy this block to a function
       /*************************/
-    std::list<int> *traj_solutions = new std::list<int>();
+    std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.get()->getJointPoses(*robot_model_, joint_poses);
 
@@ -353,10 +353,12 @@ bool PlanningGraph::calculateJointSolutions()
       for (std::vector<std::vector<double> >::iterator joint_pose_iter = joint_poses.begin();
           joint_pose_iter != joint_poses.end(); joint_pose_iter++)
       {
-        traj_solutions->push_back(counter_joint_solutions);
-        joint_solutions_map_[counter_joint_solutions] = *joint_pose_iter;
-
-        counter_joint_solutions++;
+        //get UUID from JointTrajPt (convert from std::vector<double>)
+        JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
+        traj_solutions->push_back(new_pt->getID());
+        JointGraphVertexPair *joint_vertex = new JointGraphVertexPair();
+        joint_vertex->first = *new_pt;
+        joint_solutions_map_[new_pt->getID()] = *joint_vertex;
       }
     }
     trajectory_point_to_joint_solutions_map_[trajectory_iter->first] == *traj_solutions;
@@ -387,27 +389,28 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> *edges)
     return false;
   }
 
-  for (std::map<int, CartesianPointRelationship>::iterator cart_link_iter = cartesian_point_link_->begin();
+  for (std::map<TrajectoryPt::ID, CartesianPointRelationship>::iterator cart_link_iter = cartesian_point_link_->begin();
       cart_link_iter != cartesian_point_link_->end(); cart_link_iter++)
   {
-    int start_cart_id = cart_link_iter->first; // should be equal to cart_link_iter->second.id
-    int end_cart_id = cart_link_iter->second.id_next;
+    TrajectoryPt::ID start_cart_id = cart_link_iter->first; // should be equal to cart_link_iter->second.id
+    TrajectoryPt::ID end_cart_id = cart_link_iter->second.id_next;
 
-    std::list<int> start_joint_ids = trajectory_point_to_joint_solutions_map_[start_cart_id];
-    std::list<int> end_joint_ids = trajectory_point_to_joint_solutions_map_[end_cart_id];
+    std::list<TrajectoryPt::ID> start_joint_ids = trajectory_point_to_joint_solutions_map_[start_cart_id];
+    std::list<TrajectoryPt::ID> end_joint_ids = trajectory_point_to_joint_solutions_map_[end_cart_id];
 
-    for (std::list<int>::iterator start_joint_iter = start_joint_ids.begin(); start_joint_iter != start_joint_ids.end();
-        start_joint_iter++)
+    for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
+        start_joint_iter != start_joint_ids.end(); start_joint_iter++)
     {
-      for (std::list<int>::iterator end_joint_iter = end_joint_ids.begin(); end_joint_iter != end_joint_ids.end();
-          end_joint_iter++)
+      for (std::list<TrajectoryPt::ID>::iterator end_joint_iter = end_joint_ids.begin();
+          end_joint_iter != end_joint_ids.end(); end_joint_iter++)
       {
         double transition_cost;
         // TODO: Make a call to somewhere that takes to JointTrajectoryPts (std::vector<double>) to get a single weight value back
-        std::vector<double> start_joint = joint_solutions_map_[*start_joint_iter];
-        std::vector<double> end_joint = joint_solutions_map_[*end_joint_iter];
+        JointTrajectoryPt start_joint = joint_solutions_map_[*start_joint_iter].first;
+        JointTrajectoryPt end_joint = joint_solutions_map_[*end_joint_iter].first;
         transition_cost = randomDouble(.5, 5.0);
         JointEdge *edge = new JointEdge();
+
         edge->joint_start = *start_joint_iter;
         edge->joint_end = *end_joint_iter;
         edge->transition_cost = transition_cost;
@@ -435,18 +438,20 @@ bool PlanningGraph::populateGraph(std::list<JointEdge> *edges)
     return false;
   }
 
-  for (std::map<int, std::vector<double> >::iterator joint_iter = joint_solutions_map_.begin();
+  for (std::map<TrajectoryPt::ID, JointGraphVertexPair>::iterator joint_iter = joint_solutions_map_.begin();
       joint_iter != joint_solutions_map_.end(); joint_iter++)
   {
     DirectedGraph::vertex_descriptor v = boost::add_vertex(dg_);
     dg_[v].id = joint_iter->first;
+    joint_iter->second.second = v;
   }
   for (std::list<JointEdge>::iterator edge_iter = edges->begin(); edge_iter != edges->end(); edge_iter++)
   {
     DirectedGraph::edge_descriptor e;
     bool b;
     // add graph links for structure
-    boost::tie(e, b) = boost::add_edge(edge_iter->joint_start, edge_iter->joint_end, dg_);
+    boost::tie(e, b) = boost::add_edge(joint_solutions_map_[edge_iter->joint_start].second,
+                                       joint_solutions_map_[edge_iter->joint_end].second, dg_);
     // populate edge fields
     dg_[e].transition_cost = edge_iter->transition_cost;
     dg_[e].joint_start = edge_iter->joint_start;

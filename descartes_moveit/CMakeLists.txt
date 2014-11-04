@@ -6,8 +6,9 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   cmake_modules
   descartes_core
+  moveit_ros_planning
 )
-find_package(console_bridge REQUIRED)
+find_package(rosconsole_bridge REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 
@@ -23,7 +24,7 @@ catkin_package(
     cmake_modules
     descartes_core
   DEPENDS
-    console_bridge
+    rosconsole_bridge
     Boost
     Eigen
 )
@@ -50,7 +51,11 @@ target_link_libraries(descartes_moveit
 ## Testing ##
 #############
 
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_descartes_core.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest)
+  set(UTEST_SRC_FILES test/utest.cpp
+      test/moveit_state_adapter_test.cpp)
+
+  add_rostest_gtest(${PROJECT_NAME}_utest test/launch/utest.launch ${UTEST_SRC_FILES})
+  target_link_libraries(${PROJECT_NAME}_utest descartes_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+endif()
