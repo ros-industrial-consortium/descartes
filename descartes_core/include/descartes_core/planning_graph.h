@@ -56,7 +56,8 @@ struct CartesianPointRelationship
 
 typedef boost::adjacency_list<boost::listS, /*edge container*/
 boost::vecS, /*vertex_container*/
-boost::directedS, /*graph type*/
+//boost::directedS, /*graph type*/
+boost::bidirectionalS,
 JointVertex, /*vertex structure*/
 JointEdge /*edge structure*/
 > DirectedGraph;
@@ -64,6 +65,7 @@ JointEdge /*edge structure*/
 typedef boost::graph_traits<DirectedGraph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<DirectedGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<DirectedGraph>::out_edge_iterator OutEdgeIterator;
+typedef boost::graph_traits<DirectedGraph>::in_edge_iterator InEdgeIterator;
 
 typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
 typedef std::pair<JointTrajectoryPt, DirectedGraph::vertex_descriptor> JointGraphVertexPair;
@@ -91,7 +93,7 @@ public:
    * @param point The new point to add to the graph
    * @return True if the point was successfully added
    */
-  bool addTrajectory(TrajectoryPtPtr point, int previous_id, int next_id);
+  bool addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previous_id, TrajectoryPt::ID next_id);
 
   bool modifyTrajectory(TrajectoryPtPtr point);
 
@@ -104,7 +106,7 @@ public:
    * @param path The sequence of points (joint solutions) for the path (TODO: change to JointTrajectoryPt?)
    * @return True if a valid path is found
    */
-  bool getShortestPathJointToJoint(int start_id, int end_id, double &cost, std::list<int> &path);
+  bool getShortestPath(double &cost, std::list<JointTrajectoryPt> &path);
   // TODO: 'overloaded' requests depending on source and destination
   //bool GetShortestPathJointToCartesian(int startIndex, int endIndex, double &cost, std::vector<TrajectoryPt> &path);
   //bool GetShortestPathCartesianToCartesian(int startIndex, int endIndex, double &cost, std::vector<TrajectoryPt> &path);
@@ -137,6 +139,10 @@ protected:
 
   // map from Cartesian Point ID to applicable joint solutions per point
   std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
+
+  bool findStartVertices(std::list<int> *start_points);
+
+  bool findEndVertices(std::list<int> *end_points);
 
   /** @brief (Re)create the list of joint solutions from the given TrajectoryPt list */
   bool calculateJointSolutions();
