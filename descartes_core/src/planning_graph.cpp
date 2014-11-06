@@ -252,7 +252,7 @@ bool PlanningGraph::findStartVertices(std::list<int> *start_points)
     if (in_ei.first == in_ei.second)
     {
       // debug
-      logDebug("Graph start node: %d", jv)
+      logDebug("Graph start node: %d", jv);
       start_points->push_back(jv);
     }
   }
@@ -269,7 +269,7 @@ bool PlanningGraph::findEndVertices(std::list<int> *end_points)
     std::pair<OutEdgeIterator, OutEdgeIterator> ei = boost::out_edges(jv, dg_);
     if (ei.first == ei.second)
     {
-      logDebug("Graph end node: %d", jv)
+      logDebug("Graph end node: %d", jv);
       end_points->push_back(jv);
     }
   }
@@ -349,40 +349,45 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
 // TODO: optionally output this to a .DOT file (viewable in GraphVIZ or comparable)
 void PlanningGraph::printGraph()
 {
-  std::cout << "GRAPH VERTICES (" << num_vertices(dg_) << "): \n";
+  std::stringstream ss;
+  ss << "GRAPH VERTICES (" << num_vertices(dg_) << "): \n";
   std::pair<VertexIterator, VertexIterator> vi = vertices(dg_);
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
 
-    std::cout << "Vertex: " << dg_[jv].id;
+    ss << "Vertex: " << dg_[jv].id;
     std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
-    std::cout << " -> {";
+    ss << " -> {";
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
       DirectedGraph::edge_descriptor e = *out_edge;
-      std::cout << dg_[e].joint_end << ", ";
+      ss << dg_[e].joint_end << ", ";
     }
-    std::cout << "}\n";
+    ss << "}\n";
   }
+  logDebug("%s", ss.str().c_str());
 
+  ss.str("");
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
 
     std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
 
-    std::cout << "{";
+    ss << "{";
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
       DirectedGraph::edge_descriptor e = *in_edge;
-      std::cout << source(e, dg_) << ", ";
+      ss << source(e, dg_) << ", ";
     }
-    std::cout << "} -> ";
-    std::cout << "Vertex (" << jv << "): " << dg_[jv].id << "\n";
+    ss << "} -> ";
+    ss << "Vertex (" << jv << "): " << dg_[jv].id << "\n";
   }
+  logDebug("%s", ss.str().c_str());
 
-  std::cout << "GRAPH EDGES (" << num_edges(dg_) << "): \n";
+  ss.str("");
+  ss << "GRAPH EDGES (" << num_edges(dg_) << "): \n";
   //Tried to make this section more clear, instead of using tie, keeping all
   //the original types so it's more clear what is going on
   std::pair<EdgeIterator, EdgeIterator> ei = edges(dg_);
@@ -393,11 +398,14 @@ void PlanningGraph::printGraph()
 
     DirectedGraph::edge_descriptor e2 = *edge_iter;
 
-    std::cout << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: "
+    ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: "
         << dg_[e2].transition_cost << "\n";
   }
 
-  std::cout << "\n";
+  ss << "\n";
+  logDebug("%s", ss.str().c_str());
+
+  ss.str("");
 }
 
 bool PlanningGraph::calculateJointSolutions()
