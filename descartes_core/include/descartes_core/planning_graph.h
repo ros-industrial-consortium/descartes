@@ -57,9 +57,8 @@ struct CartesianPointRelationship
 typedef boost::adjacency_list<boost::listS, /*edge container*/
 boost::vecS, /*vertex_container*/
 //boost::directedS, /*graph type*/
-boost::bidirectionalS,
-JointVertex, /*vertex structure*/
-JointEdge /*edge structure*/
+    boost::bidirectionalS, JointVertex, /*vertex structure*/
+    JointEdge /*edge structure*/
 > DirectedGraph;
 
 typedef boost::graph_traits<DirectedGraph>::vertex_iterator VertexIterator;
@@ -77,19 +76,13 @@ struct CartesianPointInformation
   std::list<TrajectoryPt::ID> joints_;
 };
 
-
 class PlanningGraph
 {
 public:
   // TODO: add constructor that takes RobotState as param
-  PlanningGraph()
-  {
-  }
-  ;
-  virtual ~PlanningGraph()
-  {
-  }
-  ;
+  PlanningGraph(RobotModelConstPtr &model);
+
+  virtual ~PlanningGraph();
 
   /** @brief initial population of graph trajectory elements
    * @param points list of trajectory points to be used to construct the graph
@@ -129,27 +122,23 @@ protected:
 
   DirectedGraph dg_;
 
-  /** @brief DEBUG function for getting edge weights */
-  double randomDouble(double min, double max);
+  /** @brief simple function for getting edge weights based on linear vector differences */
+  double linearWeight(JointTrajectoryPt start, JointTrajectoryPt end);
 
   // NOTE: both Cartesian Points and Joint Points/solutions extend a base TrajectoryPt type
   //       and include an accessor to both formats
 
-  // maintains an order to the Cartesian points list
+  // maintains the original (Cartesian) points list along with link information and associated joint trajectories per point
   std::map<TrajectoryPt::ID, CartesianPointInformation> *cartesian_point_link_;
 
-  // map from ID to Cartesian Coordinate point (these can be joint solutions also?)
-  // NOTE: if this can be JointTrajectoryPt, make this a map to pointers (cannot create a map to the abstract TrajectoryPt object type)
-  //std::map<TrajectoryPt::ID, TrajectoryPtPtr> trajectory_point_map_;
-
-  // each JointSolution is a vertex in the graph, one or more of these will exist for each element in trajectory_point_map
+  // maintains a map of joint solutions with it's corresponding graph vertex_descriptor
+  //   one or more of these will exist for each element in trajectory_point_map
   std::map<TrajectoryPt::ID, JointGraphVertexPair> joint_solutions_map_;
 
-  // map from Cartesian Point ID to applicable joint solutions per point
-  //std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
-
+  /** @brief simple function to iterate over all graph vertices to find ones that do not have an incoming edge */
   bool findStartVertices(std::list<int> &start_points);
 
+  /** @brief simple function to iterate over all graph vertices to find ones that do not have an outgoing edge */
   bool findEndVertices(std::list<int> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given TrajectoryPt list */

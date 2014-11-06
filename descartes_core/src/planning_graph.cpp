@@ -36,11 +36,19 @@
 
 namespace descartes_core
 {
-// TODO: add constructor that takes RobotState as param
-//PlanningGraph::PlanningGraph()
-//{
-//
-//}
+
+PlanningGraph::PlanningGraph(RobotModelConstPtr &model)
+{
+  robot_model_ = model;
+}
+
+PlanningGraph::~PlanningGraph()
+{
+  if(cartesian_point_link_)
+  {
+    delete cartesian_point_link_;
+  }
+}
 
 bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
 {
@@ -320,6 +328,7 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
       // actual weight(cost) from start_id to end_id
       double weight = weights[*end];
 
+      // if the weight of this path of less than a previous one, replace the return path
       if (weight < lowest_weight)
       {
         cost = lowest_weight;
@@ -348,10 +357,8 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
     logError("unable to find a valid path");
     return false;
   }
-
 }
 
-// TODO: change this to ROS_DEBUG() or whatever is appropriate
 // TODO: optionally output this to a .DOT file (viewable in GraphVIZ or comparable)
 void PlanningGraph::printGraph()
 {
@@ -427,7 +434,7 @@ bool PlanningGraph::calculateJointSolutions()
   for (std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator trajectory_iter = cartesian_point_link_->begin();
       trajectory_iter != cartesian_point_link_->end(); trajectory_iter++)
   {
-    // TODO: copy this block to a function
+    // TODO: copy this block to a function that can be used by add and modify
     /*************************/
     std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
     std::vector<std::vector<double> > joint_poses;
@@ -491,9 +498,9 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
         // TODO: Make a call to somewhere that takes to JointTrajectoryPts (std::vector<double>) to get a single weight value back
         JointTrajectoryPt start_joint = joint_solutions_map_[*start_joint_iter].first;
         JointTrajectoryPt end_joint = joint_solutions_map_[*end_joint_iter].first;
-        transition_cost = randomDouble(.5, 5.0);
-        JointEdge *edge = new JointEdge();
 
+        transition_cost = linearWeight(start_joint, end_joint);
+        JointEdge *edge = new JointEdge();
         edge->joint_start = *start_joint_iter;
         edge->joint_end = *end_joint_iter;
         edge->transition_cost = transition_cost;
@@ -551,10 +558,38 @@ bool PlanningGraph::populateGraphEdges(const std::list<JointEdge> &edges)
   return true;
 }
 
-// TODO: delete this once a call to get real transition costs is made
-double PlanningGraph::randomDouble(double min, double max)
+double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt end)
 {
-  double ret = (double)rand() / RAND_MAX;
-  return min + ret * (max - min);
+  std::vector<std::vector<double> > joint_poses_start;
+  start.getJointPoses(*robot_model_, joint_poses_start);
+
+  std::vector<std::vector<double> > joint_poses_end;
+  end.getJointPoses(*robot_model_, joint_poses_end);
+
+  // each should only return one
+  if (joint_poses_start.size() == 1 && joint_poses_end.size() == 1)
+  {
+    std::vector<double> start_vector = joint_poses_start[0];
+    std::vector<double> end_vector = joint_poses_end[0];
+    if (start_vector.size() == end_vector.size())
+    {
+      double vector_diff = 0;
+      for (int i = 0; i < start_vector.size(); i++)
+      {
+        vector_diff += abs(end_vector[i] - start_vector[i]);
+      }
+      return vector_diff;
+    }
+    else
+    {
+      logWarn("unequal joint pose vector lengths");
+      return std::numeric_limits<double>::max();
+    }
+  }
+  else
+  {
+    logWarn("invalid joint pose(s) found");
+    return std::numeric_limits<double>::max();
+  }
 }
 } /* namespace descartes_core */
