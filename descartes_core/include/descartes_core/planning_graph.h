@@ -70,6 +70,14 @@ typedef boost::graph_traits<DirectedGraph>::in_edge_iterator InEdgeIterator;
 typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
 typedef std::pair<JointTrajectoryPt, DirectedGraph::vertex_descriptor> JointGraphVertexPair;
 
+struct CartesianPointInformation
+{
+  CartesianPointRelationship links_;
+  TrajectoryPtPtr source_trajectory_;
+  std::list<TrajectoryPt::ID> joints_;
+};
+
+
 class PlanningGraph
 {
 public:
@@ -128,17 +136,17 @@ protected:
   //       and include an accessor to both formats
 
   // maintains an order to the Cartesian points list
-  std::map<TrajectoryPt::ID, CartesianPointRelationship> *cartesian_point_link_;
+  std::map<TrajectoryPt::ID, CartesianPointInformation> *cartesian_point_link_;
 
   // map from ID to Cartesian Coordinate point (these can be joint solutions also?)
   // NOTE: if this can be JointTrajectoryPt, make this a map to pointers (cannot create a map to the abstract TrajectoryPt object type)
-  std::map<TrajectoryPt::ID, TrajectoryPtPtr> trajectory_point_map_;
+  //std::map<TrajectoryPt::ID, TrajectoryPtPtr> trajectory_point_map_;
 
   // each JointSolution is a vertex in the graph, one or more of these will exist for each element in trajectory_point_map
   std::map<TrajectoryPt::ID, JointGraphVertexPair> joint_solutions_map_;
 
   // map from Cartesian Point ID to applicable joint solutions per point
-  std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
+  //std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
 
   bool findStartVertices(std::list<int> *start_points);
 
