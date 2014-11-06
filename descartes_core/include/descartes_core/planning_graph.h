@@ -148,18 +148,21 @@ protected:
   // map from Cartesian Point ID to applicable joint solutions per point
   //std::map<TrajectoryPt::ID, std::list<TrajectoryPt::ID> > trajectory_point_to_joint_solutions_map_;
 
-  bool findStartVertices(std::list<int> *start_points);
+  bool findStartVertices(std::list<int> &start_points);
 
-  bool findEndVertices(std::list<int> *end_points);
+  bool findEndVertices(std::list<int> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given TrajectoryPt list */
   bool calculateJointSolutions();
 
-  /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
-  bool calculateEdgeWeights(std::list<JointEdge> *edges);
+  /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */
+  bool populateGraphVertices();
 
-  /** @brief (Re)create the actual graph structure from the list of joint solutions (vertices) and transition costs (edges) */
-  bool populateGraph(std::list<JointEdge> *edges);
+  /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
+  bool calculateEdgeWeights(std::list<JointEdge> &edges);
+
+  /** @brief (Re)create the actual graph structure from the list of transition costs (edges) */
+  bool populateGraphEdges(const std::list<JointEdge> &edges);
 };
 
 } /* namespace descartes_core */

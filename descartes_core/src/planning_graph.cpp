@@ -94,10 +94,16 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     return false;
   }
 
+  if (!populateGraphVertices())
+  {
+    logError("unable to populate graph from input points");
+    return false;
+  }
+
   // after obtaining joint trajectories, calculate each edge weight between adjacent joint trajectories
   // edge list can be local here, it needs to be passed to populate the graph but not maintained afterwards
   std::list<JointEdge> edges;
-  if (!calculateEdgeWeights(&edges))
+  if (!calculateEdgeWeights(edges))
   {
     // failed to get edge weights
     logError("unable to calculate edge weight of joint transitions for joint trajectories");
@@ -105,10 +111,10 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
   }
 
   // from list of joint trajectories (vertices) and edges (edges), construct the actual graph
-  if (!populateGraph(&edges))
+  if (!populateGraphEdges(edges))
   {
     // failed to create graph
-    logError("unable to populate graph from input points and calculated edges");
+    logError("unable to populate graph from calculated edges");
     return false;
   }
 
@@ -241,7 +247,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   // TODO: complete modify function
 }
 
-bool PlanningGraph::findStartVertices(std::list<int> *start_points)
+bool PlanningGraph::findStartVertices(std::list<int> &start_points)
 {
   std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
@@ -253,13 +259,13 @@ bool PlanningGraph::findStartVertices(std::list<int> *start_points)
     {
       // debug
       logDebug("Graph start node: %d", jv);
-      start_points->push_back(jv);
+      start_points.push_back(jv);
     }
   }
-  return !start_points->empty();
+  return !start_points.empty();
 }
 
-bool PlanningGraph::findEndVertices(std::list<int> *end_points)
+bool PlanningGraph::findEndVertices(std::list<int> &end_points)
 {
   std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
@@ -270,18 +276,18 @@ bool PlanningGraph::findEndVertices(std::list<int> *end_points)
     if (ei.first == ei.second)
     {
       logDebug("Graph end node: %d", jv);
-      end_points->push_back(jv);
+      end_points.push_back(jv);
     }
   }
-  return !end_points->empty();
+  return !end_points.empty();
 }
 
 bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &path)
 {
   std::list<int> start_points;
-  findStartVertices(&start_points);
+  findStartVertices(start_points);
   std::list<int> end_points;
-  findEndVertices(&end_points);
+  findEndVertices(end_points);
 
   size_t num_vert = boost::num_vertices(dg_);
 
@@ -398,8 +404,8 @@ void PlanningGraph::printGraph()
 
     DirectedGraph::edge_descriptor e2 = *edge_iter;
 
-    ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: "
-        << dg_[e2].transition_cost << "\n";
+    ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost
+        << "\n";
   }
 
   ss << "\n";
@@ -451,7 +457,7 @@ bool PlanningGraph::calculateJointSolutions()
   return true;
 }
 
-bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> *edges)
+bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
 {
   if (cartesian_point_link_->size() == 0)
   {
@@ -492,26 +498,20 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> *edges)
         edge->joint_end = *end_joint_iter;
         edge->transition_cost = transition_cost;
 
-        edges->push_back(*edge);
+        edges.push_back(*edge);
       }
     }
   }
 
-  return true;
+  return !edges.empty();
 }
 
-bool PlanningGraph::populateGraph(std::list<JointEdge> *edges)
+bool PlanningGraph::populateGraphVertices()
 {
   if (joint_solutions_map_.size() == 0)
   {
     // no joints (vertices)
     logError("no joint solutions defined, thus no graph vertices");
-    return false;
-  }
-  if (edges->size() == 0)
-  {
-    // no edges
-    logError("no graph edges defined");
     return false;
   }
 
@@ -522,7 +522,20 @@ bool PlanningGraph::populateGraph(std::list<JointEdge> *edges)
     dg_[v].id = joint_iter->first;
     joint_iter->second.second = v;
   }
-  for (std::list<JointEdge>::iterator edge_iter = edges->begin(); edge_iter != edges->end(); edge_iter++)
+
+  return true;
+}
+
+bool PlanningGraph::populateGraphEdges(const std::list<JointEdge> &edges)
+{
+  if (edges.size() == 0)
+  {
+    // no edges
+    logError("no graph edges defined");
+    return false;
+  }
+
+  for (std::list<JointEdge>::const_iterator edge_iter = edges.begin(); edge_iter != edges.end(); edge_iter++)
   {
     DirectedGraph::edge_descriptor e;
     bool b;
