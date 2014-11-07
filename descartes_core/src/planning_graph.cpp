@@ -252,7 +252,123 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
     logError("unable to find cartesian point link with ID: %s", modify_id);
     return false;
   }
-  // TODO: complete modify function
+  // identify joint points at this cartesian point
+  std::list<TrajectoryPt::ID> start_joint_ids = (*cartesian_point_link_)[modify_id].joints_;
+
+  // remove edges
+  for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
+      start_joint_iter != start_joint_ids.end(); start_joint_iter++)
+  {
+    // get the graph vertex descriptor
+    DirectedGraph::vertex_descriptor jv = joint_solutions_map_[*start_joint_iter].second;
+
+    // remove out edges
+    std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
+    for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
+    {
+      DirectedGraph::edge_descriptor e = *out_edge;
+      boost:remove_edge(e, dg_);
+    }
+
+    // remove in edges
+    std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
+    for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
+    {
+      DirectedGraph::edge_descriptor e = *in_edge;
+      boost::remove_edge(e, dg_);
+    }
+
+    // remove the graph vertex and joint point
+    boost::remove_vertex(jv, dg_);
+    joint_solutions_map_.erase(*start_joint_iter);
+  }
+
+  // get new joint points for this cartesian
+  std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
+  std::vector<std::vector<double> > joint_poses;
+  point.get()->getJointPoses(*robot_model_, joint_poses);
+
+  if (joint_poses.size() == 0)
+  {
+    logWarn("no joint solution for this point... potential discontinuity in the graph");
+  }
+  else
+  {
+    for (std::vector<std::vector<double> >::iterator joint_pose_iter = joint_poses.begin();
+        joint_pose_iter != joint_poses.end(); joint_pose_iter++)
+    {
+      //get UUID from JointTrajPt (convert from std::vector<double>)
+      JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
+      traj_solutions->push_back(new_pt->getID());
+      JointGraphVertexPair *joint_vertex = new JointGraphVertexPair();
+      joint_vertex->first = *new_pt;
+
+      // insert new vertices into graph
+      DirectedGraph::vertex_descriptor v = boost::add_vertex(dg_);
+      dg_[v].id = new_pt->getID();
+      joint_vertex->second = v;
+
+      joint_solutions_map_[new_pt->getID()] = *joint_vertex;
+    }
+  }
+  (*cartesian_point_link_)[modify_id].joints_ == *traj_solutions;
+  (*cartesian_point_link_)[modify_id].source_trajectory_ = point;
+  // don't need to modify links
+
+
+  std::list<JointEdge> edges;
+  // recalculate edges(previous -> this; this -> next)
+  TrajectoryPt::ID previous_cart_id = (*cartesian_point_link_)[modify_id].links_.id_previous; // should be equal to cart_link_iter->second.links_.id
+  TrajectoryPt::ID next_cart_id = (*cartesian_point_link_)[modify_id].links_.id_next;
+
+  std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_cart_id].joints_;
+  std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_cart_id].joints_;
+
+  // calculate edges for previous vertices to this set of vertices
+  for (std::list<TrajectoryPt::ID>::iterator previous_joint_iter = previous_joint_ids.begin();
+      previous_joint_iter != previous_joint_ids.end(); previous_joint_iter++)
+  {
+    for (std::list<TrajectoryPt::ID>::iterator this_joint_iter = traj_solutions->begin();
+        this_joint_iter != traj_solutions->end(); this_joint_iter++)
+    {
+      double transition_cost;
+      // TODO: Make a call to somewhere that takes to JointTrajectoryPts (std::vector<double>) to get a single weight value back
+      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter].first;
+      JointTrajectoryPt end_joint = joint_solutions_map_[*this_joint_iter].first;
+
+      transition_cost = linearWeight(start_joint, end_joint);
+      JointEdge *edge = new JointEdge();
+      edge->joint_start = *previous_joint_iter;
+      edge->joint_end = *this_joint_iter;
+      edge->transition_cost = transition_cost;
+
+      edges.push_back(*edge);
+    }
+  }
+  // calculate edges for this set of vertices to the next set of vertices
+  for (std::list<TrajectoryPt::ID>::iterator this_joint_iter = traj_solutions->begin();
+      this_joint_iter != traj_solutions->end(); this_joint_iter++)
+  {
+    for (std::list<TrajectoryPt::ID>::iterator next_joint_iter = next_joint_ids.begin();
+        next_joint_iter != next_joint_ids.end(); next_joint_iter++)
+    {
+      double transition_cost;
+      // TODO: Make a call to somewhere that takes to JointTrajectoryPts (std::vector<double>) to get a single weight value back
+      JointTrajectoryPt start_joint = joint_solutions_map_[*this_joint_iter].first;
+      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter].first;
+
+      transition_cost = linearWeight(start_joint, end_joint);
+      JointEdge *edge = new JointEdge();
+      edge->joint_start = *this_joint_iter;
+      edge->joint_end = *next_joint_iter;
+      edge->transition_cost = transition_cost;
+
+      edges.push_back(*edge);
+    }
+  }
+  // insert new edges
+  populateGraphEdges(edges);
+
 }
 
 bool PlanningGraph::findStartVertices(std::list<int> &start_points)
