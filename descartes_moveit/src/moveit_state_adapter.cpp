@@ -29,30 +29,6 @@
 namespace descartes_moveit
 {
 
-bool MoveitStateAdapter::equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                               const double tol)
-{
-  bool rtn = false;
-  if( lhs.size() == rhs.size() )
-  {
-    rtn = true;
-    for(size_t ii = 0; ii < lhs.size(); ++ii)
-    {
-      if(std::fabs(lhs[ii]-rhs[ii]) > tol)
-      {
-        rtn = false;
-        break;
-      }
-    }
-
-  }
-  else
-  {
-    rtn = false;
-  }
-  return rtn;
-}
-
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & wobj_frame,
                                        const size_t sample_iterations) :

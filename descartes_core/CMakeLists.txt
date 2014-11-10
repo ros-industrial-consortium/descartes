@@ -16,6 +16,7 @@ find_package(Eigen REQUIRED)
 catkin_package(
   INCLUDE_DIRS
     include
+    test
   LIBRARIES
     descartes_core
   CATKIN_DEPENDS
@@ -43,6 +44,7 @@ add_library(descartes_core
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
             src/planning_graph.cpp
+            src/robot_model.cpp
 )
 ##Disabling planning graph due to issues with
 ##Trajectory point ID

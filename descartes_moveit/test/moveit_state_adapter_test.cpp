@@ -16,78 +16,52 @@
  * limitations under the License.
  */
 
-#include "descartes_core/pretty_print.hpp"
 #include "descartes_moveit/moveit_state_adapter.h"
+#include "descartes_core_test/robot_model_test.hpp"
 #include "moveit/robot_model_loader/robot_model_loader.h"
-#include "console_bridge/console.h"
-#include "ros/console.h"
 #include <gtest/gtest.h>
-#include <iostream>
 
 using namespace descartes_moveit;
+using namespace descartes_core;
 
-class RobotModelTest : public ::testing::Test {
- protected:
-  virtual void SetUp() {
+using testing::Types;
 
-    ROS_INFO_STREAM("Loading robot model from parameter");
-    robot_ = robot_model_loader::RobotModelLoaderPtr(
-          new robot_model_loader::RobotModelLoader("robot_description"));
-    ASSERT_TRUE(robot_);
-    ROS_INFO_STREAM("Robot model loaded");
-    moveit_model_ = robot_->getModel();
-    state_ = robot_state::RobotStatePtr(new robot_state::RobotState(moveit_model_));
-    ROS_INFO_STREAM("Construction descartes robot model");
-    descartes_model_ = descartes_core::RobotModelPtr(new descartes_moveit::MoveitStateAdapter(*state_, "manipulator",
-                                                                                    "tool0", "base_link"));
-    ROS_INFO_STREAM("Descartes robot model constructed");
-  }
+namespace descartes_core_test
+{
+// This variable must be global in order for the test to pass.
+// Destructing the robot model results in a boost mutex exception:
+// ---
+// /usr/include/boost/thread/pthread/pthread_mutex_scoped_lock.hpp:26:
+// boost::pthread::pthread_mutex_scoped_lock::pthread_mutex_scoped_lock(pthread_mutex_t*):
+// Assertion `!pthread_mutex_lock(m)' failed.
+// ---
 
-  // virtual void TearDown() {}
+robot_model_loader::RobotModelLoaderPtr robot_;
 
-  robot_model_loader::RobotModelLoaderPtr robot_;
+template <>
+RobotModelPtr CreateRobotModel<MoveitStateAdapter>()
+{
   robot_model::RobotModelPtr moveit_model_;
   robot_state::RobotStatePtr state_;
   descartes_core::RobotModelPtr descartes_model_;
 
-};
-
-const double TF_EQ_TOL = 0.001;
-const double JOINT_EQ_TOL = 0.001;
-
-TEST_F(RobotModelTest, construction) {
-  ROS_INFO_STREAM("Robot model test construction");
+  ROS_INFO_STREAM("Loading robot model from parameter");
+  robot_ = robot_model_loader::RobotModelLoaderPtr(
+        new robot_model_loader::RobotModelLoader("robot_description"));
+  EXPECT_TRUE(robot_);
+  ROS_INFO_STREAM("Robot model loaded");
+  moveit_model_ = robot_->getModel();
+  state_ = robot_state::RobotStatePtr(new robot_state::RobotState(moveit_model_));
+  ROS_INFO_STREAM("Construction descartes robot model");
+  descartes_model_ = descartes_core::RobotModelPtr(
+        new descartes_moveit::MoveitStateAdapter(*state_, "manipulator", "tool0", "base_link"));
+  ROS_INFO_STREAM("Descartes robot model constructed");
+  return descartes_model_;
 }
 
+template<class T>
+class MoveitRobotModelTest : public descartes_core_test::RobotModelTest<T>{};
 
-TEST_F(RobotModelTest, getIK) {
-  ROS_INFO_STREAM("Testing getIK");
-  std::vector<double> fk_joint(6, 0.0);
-  std::vector<double> ik_joint;
-  Eigen::Affine3d ik_pose, fk_pose;
-  EXPECT_TRUE(this->descartes_model_->getFK(fk_joint, ik_pose));
-  EXPECT_TRUE(this->descartes_model_->getIK(ik_pose, fk_joint, ik_joint));
-  //This doesn't always work, but it should.  The IKFast solution doesn't
-  //return the "closets" solution.  Numeric IK does appear to do this.
-  EXPECT_TRUE(MoveitStateAdapter::equal(fk_joint, ik_joint, JOINT_EQ_TOL));
-  EXPECT_TRUE(this->descartes_model_->getFK(ik_joint, fk_pose));
-  EXPECT_TRUE(ik_pose.matrix().isApprox(fk_pose.matrix(), TF_EQ_TOL));
-}
+INSTANTIATE_TYPED_TEST_CASE_P(MoveitRobotModelTest, RobotModelTest, MoveitStateAdapter);
 
-TEST_F(RobotModelTest, getAllIK) {
-  ROS_INFO_STREAM("Testing getAllIK");
-  std::vector<double> fk_joint(6, 0.5);
-  std::vector<std::vector<double> > joint_poses;
-  Eigen::Affine3d ik_pose, fk_pose;
-
-  EXPECT_TRUE(this->descartes_model_->getFK(fk_joint, ik_pose));
-  EXPECT_TRUE(this->descartes_model_->getAllIK(ik_pose, joint_poses));
-  ROS_INFO_STREAM("Get all IK returned " << joint_poses.size() << " solutions");
-  std::vector<std::vector<double> >::iterator it;
-  for (it = joint_poses.begin(); it != joint_poses.end(); ++it)
-  {
-    ROS_INFO_STREAM("GetIK joint solution: " << *it);
-    EXPECT_TRUE(this->descartes_model_->getFK(*it, fk_pose));
-    EXPECT_TRUE(ik_pose.matrix().isApprox(fk_pose.matrix(), TF_EQ_TOL));
-  }
-}
+} //descartes_core_test

@@ -40,6 +40,17 @@ DESCARTES_CLASS_FORWARD(RobotModel);
 class RobotModel
 {
 public:
+
+
+  /**
+    * Compares two vectors for equality (within +/- tolerance).  abs(lhs - rhs) > tol
+    * @param lhs
+    * @param rhs
+    * @param tol +/- tolerance for floating point equality
+    */
+  static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
+                                        const double tol);
+
   RobotModel()
   {
   }
