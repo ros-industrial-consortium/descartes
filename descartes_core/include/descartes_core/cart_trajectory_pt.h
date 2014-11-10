@@ -97,6 +97,27 @@ class CartTrajectoryPt : public TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+public:
+  struct CartPointData
+  {
+    CartPointData():
+      wobj_base(Eigen::Affine3d::Identity()), wobj_pt(Eigen::Affine3d::Identity()),
+      tool_base(Eigen::Affine3d::Identity()), tool_pt(Eigen::Affine3d::Identity())
+    {};
+
+    CartPointData(const Frame &_wobj_base, const TolerancedFrame &_wobj_pt,
+                  const Frame &_tool_base, const TolerancedFrame &_tool_pt):
+                    wobj_base(_wobj_base), wobj_pt(_wobj_pt),
+                    tool_base(_tool_base), tool_pt(_tool_pt)
+    {};
+
+    Frame               tool_base;      /**<@brief Fixed transform from wrist/tool_plate to tool base. */
+    TolerancedFrame     tool_pt;        /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
+    Frame               wobj_base;      /**<@brief Fixed transform from WCS to base of object. */
+    TolerancedFrame     wobj_pt;        /**<@brief Underconstrained transform from object base to goal point on object. */
+  };
+
 public:
 
   /**
@@ -172,33 +193,32 @@ public:
 
     //TODO complete
     virtual bool isValid(const RobotModel &model) const;
-  /**@brief Set discretization. Cartesian points can have position and angular discretization.
-   * @param discretization Vector of discretization values. Must be length 2 or 6 (position/orientation or separate xyzrpy).
-   * @return True if vector is valid length/values. TODO what are valid values?
-   */
-  virtual bool setDiscretization(const std::vector<double> &discretization);
 
   inline
   void setTool(const Frame &base, const TolerancedFrame &pt)
   {
-    tool_base_ = base;
-    tool_pt_ = pt;
+    point_data_.tool_base = base;
+    point_data_.tool_pt = pt;
   }
 
   inline
   void setWobj(const Frame &base, const TolerancedFrame &pt)
   {
-    wobj_base_ = base;
-    wobj_pt_ = pt;
+    point_data_.wobj_base = base;
+    point_data_.wobj_pt = pt;
   }
 
+  virtual const void* getPointData() const;
+
+  virtual
+  bool setSampler(const TrajectoryPtSamplerPtr &sampler);
+
+  virtual
+  bool sample(size_t n);
 
 protected:
-  Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */
-  TolerancedFrame               tool_pt_;       /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
-  Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
-  TolerancedFrame               wobj_pt_;       /**<@brief Underconstrained transform from object base to goal point on object. */
 
+  CartPointData point_data_;
 
 };
 

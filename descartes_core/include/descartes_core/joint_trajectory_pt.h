@@ -86,6 +86,25 @@ class JointTrajectoryPt: public TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;      //TODO is this needed when Frame already has it?
+
+public:
+  struct JointPointData
+  {
+    JointPointData():
+      tool(Eigen::Affine3d::Identity()), wobj(Eigen::Affine3d::Identity())
+    {};
+
+    JointPointData(const std::vector<TolerancedJointValue> &_joints,
+                   const Frame &_tool, const Frame &_wobj):
+                     joint_position(_joints),
+                     tool(_tool), wobj(_wobj)
+    {};
+
+    std::vector<TolerancedJointValue> joint_position;   /**<@brief Fixed joint position with tolerance */
+    Frame tool;                                         /**<@brief Transform from robot wrist to active tool pt. */
+    Frame wobj;                                         /**<@brief Transform from world to active workobject pt. */
+  };
+
 public:
   /**
     @brief Default joint trajectory point constructor.  All frames initialized to Identity, joint
@@ -146,6 +165,8 @@ public:
                                      const RobotModel &model,
                                      std::vector<double> &joint_pose) const;
 
+  virtual const void* getPointData() const;
+
   //TODO complete
   virtual void getJointPoses(const RobotModel &model,
                                std::vector<std::vector<double> > &joint_poses) const;
@@ -154,41 +175,34 @@ public:
   //TODO complete
   virtual bool isValid(const RobotModel &model) const;
 
-  //TODO complete
-  /**@brief Set discretization. Each joint can have a different discretization.
-   * @param discretization Vector of discretization values. If length=1, set all elements of discretization_ are set to value.
-   * @return True if vector is length 1 or length(joint_position_) and value[ii] are within 0-range(joint_position[ii]).
-   */
-  virtual bool setDiscretization(const std::vector<double> &discretization);
-
 inline
   void setJoints(const std::vector<TolerancedJointValue> &joints)
   {
-    joint_position_ = joints;
+    point_data_.joint_position = joints;
   }
 
   inline
   void setTool(const Frame &tool)
   {
-    tool_ = tool;
+    point_data_.tool = tool;
   }
 
   inline
   void setWobj(const Frame &wobj)
   {
-    wobj_ = wobj;
+    point_data_.wobj = wobj;
   }
   /**@} (end Setters section) */
-protected:
-  std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
-  std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
 
-  /** @name JointTrajectoryPt transforms. Used in get*CartPose() methods and for interpolation.
-   *  @{
-   */
-  Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
-  Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
-  /** @} (end section) */
+  virtual
+  bool setSampler(const TrajectoryPtSamplerPtr &sampler);
+
+  virtual
+  bool sample(size_t n);
+
+protected:
+
+  JointPointData point_data_;
 
 };
 

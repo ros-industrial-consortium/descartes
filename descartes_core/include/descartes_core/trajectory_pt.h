@@ -33,11 +33,16 @@
 #include <boost/uuid/uuid_generators.hpp>
 
 #include "descartes_core/robot_model.h"
+#include "descartes_core/samplers/trajectory_pt_sampler.h"
 #include "descartes_core/trajectory_pt_transition.h"
+#include "descartes_core/utils.h"
 
 
 namespace descartes_core
 {
+
+DESCARTES_CLASS_FORWARD(TrajectoryPt);
+DESCARTES_CLASS_FORWARD(TrajectoryPtSampler);
 
 /**@brief Frame is a wrapper for an affine frame transform.
  * Frame inverse can also be stored for increased speed in downstream calculations.
@@ -132,6 +137,9 @@ public:
                                    const RobotModel &model,
                                    std::vector<double> &joint_pose) const = 0;
 
+  virtual
+  const void* getPointData() const = 0;
+
   /**@brief Get "all" joint poses that satisfy this point.
    * @param model Robot model  object used to calculate pose
    * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
@@ -144,12 +152,6 @@ public:
    * @param model Robot model  object used to determine validity
    */
   virtual bool isValid(const RobotModel &model) const = 0;
-
-  /**@brief Set discretization. Note: derived classes interpret and use discretization differently.
-   * @param discretization Vector of discretization values.
-   * @return True if vector is valid length/values.
-   */
-  virtual bool setDiscretization(const std::vector<double> &discretization) = 0;
 
   /**@name Getters/Setters for ID
    * @{ */
@@ -170,9 +172,19 @@ public:
   }
   /** @} (end section) */
 
+  /**@name Sampling
+   * @{ */
+  virtual
+  bool setSampler(const TrajectoryPtSamplerPtr &sampler) = 0;
+
+  virtual
+  bool sample(size_t n) = 0;
+  /** @} (end section "Sampling" */
+
 protected:
   ID                            id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
   TrajectoryPtTransitionPtr     transition_;            /**<@brief Velocities at, and interpolation method to reach this point **/
+  TrajectoryPtSamplerPtr        sampler_;               /**<@brief Sampler to be used on this point. **/
 
 };
 

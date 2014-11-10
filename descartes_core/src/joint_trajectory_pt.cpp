@@ -25,6 +25,7 @@
 #include <console_bridge/console.h>
 #include "descartes_core/joint_trajectory_pt.h"
 
+
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 
@@ -32,30 +33,24 @@ namespace descartes_core
 {
 
 JointTrajectoryPt::JointTrajectoryPt():
-    tool_(Eigen::Affine3d::Identity()),
-    wobj_(Eigen::Affine3d::Identity())
+    point_data_()
 {}
 
 JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints,
                                      const Frame &tool, const Frame &wobj):
-  joint_position_(joints),
-  tool_(tool),
-  wobj_(wobj)
+  point_data_(joints, tool, wobj)
 {}
 
 JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints):
-  joint_position_(joints),
-  tool_(Eigen::Affine3d::Identity()),
-  wobj_(Eigen::Affine3d::Identity())
+  point_data_(joints, Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity())
 {}
 
 JointTrajectoryPt::JointTrajectoryPt(const std::vector<double> &joints):
-  tool_(Eigen::Affine3d::Identity()),
-  wobj_(Eigen::Affine3d::Identity())
+  point_data_(std::vector<TolerancedJointValue>(), Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity())
 {
   for (size_t ii = 0; ii < joints.size(); ++ii)
   {
-    joint_position_.push_back(TolerancedJointValue(joints[ii]));
+    point_data_.joint_position.push_back(TolerancedJointValue(joints[ii]));
   }
 }
 
@@ -84,14 +79,19 @@ bool JointTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_stat
   NOT_IMPLEMENTED_ERR(false);
 }
 
+const void* JointTrajectoryPt::getPointData() const
+{
+  return (const void*) &point_data_;
+}
+
 bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
                                             const RobotModel &model,
                                             std::vector<double> &joint_pose) const
 {
-  joint_pose.resize(joint_position_.size());
-  for (size_t ii=0; ii<joint_position_.size(); ++ii)
+  joint_pose.resize(point_data_.joint_position.size());
+  for (size_t ii=0; ii<point_data_.joint_position.size(); ++ii)
   {
-    joint_pose[ii] = joint_position_[ii].nominal;
+    joint_pose[ii] = point_data_.joint_position[ii].nominal;
   }
   return true;
 }
@@ -104,42 +104,36 @@ void JointTrajectoryPt::getJointPoses(const RobotModel &model,
 
 bool JointTrajectoryPt::isValid(const RobotModel &model) const
 {
-  std::vector<double> lower(joint_position_.size());
-  std::vector<double> upper(joint_position_.size());
-  for (size_t ii = 0; ii < joint_position_.size(); ++ii)
+  std::vector<double> lower(point_data_.joint_position.size());
+  std::vector<double> upper(point_data_.joint_position.size());
+  for (size_t ii = 0; ii < point_data_.joint_position.size(); ++ii)
   {
-    lower[ii] = joint_position_[ii].tolerance.lower;
-    upper[ii] = joint_position_[ii].tolerance.upper;
+    lower[ii] = point_data_.joint_position[ii].tolerance.lower;
+    upper[ii] = point_data_.joint_position[ii].tolerance.upper;
   }
 return model.isValid(lower) && model.isValid(upper);
 }
 
-bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
+bool JointTrajectoryPt::setSampler(const TrajectoryPtSamplerPtr &sampler)
 {
-  if (discretization.size() != 1 || discretization.size() != joint_position_.size())
+  sampler_ = sampler;
+  if (!sampler_->init(*this))
   {
-    logError("discretization must be size 1 or same size as joint count.");
+    sampler_.reset();
+    return false;
+  }
+  return true;
+}
+
+bool JointTrajectoryPt::sample(size_t n)
+{
+  if (!sampler_)
+  {
+    logWarn("No sampler associated with point; Cannot sample.");
     return false;
   }
 
-  if (discretization.size() == 1)
-  {
-    discretization_ = std::vector<double>(joint_position_.size(), discretization[0]);
-    return true;
-  }
-
-  /* Do not copy discretization values until all values are confirmed */
-  for (size_t ii=0; ii<discretization.size(); ++ii)
-  {
-    if (discretization[ii] < 0. || discretization[ii] > joint_position_[ii].range())
-    {
-      logError("discretization value out of range.");
-      return false;
-    }
-  }
-
-  discretization_ = discretization;
-
+  const std::vector<std::vector<double> > *solutions = static_cast<const std::vector<std::vector<double> >* >(sampler_->sample(n, *this));
   return true;
 }
 
