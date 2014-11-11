@@ -84,21 +84,21 @@ TYPED_TEST(TrajectoryPtTest, construction) {
   //Depending on construction method (declaration, copy, clone, same pointer), the
   //objects and specifically IDs equality should be defined as follow
 
+  //TODO: Implement equality checks
+
   //Declared objects should always be different
-  EXPECT_NE(this->lhs_, this->rhs_);
+  //EXPECT_NE(*(this->lhs_), *(this->rhs_));
   EXPECT_NE(this->lhs_->getID(), this->rhs_->getID());
 
   //Copied objects should always be the same
-  //TODO: The equal comparison fails for some unknown reason.  In the debugger
-  //the values are equal, so this may be a problem with eigen.
-  //EXPECT_EQ(this->lhs_, this->lhs_copy_);
+  //EXPECT_EQ(*(this->lhs_), *(this->lhs_copy_));
   EXPECT_EQ(this->lhs_->getID(), this->lhs_copy_->getID());
 
   //Cloned objects should have the same data (we can't test, but different ids)
-  EXPECT_NE(this->lhs_, this->lhs_clone_);
+  //EXPECT_NE(*(this->lhs_), *(this->lhs_clone_));
   EXPECT_NE(this->lhs_->getID(), this->lhs_clone_->getID());
 
   //Pointers to the same objects should be identical (like a copy, but no ambiguity)
-  EXPECT_EQ(this->lhs_, this->lhs_same_);
+  //EXPECT_EQ(*(this->lhs_), *(this->lhs_same_));
   EXPECT_EQ(this->lhs_->getID(), this->lhs_same_->getID());
 }
