@@ -170,6 +170,16 @@ public:
   }
   /** @} (end section) */
 
+  /**@brief Clones a trajectory point.  Performs a copy operation and then creates a new ID
+   * @param clone A copy of this trajectory point with a different ID
+   */
+  virtual void cloneTo(TrajectoryPt &clone) const
+  {
+    clone = *this;
+    clone.setID(boost::uuids::random_generator()());
+  }
+
+
 protected:
   ID                            id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
   TrajectoryPtTransitionPtr     transition_;            /**<@brief Velocities at, and interpolation method to reach this point **/
