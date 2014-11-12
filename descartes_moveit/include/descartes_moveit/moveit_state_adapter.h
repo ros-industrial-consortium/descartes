@@ -20,6 +20,7 @@
 #define MOVEIT_STATE_ADPATER_H_
 
 #include "descartes_core/robot_model.h"
+#include <descartes_core/cart_trajectory_pt.h>
 #include "moveit/robot_model/robot_model.h"
 #include "moveit/kinematics_base/kinematics_base.h"
 #include <string>
@@ -98,6 +99,12 @@ protected:
    * @brief Work object/reference frame name
    */
   std::string wobj_base_;
+
+  /**
+   * @brief convenient transformation frames
+   */
+  descartes_core::Frame base_to_world_;
+  descartes_core::Frame world_to_root_;
 
   /**
    * @brief Joint solution sample iterations for returning "all" joints
