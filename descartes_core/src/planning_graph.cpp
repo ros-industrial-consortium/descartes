@@ -573,7 +573,7 @@ bool PlanningGraph::calculateJointSolutions()
         joint_solutions_map_[new_pt->getID()] = *joint_vertex;
       }
     }
-    trajectory_iter->second.joints_ == *traj_solutions;
+    trajectory_iter->second.joints_ = *traj_solutions;
     /*************************/
   }
 
@@ -588,11 +588,20 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
     logError("no trajectory point links defined");
     return false;
   }
+  else
+  {
+    logInform("Found %i trajectory point links",cartesian_point_link_->size());
+  }
+
   if (joint_solutions_map_.size() == 0)
   {
     // no joint solutions to calculate transitions for
     logError("no joint solutions available");
     return false;
+  }
+  else
+  {
+    logInform("Found %i joint solutions available",joint_solutions_map_.size());
   }
 
   for (std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator cart_link_iter = cartesian_point_link_->begin();
@@ -603,6 +612,12 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
 
     std::list<TrajectoryPt::ID> start_joint_ids = cart_link_iter->second.joints_;
     std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[end_cart_id].joints_;
+
+    if(start_joint_ids.empty() || end_joint_ids.empty())
+    {
+      logWarn("One or more joints lists in the cartesian point link is empty,[start ids: %i],[end ids: %i]",
+              start_joint_ids.size(),end_joint_ids.size());
+    }
 
     for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
         start_joint_iter != start_joint_ids.end(); start_joint_iter++)
