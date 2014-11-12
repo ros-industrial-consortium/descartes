@@ -44,14 +44,27 @@ template <class T>
 class TrajectoryPtTest : public testing::Test {
  protected:
 
-  TrajectoryPtTest() : lhs_(CreateTrajectoryPt<T>()), rhs_(CreateTrajectoryPt<T>())
+  TrajectoryPtTest() : lhs_(CreateTrajectoryPt<T>()), rhs_(CreateTrajectoryPt<T>()),
+    lhs_copy_(CreateTrajectoryPt<T>()), lhs_clone_(CreateTrajectoryPt<T>())
   {
+    *lhs_copy_ = *lhs_;
+    lhs_->cloneTo(*lhs_clone_);
+    lhs_same_ = lhs_;
   }
 
-  virtual ~TrajectoryPtTest() { delete lhs_; }
+  virtual ~TrajectoryPtTest()
+  {
+    delete lhs_;
+    delete rhs_;
+    delete lhs_copy_;
+    delete lhs_clone_;
+  }
 
   TrajectoryPt* lhs_;
   TrajectoryPt* rhs_;
+  TrajectoryPt* lhs_copy_;
+  TrajectoryPt* lhs_clone_;
+  TrajectoryPt* lhs_same_;
 };
 
 using testing::Types;
@@ -61,23 +74,31 @@ typedef Types<CartTrajectoryPt, JointTrajectoryPt> Implementations;
 
 TYPED_TEST_CASE(TrajectoryPtTest, Implementations);
 
-TYPED_TEST(TrajectoryPtTest, idConstruction) {
+TYPED_TEST(TrajectoryPtTest, construction) {
 
   EXPECT_FALSE(this->lhs_->getID().is_nil());
+  EXPECT_FALSE(this->lhs_copy_->getID().is_nil());
+  EXPECT_FALSE(this->lhs_clone_->getID().is_nil());
   EXPECT_FALSE(this->rhs_->getID().is_nil());
 
-  //Points (and specifically IDs) should be unique
-  EXPECT_NE(this->lhs_, this->rhs_);
+  //Depending on construction method (declaration, copy, clone, same pointer), the
+  //objects and specifically IDs equality should be defined as follow
+
+  //TODO: Implement equality checks
+
+  //Declared objects should always be different
+  //EXPECT_NE(*(this->lhs_), *(this->rhs_));
   EXPECT_NE(this->lhs_->getID(), this->rhs_->getID());
+
+  //Copied objects should always be the same
+  //EXPECT_EQ(*(this->lhs_), *(this->lhs_copy_));
+  EXPECT_EQ(this->lhs_->getID(), this->lhs_copy_->getID());
+
+  //Cloned objects should have the same data (we can't test, but different ids)
+  //EXPECT_NE(*(this->lhs_), *(this->lhs_clone_));
+  EXPECT_NE(this->lhs_->getID(), this->lhs_clone_->getID());
+
+  //Pointers to the same objects should be identical (like a copy, but no ambiguity)
+  //EXPECT_EQ(*(this->lhs_), *(this->lhs_same_));
+  EXPECT_EQ(this->lhs_->getID(), this->lhs_same_->getID());
 }
-
-TYPED_TEST(TrajectoryPtTest, idCopy) {
-  this->lhs_ = this->rhs_;
-  EXPECT_FALSE(this->lhs_->getID().is_nil());
-  EXPECT_FALSE(this->rhs_->getID().is_nil());
-
-  //Copies of points (and specifically IDs) should be unique
-  EXPECT_EQ(this->lhs_, this->rhs_);
-  EXPECT_EQ(this->lhs_->getID(), this->rhs_->getID());
-}
-
