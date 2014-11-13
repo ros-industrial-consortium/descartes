@@ -30,11 +30,13 @@ namespace descartes_moveit
 {
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                                     const std::string & tool_frame, const std::string & wobj_frame,
-                                       const size_t sample_iterations) :
+                                     const std::string & tool_frame, const std::string & world_frame,
+                                       const size_t sample_iterations,double ik_timeout ,double ik_attempts) :
     robot_state_(new moveit::core::RobotState(robot_state)), group_name_(group_name),
-  tool_base_(tool_frame), wobj_base_(wobj_frame), sample_iterations_(sample_iterations),
-  world_to_root_(Eigen::Affine3d::Identity())
+  tool_frame_(tool_frame), world_frame_(world_frame), sample_iterations_(sample_iterations),
+  world_to_root_(Eigen::Affine3d::Identity()),
+  ik_timeout_(ik_timeout),
+  ik_attempts_(ik_attempts)
 {
 
   moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
@@ -42,20 +44,18 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   if (joint_model_group_ptr)
   {
     const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
-    if (tool_base_ != link_names.back())
+    if (tool_frame_ != link_names.back())
     {
-      logWarn("Tool: %s does not match group tool: %s, functionality will be implemented in the future",
-               tool_base_.c_str(), link_names.back().c_str());
+      logWarn("Tool frame '%s' does not match group tool frame '%s', functionality will be implemented in the future",
+               tool_frame_.c_str(), link_names.back().c_str());
     }
 
-    if (wobj_base_ != link_names.front())
+    if (world_frame_ != robot_state_->getRobotModel()->getModelFrame())
     {
-      logWarn("Work object: %s does not match group base: %s, all poses will be transformed to world frame '%s'",
-               wobj_base_.c_str(), link_names.front().c_str(),wobj_base_.c_str());
+      logWarn("World frame '%s' does not match model root frame '%s', all poses will be transformed to world frame '%s'",
+               world_frame_.c_str(), link_names.front().c_str(),world_frame_.c_str());
 
-      Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(wobj_base_);
-      Eigen::Affine3d root_to_base = robot_state_->getFrameTransform(link_names.front());
-
+      Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(world_frame_);
       world_to_root_ = descartes_core::Frame(root_to_world.inverse());
     }
 
@@ -85,7 +85,8 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
   Eigen::Affine3d tool_pose = world_to_root_.frame* pose;
 
 
-  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose, tool_base_, 4, 0.05f))
+  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose,
+                              tool_frame_, ik_attempts_, ik_timeout_))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
@@ -166,14 +167,14 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if ( isValid(joint_pose) )
   {
-    if (robot_state_->knowsFrameTransform(tool_base_))
+    if (robot_state_->knowsFrameTransform(tool_frame_))
     {
-      pose = world_to_root_.frame*robot_state_->getFrameTransform(tool_base_);
+      pose = world_to_root_.frame*robot_state_->getFrameTransform(tool_frame_);
       rtn = true;
     }
     else
     {
-      logError("Robot state does not recognize tool frame: %s", tool_base_.c_str());
+      logError("Robot state does not recognize tool frame: %s", tool_frame_.c_str());
       rtn = false;
     }
   }

@@ -40,11 +40,11 @@ public:
    * @param robot_state robot state object utilized for kinematic/dynamic state checking
    * @param group_name planning group name
    * @param tool_frame tool frame name
-   * @param wobj_frame work object frame name
+   * @param world_frame work object frame name
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                    const std::string & tool_frame, const std::string & wobj_frame,
-                     const size_t sample_iterations = 10);
+                    const std::string & tool_frame, const std::string & world_frame,
+                     size_t sample_iterations = 10,double ik_timeout = 0.05f,double ik_attempts = 4);
   virtual ~MoveitStateAdapter()
   {
   }
@@ -93,12 +93,12 @@ protected:
   /**
    * @brief Tool frame name
    */
-  std::string tool_base_;
+  std::string tool_frame_;
 
   /**
    * @brief Work object/reference frame name
    */
-  std::string wobj_base_;
+  std::string world_frame_;
 
   /**
    * @brief convenient transformation frame
@@ -109,6 +109,12 @@ protected:
    * @brief Joint solution sample iterations for returning "all" joints
    */
   size_t sample_iterations_;
+
+  /**
+    * @brief kinematic solver parameters
+    */
+  double ik_timeout_;
+  int ik_attempts_;
 
 };
 
