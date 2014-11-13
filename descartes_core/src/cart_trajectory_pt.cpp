@@ -188,16 +188,34 @@ bool CartTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state
 void CartTrajectoryPt::getJointPoses(const RobotModel &model,
                                      std::vector<std::vector<double> > &joint_poses) const
 {
-  bool rtn = false;
-  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame *
-      tool_pt_.frame_inv * tool_base_.frame_inv;
-  if(model.getAllIK(robot_pose, joint_poses))
+  joint_poses.clear();
+  EigenSTL::vector_Affine3d sampled_wobj_pts = uniform(wobj_pt_, orient_increment_,
+                                                     pos_increment_);
+  EigenSTL::vector_Affine3d sampled_tool_pts = uniform(tool_pt_, orient_increment_,
+                                                       pos_increment_);
+  size_t sample_size = sampled_wobj_pts.size() * sampled_tool_pts.size();
+  joint_poses.reserve(sample_size);
+  for(size_t wobj_pt = 0; wobj_pt < sampled_wobj_pts.size(); ++wobj_pt)
   {
-    rtn = true;
+    for(size_t tool_pt = 0; tool_pt < sampled_tool_pts.size(); ++tool_pt)
+    {
+      Eigen::Affine3d pose = wobj_base_.frame * sampled_wobj_pts[wobj_pt] *
+          sampled_tool_pts[tool_pt].inverse() * tool_base_.frame_inv;
+      std::vector<std::vector<double> > local_joint_poses;
+      if(model.getAllIK(pose, local_joint_poses))
+      {
+        joint_poses.insert(joint_poses.end(), local_joint_poses.begin(), local_joint_poses.end());
+      }
+    }
+  }
+  if( joint_poses.empty())
+  {
+    ROS_WARN("Failed for find ANY joint poses, returning");
   }
   else
   {
-    logWarn("Call to get joint poses returned empty set");
+    ROS_DEBUG_STREAM("Get joint poses, sampled: " << sample_size
+                     << ", with " << joint_poses.size() << " valid(returned) poses");
   }
 }
 

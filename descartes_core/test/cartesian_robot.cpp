@@ -51,8 +51,6 @@ namespace descartes_core_test
     joint_pose[2] = kdl_frame.p.z();
     kdl_frame.M.GetRPY(joint_pose[3], joint_pose[4], joint_pose[5]);
 
-    ROS_DEBUG_STREAM("IK result for pose: " << pose.matrix() << " is " << joint_pose);
-
     if(isValid(joint_pose))
     {
       rtn = true;
@@ -116,12 +114,6 @@ namespace descartes_core_test
               fabs(joint_pose[3]) <= orient_limit &&
               fabs(joint_pose[4]) <= orient_limit &&
               fabs(joint_pose[5]) <= orient_limit );
-//      if(!rtn)
-//      {
-//        ROS_DEBUG_STREAM("Joint pose: " << joint_pose << " NOT valid"
-//                         << ", outside limits[pos/orient]" << pos_limit
-//                         << "/" << orient_limit);
-//      }
     }
     else
     {
@@ -148,11 +140,6 @@ namespace descartes_core_test
             fabs(R) <= orient_limit &&
             fabs(P) <= orient_limit &&
             fabs(Y) <= orient_limit );
-
-//    if(!rtn)
-//    {
-//      ROS_DEBUG_STREAM("Cart pose: " << std::endl << pose.matrix() << " NOT valid");
-//    }
 
     return rtn;
   }

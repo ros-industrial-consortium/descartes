@@ -71,15 +71,21 @@ TEST(CartTrajPt, getPoses)
   CartesianRobot robot(POS_TOL+2*EPSILON, ORIENT_TOL+2*EPSILON);
   fuzzy_pos.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_POS);
-//  fuzzy_pos.getJointPoses(robot,joint_solutions);
-//  EXPECT_EQ(joint_solutions.size(), NUM_SAMPLED_POS);
+  fuzzy_pos.getJointPoses(robot,joint_solutions);
+  EXPECT_EQ(joint_solutions.size(), NUM_SAMPLED_POS);
 
   fuzzy_orient.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_ORIENT);
+  fuzzy_orient.getJointPoses(robot,joint_solutions);
+  EXPECT_EQ(joint_solutions.size(), NUM_SAMPLED_ORIENT);
 
   fuzzy_both.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_BOTH);
+  fuzzy_both.getJointPoses(robot,joint_solutions);
+  EXPECT_EQ(joint_solutions.size(), NUM_SAMPLED_BOTH);
 
+  // TODO: Add tests for cartesian points outside of the robot workspace.  These
+  // tests below seem to work, but predicting the number of samples isn't working.
 //  const double WS_FRACTION = 0.5;  //Reduces robot workspace
 //  const int LIMIT_SAMPLED_POS = pow(((WS_FRACTION * POS_TOL)/POS_INC) + 1, 3.0);
 //  const int LIMIT_SAMPLED_ORIENT = pow(((WS_FRACTION * ORIENT_TOL)/ORIENT_INC) + 1, 3.0);
