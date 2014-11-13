@@ -118,6 +118,8 @@ public:
   void printGraph();
 
 protected:
+  boost::uuids::nil_generator generate_nil;
+
   RobotModelConstPtr robot_model_;
 
   DirectedGraph dg_;
