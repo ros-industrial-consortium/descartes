@@ -30,27 +30,33 @@ namespace descartes_moveit
 {
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                                     const std::string & tool_frame, const std::string & wobj_frame,
+                                     const std::string & tool_frame, const std::string & world_frame,
                                        const size_t sample_iterations) :
     robot_state_(new moveit::core::RobotState(robot_state)), group_name_(group_name),
-  tool_base_(tool_frame), wobj_base_(wobj_frame), sample_iterations_(sample_iterations)
+  tool_frame_(tool_frame), world_frame_(world_frame), sample_iterations_(sample_iterations),
+  world_to_root_(Eigen::Affine3d::Identity())
 {
 
   moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
-
-  if (robot_model_->getJointModelGroup(group_name_))
+  const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
+  if (joint_model_group_ptr)
   {
-    std::vector<std::string> link_names = robot_model_->getLinkModelNames();
-    if (tool_base_ != link_names.back())
+    const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
+    if (tool_frame_ != link_names.back())
     {
-      logError("Tool: %s does not match group tool: %s, functionality will be implemented in the future",
-               tool_base_.c_str(), link_names.back().c_str());
+      logWarn("Tool frame '%s' does not match group tool frame '%s', functionality will be implemented in the future",
+               tool_frame_.c_str(), link_names.back().c_str());
     }
-    if (wobj_base_ != link_names.front())
+
+    if (world_frame_ != robot_state_->getRobotModel()->getModelFrame())
     {
-      logError("Work object: %s does not match group base: %s, functionality will be implemented in the future",
-               wobj_base_.c_str(), link_names.front().c_str());
+      logWarn("World frame '%s' does not match model root frame '%s', all poses will be transformed to world frame '%s'",
+               world_frame_.c_str(), link_names.front().c_str(),world_frame_.c_str());
+
+      Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(world_frame_);
+      world_to_root_ = descartes_core::Frame(root_to_world.inverse());
     }
+
   }
   else
   {
@@ -72,14 +78,19 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, const std::vector<do
 bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> &joint_pose) const
 {
   bool rtn = false;
-  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), pose, tool_base_, 10, 10.0))
+
+  // transform to group base
+  Eigen::Affine3d tool_pose = world_to_root_.frame* pose;
+
+
+  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose,
+                              tool_frame_))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
   }
   else
   {
-    logError("Could not set Cartesian pose.");
     rtn = false;
   }
   return rtn;
@@ -88,10 +99,10 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
 bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const
 {
   //The minimum difference between solutions should be greater than the search discretization
-  //used by the IK solver.  This value is multiplied by 2 to remove any chance that a solution
+  //used by the IK solver.  This value is multiplied by 4 to remove any chance that a solution
   //in the middle of a discretization step could be double counted.  In reality, we'd like solutions
   //to be further apart than this.
-  double epsilon = 2 * robot_state_->getRobotModel()->getJointModelGroup(group_name_)->getSolverInstance()->
+  double epsilon = 4 * robot_state_->getRobotModel()->getJointModelGroup(group_name_)->getSolverInstance()->
       getSearchDiscretization();
   logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
@@ -138,10 +149,12 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
   logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
   if (joint_poses.empty())
   {
+    logError("Found 0 joint solutions out of %d iterations", sample_iterations_);
     return false;
   }
   else
   {
+    logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
     return true;
   }
 }
@@ -152,14 +165,14 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if ( isValid(joint_pose) )
   {
-    if (robot_state_->knowsFrameTransform(tool_base_))
+    if (robot_state_->knowsFrameTransform(tool_frame_))
     {
-      pose = robot_state_->getFrameTransform(tool_base_);
+      pose = world_to_root_.frame*robot_state_->getFrameTransform(tool_frame_);
       rtn = true;
     }
     else
     {
-      logError("Robot state does not recognize tool frame: %s", tool_base_.c_str());
+      logError("Robot state does not recognize tool frame: %s", tool_frame_.c_str());
       rtn = false;
     }
   }
