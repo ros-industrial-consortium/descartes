@@ -68,7 +68,7 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
 
   cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointInformation>();
 
-  TrajectoryPt::ID previous_id;
+  TrajectoryPt::ID previous_id = boost::uuids::nil_uuid();
 
   // input is valid, copy to local maps that will be maintained by the planning graph
   for (std::vector<TrajectoryPtPtr>::iterator point_iter = points->begin(); point_iter != points->end(); point_iter++)
