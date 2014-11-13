@@ -101,9 +101,8 @@ protected:
   std::string wobj_base_;
 
   /**
-   * @brief convenient transformation frames
+   * @brief convenient transformation frame
    */
-  descartes_core::Frame base_to_world_;
   descartes_core::Frame world_to_root_;
 
   /**

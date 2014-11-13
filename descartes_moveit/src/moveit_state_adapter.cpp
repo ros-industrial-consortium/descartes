@@ -34,7 +34,6 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
                                        const size_t sample_iterations) :
     robot_state_(new moveit::core::RobotState(robot_state)), group_name_(group_name),
   tool_base_(tool_frame), wobj_base_(wobj_frame), sample_iterations_(sample_iterations),
-  base_to_world_(Eigen::Affine3d::Identity()),
   world_to_root_(Eigen::Affine3d::Identity())
 {
 
@@ -57,7 +56,6 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
       Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(wobj_base_);
       Eigen::Affine3d root_to_base = robot_state_->getFrameTransform(link_names.front());
 
-      base_to_world_ = descartes_core::Frame((root_to_base.inverse())*root_to_world);
       world_to_root_ = descartes_core::Frame(root_to_world.inverse());
     }
 
@@ -84,9 +82,10 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
   bool rtn = false;
 
   // transform to group base
-  Eigen::Affine3d tool_pose = base_to_world_.frame*pose;
+  Eigen::Affine3d tool_pose = world_to_root_.frame* pose;
 
-  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose, tool_base_, 4, 0.05))
+
+  if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose, tool_base_, 4, 0.05f))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
@@ -104,7 +103,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
   //used by the IK solver.  This value is multiplied by 2 to remove any chance that a solution
   //in the middle of a discretization step could be double counted.  In reality, we'd like solutions
   //to be further apart than this.
-  double epsilon = 2 * robot_state_->getRobotModel()->getJointModelGroup(group_name_)->getSolverInstance()->
+  double epsilon = 4 * robot_state_->getRobotModel()->getJointModelGroup(group_name_)->getSolverInstance()->
       getSearchDiscretization();
   logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
