@@ -31,12 +31,10 @@ namespace descartes_moveit
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & world_frame,
-                                       const size_t sample_iterations,double ik_timeout ,double ik_attempts) :
+                                       const size_t sample_iterations) :
     robot_state_(new moveit::core::RobotState(robot_state)), group_name_(group_name),
   tool_frame_(tool_frame), world_frame_(world_frame), sample_iterations_(sample_iterations),
-  world_to_root_(Eigen::Affine3d::Identity()),
-  ik_timeout_(ik_timeout),
-  ik_attempts_(ik_attempts)
+  world_to_root_(Eigen::Affine3d::Identity())
 {
 
   moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
@@ -86,7 +84,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
 
 
   if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose,
-                              tool_frame_, ik_attempts_, ik_timeout_))
+                              tool_frame_))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
@@ -101,7 +99,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
 bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const
 {
   //The minimum difference between solutions should be greater than the search discretization
-  //used by the IK solver.  This value is multiplied by 2 to remove any chance that a solution
+  //used by the IK solver.  This value is multiplied by 4 to remove any chance that a solution
   //in the middle of a discretization step could be double counted.  In reality, we'd like solutions
   //to be further apart than this.
   double epsilon = 4 * robot_state_->getRobotModel()->getJointModelGroup(group_name_)->getSolverInstance()->

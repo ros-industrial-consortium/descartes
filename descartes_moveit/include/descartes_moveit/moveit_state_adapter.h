@@ -44,7 +44,7 @@ public:
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                     const std::string & tool_frame, const std::string & world_frame,
-                     size_t sample_iterations = 10,double ik_timeout = 0.05f,double ik_attempts = 4);
+                     size_t sample_iterations = 10);
   virtual ~MoveitStateAdapter()
   {
   }
@@ -109,12 +109,6 @@ protected:
    * @brief Joint solution sample iterations for returning "all" joints
    */
   size_t sample_iterations_;
-
-  /**
-    * @brief kinematic solver parameters
-    */
-  double ik_timeout_;
-  int ik_attempts_;
 
 };
 
