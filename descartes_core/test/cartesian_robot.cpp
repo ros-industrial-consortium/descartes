@@ -24,6 +24,19 @@
 namespace descartes_core_test
 {
 
+  CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2)
+  {
+    ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
+                     << ", orientation: " << orient_range_);
+  }
+
+  CartesianRobot::CartesianRobot(double pos_range, double orient_range) :
+    pos_range_(pos_range), orient_range_(orient_range)
+  {
+    ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
+                     << ", orientation: " << orient_range_);
+  }
+
 
   bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const
@@ -91,15 +104,28 @@ namespace descartes_core_test
   {
     bool rtn = false;
 
-    rtn = ( fabs(joint_pose[0]) <= pos_limit_ &&
-            fabs(joint_pose[1]) <= pos_limit_ &&
-            fabs(joint_pose[3]) <= pos_limit_ &&
-            fabs(joint_pose[4]) <= orient_limit_ &&
-            fabs(joint_pose[5]) <= orient_limit_ &&
-            fabs(joint_pose[6]) <= orient_limit_ );
-    if(!rtn)
+    double pos_limit = pos_range_/2.0;
+    double orient_limit = orient_range_/2.0;
+
+    if(6 == joint_pose.size())
     {
-      ROS_DEBUG_STREAM("Joint pose: " << joint_pose << " NOT valid");
+
+      rtn = ( fabs(joint_pose[0]) <= pos_limit &&
+              fabs(joint_pose[1]) <= pos_limit &&
+              fabs(joint_pose[2]) <= pos_limit &&
+              fabs(joint_pose[3]) <= orient_limit &&
+              fabs(joint_pose[4]) <= orient_limit &&
+              fabs(joint_pose[5]) <= orient_limit );
+//      if(!rtn)
+//      {
+//        ROS_DEBUG_STREAM("Joint pose: " << joint_pose << " NOT valid"
+//                         << ", outside limits[pos/orient]" << pos_limit
+//                         << "/" << orient_limit);
+//      }
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() << "exceeds 6");
     }
 
     return rtn;
@@ -113,17 +139,20 @@ namespace descartes_core_test
     tf::transformEigenToKDL(pose, kdl_frame);
     kdl_frame.M.GetRPY(R, P, Y);
 
-    rtn = ( fabs(kdl_frame.p.x()) <= pos_limit_ &&
-            fabs(kdl_frame.p.y()) <= pos_limit_ &&
-            fabs(kdl_frame.p.z()) <= pos_limit_ &&
-            fabs(R) <= orient_limit_ &&
-            fabs(P) <= orient_limit_ &&
-            fabs(Y) <= orient_limit_ );
+    double pos_limit = pos_range_/2.0;
+    double orient_limit = orient_range_/2.0;
 
-    if(!rtn)
-    {
-      ROS_DEBUG_STREAM("Cart pose: " << pose.matrix() << " NOT valid");
-    }
+    rtn = ( fabs(kdl_frame.p.x()) <= pos_limit &&
+            fabs(kdl_frame.p.y()) <= pos_limit &&
+            fabs(kdl_frame.p.z()) <= pos_limit &&
+            fabs(R) <= orient_limit &&
+            fabs(P) <= orient_limit &&
+            fabs(Y) <= orient_limit );
+
+//    if(!rtn)
+//    {
+//      ROS_DEBUG_STREAM("Cart pose: " << std::endl << pose.matrix() << " NOT valid");
+//    }
 
     return rtn;
   }

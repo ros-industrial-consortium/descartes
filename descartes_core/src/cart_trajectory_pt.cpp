@@ -36,6 +36,23 @@ EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double or
 {
   EigenSTL::vector_Affine3d rtn;
   Eigen::Affine3d sampled_frame;
+  // Estimating the number of samples base on tolerance zones and sampling increment.
+  int est_num_samples =
+      (
+        (
+          ((frame.orientation_tolerance.x_upper - frame.orientation_tolerance.x_lower)/orient_increment + 1) *
+          ((frame.orientation_tolerance.y_upper - frame.orientation_tolerance.y_lower)/orient_increment + 1) *
+          ((frame.orientation_tolerance.z_upper - frame.orientation_tolerance.z_lower)/orient_increment + 1)
+        ) *
+        (
+          ((frame.position_tolerance.x_upper - frame.position_tolerance.x_lower)/pos_increment + 1) *
+          ((frame.position_tolerance.y_upper - frame.position_tolerance.y_lower)/pos_increment + 1) *
+          ((frame.position_tolerance.z_upper - frame.position_tolerance.z_lower)/pos_increment + 1)
+        )
+      );
+  ROS_DEBUG_STREAM("Estimated number of samples: " << est_num_samples << ", reserving space");
+  rtn.reserve(est_num_samples);
+
   //TODO: The following for loops do not ensure that the rull range is sample (lower to upper)
   //since there could be round off error in the incrementing of samples.  As a result, the
   //exact upper bound may not be sampled.  Since this isn't a final implementation, this will
@@ -63,10 +80,6 @@ EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double or
                   Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
                   Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
               rtn.push_back(sampled_frame);
-              //ROS_DEBUG_STREAM("sample(tx, ty, tz, rx, ry, rz):["
-              //                 << tx << "," << ty << "," << tz << ","
-              //                 << rx << "," << ry << "," << rz << "]");
-              //ROS_DEBUG_STREAM("sampled pose: " << sampled_frame.matrix());
             }
           }
         }

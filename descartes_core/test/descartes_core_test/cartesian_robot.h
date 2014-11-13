@@ -32,14 +32,9 @@ class CartesianRobot : public descartes_core::RobotModel
 {
 public:
 
-  CartesianRobot() : pos_limit_(1.0), orient_limit_(M_PI)
-  {
-  }
-  ;
-  CartesianRobot(double pos_limit, double orient_limit) : pos_limit_(pos_limit), orient_limit_(orient_limit)
-  {
-  }
-  ;
+  CartesianRobot();
+
+  CartesianRobot(double pos_range, double orient_range)  ;
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -52,8 +47,8 @@ public:
 
   virtual bool isValid(const Eigen::Affine3d &pose) const;
 
-  double pos_limit_;
-  double orient_limit_;
+  double pos_range_;
+  double orient_range_;
 
 };
 
