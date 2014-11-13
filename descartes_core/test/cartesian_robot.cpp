@@ -97,11 +97,7 @@ namespace descartes_core_test
             fabs(joint_pose[4]) <= orient_limit_ &&
             fabs(joint_pose[5]) <= orient_limit_ &&
             fabs(joint_pose[6]) <= orient_limit_ );
-    if(rtn)
-    {
-      ROS_DEBUG_STREAM("Joint pose: " << joint_pose << " valid");
-    }
-    else
+    if(!rtn)
     {
       ROS_DEBUG_STREAM("Joint pose: " << joint_pose << " NOT valid");
     }
@@ -124,11 +120,7 @@ namespace descartes_core_test
             fabs(P) <= orient_limit_ &&
             fabs(Y) <= orient_limit_ );
 
-    if(rtn)
-    {
-      ROS_DEBUG_STREAM("Cart pose: " << pose.matrix() << " valid");
-    }
-    else
+    if(!rtn)
     {
       ROS_DEBUG_STREAM("Cart pose: " << pose.matrix() << " NOT valid");
     }

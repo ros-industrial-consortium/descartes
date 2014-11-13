@@ -23,6 +23,7 @@
  */
 
 #include <console_bridge/console.h>
+#include <ros/console.h>
 #include "descartes_core/cart_trajectory_pt.h"
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
@@ -30,28 +31,82 @@
 
 namespace descartes_core
 {
+EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double orient_increment,
+                                  const double pos_increment)
+{
+  EigenSTL::vector_Affine3d rtn;
+  Eigen::Affine3d sampled_frame;
+  //TODO: The following for loops do not ensure that the rull range is sample (lower to upper)
+  //since there could be round off error in the incrementing of samples.  As a result, the
+  //exact upper bound may not be sampled.  Since this isn't a final implementation, this will
+  //be ignored.
+  for(double rx = frame.orientation_tolerance.x_lower; rx <= frame.orientation_tolerance.x_upper;
+      rx += orient_increment)
+  {
+    for(double ry = frame.orientation_tolerance.y_lower; ry <= frame.orientation_tolerance.y_upper;
+        ry += orient_increment)
+    {
+      for(double rz = frame.orientation_tolerance.z_lower; rz <= frame.orientation_tolerance.z_upper;
+          rz += orient_increment)
+      {
+        for(double tx = frame.position_tolerance.x_lower; tx <= frame.position_tolerance.x_upper;
+            tx += pos_increment)
+        {
+          for(double ty = frame.position_tolerance.y_lower; ty <= frame.position_tolerance.y_upper;
+              ty += pos_increment)
+          {
+            for(double tz = frame.position_tolerance.z_lower; tz <= frame.position_tolerance.z_upper;
+                tz += pos_increment)
+            {
+              sampled_frame = Eigen::Translation3d(tx,ty,tz) *
+                  Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+                  Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+              rtn.push_back(sampled_frame);
+              //ROS_DEBUG_STREAM("sample(tx, ty, tz, rx, ry, rz):["
+              //                 << tx << "," << ty << "," << tz << ","
+              //                 << rx << "," << ry << "," << rz << "]");
+              //ROS_DEBUG_STREAM("sampled pose: " << sampled_frame.matrix());
+            }
+          }
+        }
+      }
+    }
+  }
+  ROS_DEBUG_STREAM("Uniform sampling of frame, utilizing orientation increment: " << orient_increment
+                   << ", and position increment: " << pos_increment
+                   << " resulted in " << rtn.size() << " samples");
+  return rtn;
+}
 
 CartTrajectoryPt::CartTrajectoryPt():
-    tool_base_(Eigen::Affine3d::Identity()),
-    tool_pt_(Eigen::Affine3d::Identity()),
-    wobj_base_(Eigen::Affine3d::Identity()),
-    wobj_pt_(Eigen::Affine3d::Identity())
-{}
-
-CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool,
-                 const TolerancedFrame &tool_pt):
-  tool_base_(tool),
-  tool_pt_(tool_pt),
-  wobj_base_(wobj_base),
-  wobj_pt_(wobj_pt)
-{}
-
-
-CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt):
   tool_base_(Eigen::Affine3d::Identity()),
   tool_pt_(Eigen::Affine3d::Identity()),
   wobj_base_(Eigen::Affine3d::Identity()),
-  wobj_pt_(wobj_pt)
+  wobj_pt_(Eigen::Affine3d::Identity()),
+  pos_increment_(0.0),
+  orient_increment_(0.0)
+{}
+
+CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool,
+                 const TolerancedFrame &tool_pt, double pos_increment, double orient_increment):
+  tool_base_(tool),
+  tool_pt_(tool_pt),
+  wobj_base_(wobj_base),
+  wobj_pt_(wobj_pt),
+  pos_increment_(pos_increment),
+  orient_increment_(orient_increment)
+{}
+
+
+CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_increment,
+                                   double orient_increment):
+  tool_base_(Eigen::Affine3d::Identity()),
+  tool_pt_(Eigen::Affine3d::Identity()),
+  wobj_base_(Eigen::Affine3d::Identity()),
+  wobj_pt_(wobj_pt),
+  pos_increment_(pos_increment),
+  orient_increment_(orient_increment)
 {}
 
 
@@ -79,6 +134,26 @@ bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
 void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
 {
   poses.clear();
+  EigenSTL::vector_Affine3d sampled_wobj_pts = uniform(wobj_pt_, orient_increment_,
+                                                     pos_increment_);
+  poses.reserve(sampled_wobj_pts.size());
+  for(size_t wobj_pt = 0; wobj_pt < sampled_wobj_pts.size(); ++wobj_pt)
+  {
+    Eigen::Affine3d pose = wobj_base_.frame * sampled_wobj_pts[wobj_pt];
+    if(model.isValid(pose))
+    {
+      poses.push_back(pose);
+    }
+  }
+  if( poses.empty())
+  {
+    ROS_WARN("Failed for find ANY cartesian poses, returning");
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Get cartesian poses, sampled: " << sampled_wobj_pts.size()
+                     << ", with " << poses.size() << " valid(returned) poses");
+  }
 }
 
 bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
