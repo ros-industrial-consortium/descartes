@@ -68,7 +68,7 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
 
   cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointInformation>();
 
-  TrajectoryPt::ID previous_id;
+  TrajectoryPt::ID previous_id = boost::uuids::nil_uuid();
 
   // input is valid, copy to local maps that will be maintained by the planning graph
   for (std::vector<TrajectoryPtPtr>::iterator point_iter = points->begin(); point_iter != points->end(); point_iter++)
@@ -81,7 +81,14 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
     {
       (*cartesian_point_link_)[previous_id].links_.id_next = point_link->id;
-      point_link->id_previous = previous_id;
+      //point_link->id_previous = previous_id;
+      logInform("PreviousID[%s].links_.id_next = %s",
+                boost::uuids::to_string(previous_id).c_str(),
+                boost::uuids::to_string(point_link->id).c_str());
+    }
+    else
+    {
+      logInform("PreviousID: %s was not found", boost::uuids::to_string(previous_id).c_str());
     }
 
     // set the new current point link
@@ -125,6 +132,8 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
     logError("unable to populate graph from calculated edges");
     return false;
   }
+
+  //printGraph();
 
   // SUCCESS! now go do something interesting with the graph
   return true;
@@ -382,7 +391,7 @@ bool PlanningGraph::findStartVertices(std::list<int> &start_points)
     if (in_ei.first == in_ei.second)
     {
       // debug
-      logDebug("Graph start node: %d", jv);
+      logInform("Graph start node: %d", jv);
       start_points.push_back(jv);
     }
   }
@@ -399,7 +408,7 @@ bool PlanningGraph::findEndVertices(std::list<int> &end_points)
     std::pair<OutEdgeIterator, OutEdgeIterator> ei = boost::out_edges(jv, dg_);
     if (ei.first == ei.second)
     {
-      logDebug("Graph end node: %d", jv);
+      logInform("Graph end node: %d", jv);
       end_points.push_back(jv);
     }
   }
@@ -424,12 +433,13 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
     vertex_index_map[i++] = dg_[jv].id;
   }
 
-  double lowest_weight = std::numeric_limits<double>::max();
+  cost = std::numeric_limits<double>::max();
 
   for (std::list<int>::iterator start = start_points.begin(); start != start_points.end(); start++)
   {
     for (std::list<int>::iterator end = end_points.begin(); end != end_points.end(); end++)
     {
+      //logInform("Checking path: S[%d] -> E[%d]", *start, *end);
       // initialize vectors to be used by dijkstra
       std::vector<int> predecessors(num_vert);
       std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
@@ -445,9 +455,9 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
       double weight = weights[*end];
 
       // if the weight of this path of less than a previous one, replace the return path
-      if (weight < lowest_weight)
+      if (weight < cost)
       {
-        cost = lowest_weight;
+        cost = weight;
         path.clear();
         // Add the destination point.
         int current = *end;
@@ -464,7 +474,7 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
     }
   }
 
-  if (lowest_weight < std::numeric_limits<double>::max())
+  if (cost < std::numeric_limits<double>::max())
   {
     return true;
   }
@@ -479,12 +489,13 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
 void PlanningGraph::printGraph()
 {
   std::stringstream ss;
-  ss << "GRAPH VERTICES (" << num_vertices(dg_) << "): \n";
+  ss << "GRAPH VERTICES (" << num_vertices(dg_) << "): ";
+  logInform("%s", ss.str().c_str());
   std::pair<VertexIterator, VertexIterator> vi = vertices(dg_);
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
-
+    ss.str("");
     ss << "Vertex: " << dg_[jv].id;
     std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
     ss << " -> {";
@@ -493,17 +504,16 @@ void PlanningGraph::printGraph()
       DirectedGraph::edge_descriptor e = *out_edge;
       ss << dg_[e].joint_end << ", ";
     }
-    ss << "}\n";
+    ss << "}";
+    logInform("%s", ss.str().c_str());
   }
-  logDebug("%s", ss.str().c_str());
 
-  ss.str("");
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
 
     std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
-
+    ss.str("");
     ss << "{";
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
@@ -512,11 +522,12 @@ void PlanningGraph::printGraph()
     }
     ss << "} -> ";
     ss << "Vertex (" << jv << "): " << dg_[jv].id << "\n";
+    logInform("%s", ss.str().c_str());
   }
-  logDebug("%s", ss.str().c_str());
 
   ss.str("");
   ss << "GRAPH EDGES (" << num_edges(dg_) << "): \n";
+  logInform("%s", ss.str().c_str());
   //Tried to make this section more clear, instead of using tie, keeping all
   //the original types so it's more clear what is going on
   std::pair<EdgeIterator, EdgeIterator> ei = edges(dg_);
@@ -526,13 +537,10 @@ void PlanningGraph::printGraph()
     DirectedGraph::edge_descriptor e = *out_edges(jv, dg_).first;
 
     DirectedGraph::edge_descriptor e2 = *edge_iter;
-
-    ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost
-        << "\n";
+    ss.str("");
+    ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost;
+    logInform("%s", ss.str().c_str());
   }
-
-  ss << "\n";
-  logDebug("%s", ss.str().c_str());
 
   ss.str("");
 }
@@ -556,6 +564,7 @@ bool PlanningGraph::calculateJointSolutions()
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.source_trajectory_.get()->getJointPoses(*robot_model_, joint_poses);
 
+    logInform("CartID: %s: JointPoses count:%i", boost::uuids::to_string(trajectory_iter->first).c_str(), joint_poses.size());
     if (joint_poses.size() == 0)
     {
       logWarn("no joint solution for this point... potential discontinuity in the graph");
@@ -573,7 +582,7 @@ bool PlanningGraph::calculateJointSolutions()
         joint_solutions_map_[new_pt->getID()] = *joint_vertex;
       }
     }
-    trajectory_iter->second.joints_ == *traj_solutions;
+    trajectory_iter->second.joints_ = *traj_solutions;
     /*************************/
   }
 
@@ -588,11 +597,20 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
     logError("no trajectory point links defined");
     return false;
   }
+  else
+  {
+    logInform("Found %i trajectory point links",cartesian_point_link_->size());
+  }
+
   if (joint_solutions_map_.size() == 0)
   {
     // no joint solutions to calculate transitions for
     logError("no joint solutions available");
     return false;
+  }
+  else
+  {
+    logInform("Found %i joint solutions available",joint_solutions_map_.size());
   }
 
   for (std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator cart_link_iter = cartesian_point_link_->begin();
@@ -603,6 +621,14 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
 
     std::list<TrajectoryPt::ID> start_joint_ids = cart_link_iter->second.joints_;
     std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[end_cart_id].joints_;
+
+    if(start_joint_ids.empty() || end_joint_ids.empty())
+    {
+      logWarn("One or more joints lists in the cartesian point link is empty, ID:%s:[start ids: %i], ID:%s:[end ids: %i]",
+              boost::uuids::to_string(start_cart_id).c_str(),
+              start_joint_ids.size(),
+              boost::uuids::to_string(end_cart_id).c_str(), end_joint_ids.size());
+    }
 
     for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
         start_joint_iter != start_joint_ids.end(); start_joint_iter++)

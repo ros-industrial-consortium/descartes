@@ -99,7 +99,9 @@ bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_stat
 void JointTrajectoryPt::getJointPoses(const RobotModel &model,
                                       std::vector<std::vector<double> > &joint_poses) const
 {
-  joint_poses.clear();
+  std::vector<double> empty_seed;
+  joint_poses.resize(1);
+  getNominalJointPose(empty_seed,model,joint_poses[0]);
 }
 
 bool JointTrajectoryPt::isValid(const RobotModel &model) const
