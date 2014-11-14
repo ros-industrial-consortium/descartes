@@ -836,7 +836,6 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
       for (int i = 0; i < start_vector.size(); i++)
       {
         vector_diff += fabs(end_vector[i] - start_vector[i]);
-        logInform("%i: [%f] - [%f] = %f", i, end_vector[i], start_vector[i], vector_diff);
       }
       return vector_diff;
     }
