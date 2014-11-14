@@ -149,8 +149,11 @@ protected:
   /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */
   bool populateGraphVertices();
 
+  /** @brief calculate weights fro each start point to each end point */
+  bool calculateEdgeWeights(const std::list<TrajectoryPt::ID> &start_joints,const std::list<TrajectoryPt::ID> &end_joints, std::list<JointEdge> &edge_results);
+
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
-  bool calculateEdgeWeights(std::list<JointEdge> &edges);
+  bool calculateAllEdgeWeights(std::list<JointEdge> &edges);
 
   /** @brief (Re)create the actual graph structure from the list of transition costs (edges) */
   bool populateGraphEdges(const std::list<JointEdge> &edges);

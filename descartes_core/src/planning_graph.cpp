@@ -119,7 +119,7 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
   // after obtaining joint trajectories, calculate each edge weight between adjacent joint trajectories
   // edge list can be local here, it needs to be passed to populate the graph but not maintained afterwards
   std::list<JointEdge> edges;
-  if (!calculateEdgeWeights(edges))
+  if (!calculateAllEdgeWeights(edges))
   {
     // failed to get edge weights
     logError("unable to calculate edge weight of joint transitions for joint trajectories");
@@ -220,46 +220,9 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
   std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_id].joints_;
 
-  // calculate edges for previous vertices to this set of vertices
-  for (std::list<TrajectoryPt::ID>::iterator previous_joint_iter = previous_joint_ids.begin();
-      previous_joint_iter != previous_joint_ids.end(); previous_joint_iter++)
-  {
-    for (std::list<TrajectoryPt::ID>::iterator this_joint_iter = traj_solutions->begin();
-        this_joint_iter != traj_solutions->end(); this_joint_iter++)
-    {
-      double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter].first;
-      JointTrajectoryPt end_joint = joint_solutions_map_[*this_joint_iter].first;
+  calculateEdgeWeights(previous_joint_ids, *traj_solutions, edges);
+  calculateEdgeWeights(*traj_solutions, next_joint_ids, edges);
 
-      transition_cost = linearWeight(start_joint, end_joint);
-      JointEdge *edge = new JointEdge();
-      edge->joint_start = *previous_joint_iter;
-      edge->joint_end = *this_joint_iter;
-      edge->transition_cost = transition_cost;
-
-      edges.push_back(*edge);
-    }
-  }
-  // calculate edges for this set of vertices to the next set of vertices
-  for (std::list<TrajectoryPt::ID>::iterator this_joint_iter = traj_solutions->begin();
-      this_joint_iter != traj_solutions->end(); this_joint_iter++)
-  {
-    for (std::list<TrajectoryPt::ID>::iterator next_joint_iter = next_joint_ids.begin();
-        next_joint_iter != next_joint_ids.end(); next_joint_iter++)
-    {
-      double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*this_joint_iter].first;
-      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter].first;
-
-      transition_cost = linearWeight(start_joint, end_joint);
-      JointEdge *edge = new JointEdge();
-      edge->joint_start = *this_joint_iter;
-      edge->joint_end = *next_joint_iter;
-      edge->transition_cost = transition_cost;
-
-      edges.push_back(*edge);
-    }
-  }
   // insert new edges
   populateGraphEdges(edges);
 
@@ -367,46 +330,9 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_cart_id].joints_;
   std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_cart_id].joints_;
 
-  // calculate edges for previous vertices to this set of vertices
-  for (std::list<TrajectoryPt::ID>::iterator previous_joint_iter = previous_joint_ids.begin();
-      previous_joint_iter != previous_joint_ids.end(); previous_joint_iter++)
-  {
-    for (std::list<TrajectoryPt::ID>::iterator this_joint_iter = traj_solutions->begin();
-        this_joint_iter != traj_solutions->end(); this_joint_iter++)
-    {
-      double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter].first;
-      JointTrajectoryPt end_joint = joint_solutions_map_[*this_joint_iter].first;
+  calculateEdgeWeights(previous_joint_ids, *traj_solutions, edges);
+  calculateEdgeWeights(*traj_solutions, next_joint_ids, edges);
 
-      transition_cost = linearWeight(start_joint, end_joint);
-      JointEdge *edge = new JointEdge();
-      edge->joint_start = *previous_joint_iter;
-      edge->joint_end = *this_joint_iter;
-      edge->transition_cost = transition_cost;
-
-      edges.push_back(*edge);
-    }
-  }
-  // calculate edges for this set of vertices to the next set of vertices
-  for (std::list<TrajectoryPt::ID>::iterator this_joint_iter = traj_solutions->begin();
-      this_joint_iter != traj_solutions->end(); this_joint_iter++)
-  {
-    for (std::list<TrajectoryPt::ID>::iterator next_joint_iter = next_joint_ids.begin();
-        next_joint_iter != next_joint_ids.end(); next_joint_iter++)
-    {
-      double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*this_joint_iter].first;
-      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter].first;
-
-      transition_cost = linearWeight(start_joint, end_joint);
-      JointEdge *edge = new JointEdge();
-      edge->joint_start = *this_joint_iter;
-      edge->joint_end = *next_joint_iter;
-      edge->transition_cost = transition_cost;
-
-      edges.push_back(*edge);
-    }
-  }
   // insert new edges
   populateGraphEdges(edges);
 
@@ -473,26 +399,9 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_id].joints_;
 
   std::list<JointEdge> edges;
-  // calculate edges for previous vertices to this set of vertices
-  for (std::list<TrajectoryPt::ID>::iterator previous_joint_iter = previous_joint_ids.begin();
-      previous_joint_iter != previous_joint_ids.end(); previous_joint_iter++)
-  {
-    for (std::list<TrajectoryPt::ID>::iterator next_joint_iter = next_joint_ids.begin();
-        next_joint_iter != next_joint_ids.end(); next_joint_iter++)
-    {
-      double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter].first;
-      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter].first;
 
-      transition_cost = linearWeight(start_joint, end_joint);
-      JointEdge *edge = new JointEdge();
-      edge->joint_start = *previous_joint_iter;
-      edge->joint_end = *next_joint_iter;
-      edge->transition_cost = transition_cost;
-
-      edges.push_back(*edge);
-    }
-  }
+  calculateEdgeWeights(previous_joint_ids, next_joint_ids, edges);
+  populateGraphEdges(edges);
 
   return true;
 }
@@ -706,7 +615,7 @@ bool PlanningGraph::calculateJointSolutions()
   return true;
 }
 
-bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
+bool PlanningGraph::calculateAllEdgeWeights(std::list<JointEdge> &edges)
 {
   if (cartesian_point_link_->size() == 0)
   {
@@ -739,37 +648,49 @@ bool PlanningGraph::calculateEdgeWeights(std::list<JointEdge> &edges)
     std::list<TrajectoryPt::ID> start_joint_ids = cart_link_iter->second.joints_;
     std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[end_cart_id].joints_;
 
-    if(start_joint_ids.empty() || end_joint_ids.empty())
+    if(!calculateEdgeWeights(start_joint_ids, end_joint_ids, edges))
     {
       logWarn("One or more joints lists in the cartesian point link is empty, ID:%s:[start ids: %i], ID:%s:[end ids: %i]",
               boost::uuids::to_string(start_cart_id).c_str(),
               start_joint_ids.size(),
               boost::uuids::to_string(end_cart_id).c_str(), end_joint_ids.size());
     }
-
-    for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
-        start_joint_iter != start_joint_ids.end(); start_joint_iter++)
-    {
-      for (std::list<TrajectoryPt::ID>::iterator end_joint_iter = end_joint_ids.begin();
-          end_joint_iter != end_joint_ids.end(); end_joint_iter++)
-      {
-        double transition_cost;
-        // TODO: Make a call to somewhere that takes to JointTrajectoryPts (std::vector<double>) to get a single weight value back
-        JointTrajectoryPt start_joint = joint_solutions_map_[*start_joint_iter].first;
-        JointTrajectoryPt end_joint = joint_solutions_map_[*end_joint_iter].first;
-
-        transition_cost = linearWeight(start_joint, end_joint);
-        JointEdge *edge = new JointEdge();
-        edge->joint_start = *start_joint_iter;
-        edge->joint_end = *end_joint_iter;
-        edge->transition_cost = transition_cost;
-
-        edges.push_back(*edge);
-      }
-    }
   }
 
   return !edges.empty();
+}
+
+bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &start_joints,const std::list<TrajectoryPt::ID> &end_joints, std::list<JointEdge> &edge_results)
+{
+  if(start_joints.empty() || end_joints.empty())
+  {
+    logWarn("One or more joints lists is empty, Start Joints: %i, End Joints: %i",
+            start_joints.size(), end_joints.size());
+    return false;
+  }
+
+  // calculate edges for previous vertices to this set of vertices
+  for (std::list<TrajectoryPt::ID>::const_iterator previous_joint_iter = start_joints.begin();
+      previous_joint_iter != start_joints.end(); previous_joint_iter++)
+  {
+    for (std::list<TrajectoryPt::ID>::const_iterator next_joint_iter = end_joints.begin();
+        next_joint_iter != end_joints.end(); next_joint_iter++)
+    {
+      double transition_cost;
+      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter].first;
+      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter].first;
+
+      transition_cost = linearWeight(start_joint, end_joint);
+      JointEdge *edge = new JointEdge();
+      edge->joint_start = *previous_joint_iter;
+      edge->joint_end = *next_joint_iter;
+      edge->transition_cost = transition_cost;
+
+      edge_results.push_back(*edge);
+    }
+  }
+
+  return edge_results.size() > 0;
 }
 
 bool PlanningGraph::populateGraphVertices()
