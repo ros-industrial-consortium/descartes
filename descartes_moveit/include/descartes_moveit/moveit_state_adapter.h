@@ -40,11 +40,11 @@ public:
    * @param robot_state robot state object utilized for kinematic/dynamic state checking
    * @param group_name planning group name
    * @param tool_frame tool frame name
-   * @param wobj_frame work object frame name
+   * @param world_frame work object frame name
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                    const std::string & tool_frame, const std::string & wobj_frame,
-                     const size_t sample_iterations = 10);
+                    const std::string & tool_frame, const std::string & world_frame,
+                     size_t sample_iterations = 10);
   virtual ~MoveitStateAdapter()
   {
   }
@@ -93,17 +93,16 @@ protected:
   /**
    * @brief Tool frame name
    */
-  std::string tool_base_;
+  std::string tool_frame_;
 
   /**
    * @brief Work object/reference frame name
    */
-  std::string wobj_base_;
+  std::string world_frame_;
 
   /**
-   * @brief convenient transformation frames
+   * @brief convenient transformation frame
    */
-  descartes_core::Frame base_to_world_;
   descartes_core::Frame world_to_root_;
 
   /**
