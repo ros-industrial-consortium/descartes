@@ -76,6 +76,8 @@ struct CartesianPointInformation
   std::list<TrajectoryPt::ID> joints_;
 };
 
+typedef std::map<TrajectoryPt::ID, CartesianPointInformation> CartesianMap;
+
 class PlanningGraph
 {
 public:
@@ -99,6 +101,11 @@ public:
   bool modifyTrajectory(TrajectoryPtPtr point);
 
   bool removeTrajectory(TrajectoryPtPtr point);
+
+  const CartesianMap& getCartesianMap()
+  {
+    return *cartesian_point_link_;
+  }
 
   /** @brief Calculate and return the shortest path from the given joint solution indices
    * @param startIndex The index of the joint solution at which to start
