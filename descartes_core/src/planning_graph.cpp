@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include <ros/console.h>
+
 #include <boost/uuid/uuid_io.hpp> // streaming operators
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
@@ -67,6 +69,8 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
   }
 
   cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointInformation>();
+
+  //printMaps();
 
   TrajectoryPt::ID previous_id = boost::uuids::nil_uuid();
 
@@ -134,6 +138,7 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
   }
 
   printGraph();
+  printMaps();
 
   // SUCCESS! now go do something interesting with the graph
   return true;
@@ -165,22 +170,45 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   point_link->id_next = next_id;
   point_link->id_previous = previous_id;
 
-  // remove graph edges from each joint at [id_previous] to joint at [id_next]
-  std::list<TrajectoryPt::ID> start_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
-  std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[next_id].joints_;
-  for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
-      start_joint_iter != start_joint_ids.end(); start_joint_iter++)
+  // save the new point_link structure to the map
+  (*cartesian_point_link_)[point_link->id].links_ = *point_link;
+
+  // if not adding at the beginning, update the previous to point to the new point
+  //if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
+  if(!previous_id.is_nil())
   {
-    for (std::list<TrajectoryPt::ID>::iterator end_joint_iter = end_joint_ids.begin();
-        end_joint_iter != end_joint_ids.end(); end_joint_iter++)
+    (*cartesian_point_link_)[previous_id].links_.id_next = point_link->id;
+  }
+  // if not updating the end, update the next to point to the new point
+  //if (cartesian_point_link_->find(next_id) != cartesian_point_link_->end())
+  if(!next_id.is_nil())
+  {
+    (*cartesian_point_link_)[next_id].links_.id_previous = point_link->id;
+  }
+
+  ROS_DEBUG("New ID: %s", boost::uuids::to_string(point_link->id).c_str());
+  ROS_DEBUG("New Next ID: %s", boost::uuids::to_string(point_link->id_next).c_str());
+  ROS_DEBUG("New Previous ID: %s", boost::uuids::to_string(point_link->id_previous).c_str());
+
+  if(!previous_id.is_nil() && !next_id.is_nil())
+  {
+    // remove graph edges from each joint at [id_previous] to joint at [id_next]
+    std::list<TrajectoryPt::ID> start_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
+    std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[next_id].joints_;
+    for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
+        start_joint_iter != start_joint_ids.end(); start_joint_iter++)
     {
-      boost::remove_edge(joint_solutions_map_[*start_joint_iter].second, joint_solutions_map_[*end_joint_iter].second,
-                         dg_);
+      for (std::list<TrajectoryPt::ID>::iterator end_joint_iter = end_joint_ids.begin();
+          end_joint_iter != end_joint_ids.end(); end_joint_iter++)
+      {
+        std::cout << "Removing edge: " << *start_joint_iter << " -> " << *end_joint_iter << std::endl;
+        boost::remove_edge(joint_solutions_map_[*start_joint_iter].second, joint_solutions_map_[*end_joint_iter].second,
+                           dg_);
+      }
     }
   }
 
   // get joint poses from new trajectory point (unique id)
-  std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
   std::vector<std::vector<double> > joint_poses;
   point.get()->getJointPoses(*robot_model_, joint_poses);
 
@@ -195,7 +223,8 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
       JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
-      traj_solutions->push_back(new_pt->getID());
+      //traj_solutions->push_back(new_pt->getID());
+      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt->getID());
       JointGraphVertexPair *joint_vertex = new JointGraphVertexPair();
       joint_vertex->first = *new_pt;
 
@@ -207,36 +236,37 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
       joint_solutions_map_[new_pt->getID()] = *joint_vertex;
     }
   }
+
   // save the list of joint solutions
-  (*cartesian_point_link_)[point->getID()].joints_ == *traj_solutions;
+  std::list<TrajectoryPt::ID> traj_solutions = (*cartesian_point_link_)[point->getID()].joints_;
   // save the actual trajectory point into the map
   (*cartesian_point_link_)[point->getID()].source_trajectory_ = point;
+
+  ROS_INFO("SAVE CART POINT ID[%s]: %s",
+           boost::uuids::to_string(point->getID()).c_str(),
+           boost::uuids::to_string((*cartesian_point_link_)[point->getID()].source_trajectory_.get()->getID()).c_str());
 
 
   std::list<JointEdge> edges;
   // recalculate edges(previous -> this; this -> next)
 
-  std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
-  std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_id].joints_;
+  if(!previous_id.is_nil())
+  {
+    std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
+    calculateEdgeWeights(previous_joint_ids, traj_solutions, edges);
+  }
 
-  calculateEdgeWeights(previous_joint_ids, *traj_solutions, edges);
-  calculateEdgeWeights(*traj_solutions, next_joint_ids, edges);
+  if(!next_id.is_nil())
+  {
+    std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_id].joints_;
+    calculateEdgeWeights(traj_solutions, next_joint_ids, edges);
+  }
 
   // insert new edges
   populateGraphEdges(edges);
 
-  // if not adding at the beginning, update the previous to point to the new point
-  if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
-  {
-    (*cartesian_point_link_)[previous_id].links_.id_next = point_link->id;
-  }
-  // if not updating the end, update the next to point to the new point
-  if (cartesian_point_link_->find(next_id) != cartesian_point_link_->end())
-  {
-    (*cartesian_point_link_)[next_id].links_.id_previous = point_link->id;
-  }
-  // save the new point_link structure to the map
-  (*cartesian_point_link_)[point_link->id].links_ = *point_link;
+  printGraph();
+  printMaps();
 
   // simple test for now to see the new point is in the list
   return (cartesian_point_link_->find(point->getID()) != cartesian_point_link_->end());
@@ -245,6 +275,8 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
 bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 {
   TrajectoryPt::ID modify_id = point.get()->getID();
+  ROS_DEBUG("Attempting to modify point:: %s", boost::uuids::to_string(modify_id).c_str());
+
   if (modify_id.is_nil())
   {
     // unable to modify a point with nil ID
@@ -295,7 +327,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 
   if (joint_poses.size() == 0)
   {
-    logWarn("no joint solution for this point... potential discontinuity in the graph");
+    ROS_WARN("no joint solution for this point... potential discontinuity in the graph");
   }
   else
   {
@@ -335,25 +367,30 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   // insert new edges
   populateGraphEdges(edges);
 
+  printGraph();
 }
 
 bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 {
   TrajectoryPt::ID delete_id = point.get()->getID();
+  ROS_INFO("Attempting to delete ID: %s", boost::uuids::to_string(delete_id).c_str());
+
   if (delete_id.is_nil())
   {
     // unable to modify a point with nil ID
-    logError("unable to delete a point with nil ID");
+    ROS_ERROR("unable to delete a point with nil ID");
     return false;
   }
   if (cartesian_point_link_->find(delete_id) == cartesian_point_link_->end())
   {
     // unable to find cartesian point with ID:
-    logError("unable to find cartesian point link with ID: %s", delete_id);
+    ROS_ERROR("unable to find cartesian point link with ID: %s", boost::uuids::to_string(delete_id).c_str());
     return false;
   }
   // identify joint points at this cartesian point
   std::list<TrajectoryPt::ID> start_joint_ids = (*cartesian_point_link_)[delete_id].joints_;
+
+  ROS_DEBUG("Attempting to delete edges from %d vertices", (int)start_joint_ids.size());
 
   // remove edges
   for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
@@ -364,10 +401,14 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
     // remove out edges
     std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
+    std::vector<DirectedGraph::edge_descriptor> to_remove;
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
       DirectedGraph::edge_descriptor e = *out_edge;
-      boost:remove_edge(e, dg_);
+      ROS_DEBUG("REMOVE OUTEDGE: %s -> %s",
+               boost::uuids::to_string(dg_[e].joint_start).c_str(),
+               boost::uuids::to_string(dg_[e].joint_end).c_str());
+      to_remove.push_back(e);
     }
 
     // remove in edges
@@ -375,7 +416,15 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
       DirectedGraph::edge_descriptor e = *in_edge;
-      boost::remove_edge(e, dg_);
+      ROS_DEBUG("REMOVE INEDGE: %s -> %s",
+               boost::uuids::to_string(dg_[e].joint_start).c_str(),
+               boost::uuids::to_string(dg_[e].joint_end).c_str());
+      to_remove.push_back(e);
+    }
+
+    for(std::vector<DirectedGraph::edge_descriptor>::iterator e_iter = to_remove.begin(); e_iter != to_remove.end(); e_iter++)
+    {
+      boost:remove_edge(*e_iter, dg_);
     }
 
     // remove the graph vertex and joint point
@@ -402,6 +451,8 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   calculateEdgeWeights(previous_joint_ids, next_joint_ids, edges);
   populateGraphEdges(edges);
 
+  printGraph();
+
   return true;
 }
 
@@ -416,7 +467,7 @@ bool PlanningGraph::findStartVertices(std::list<int> &start_points)
     if (in_ei.first == in_ei.second)
     {
       // debug
-      logInform("Graph start node: %d", jv);
+      ROS_INFO("Graph start node: %d", (int)jv);
       start_points.push_back(jv);
     }
   }
@@ -433,7 +484,7 @@ bool PlanningGraph::findEndVertices(std::list<int> &end_points)
     std::pair<OutEdgeIterator, OutEdgeIterator> ei = boost::out_edges(jv, dg_);
     if (ei.first == ei.second)
     {
-      logInform("Graph end node: %d", jv);
+      ROS_INFO("Graph end node: %d", (int)jv);
       end_points.push_back(jv);
     }
   }
@@ -510,18 +561,35 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
   }
 }
 
+void PlanningGraph::printMaps()
+{
+  ROS_INFO("Number of points: %d", (int)cartesian_point_link_->size());
+
+  for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
+      c_iter != cartesian_point_link_->end(); c_iter++)
+  {
+    ROS_INFO("C_ID: %s [P_ID: %s -> N_ID: %s](Joints: %d)",
+             boost::uuids::to_string(c_iter->first).c_str(),
+             boost::uuids::to_string(c_iter->second.links_.id_previous).c_str(),
+             boost::uuids::to_string(c_iter->second.links_.id_next).c_str(),
+             (int)c_iter->second.joints_.size());
+  }
+}
+
 // TODO: optionally output this to a .DOT file (viewable in GraphVIZ or comparable)
 void PlanningGraph::printGraph()
 {
   std::stringstream ss;
   ss << "GRAPH VERTICES (" << num_vertices(dg_) << "): ";
-  logInform("%s", ss.str().c_str());
+  ROS_INFO("%s", ss.str().c_str());
   std::pair<VertexIterator, VertexIterator> vi = vertices(dg_);
+  ROS_INFO("Graph OutEdges:");
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
     ss.str("");
-    ss << "Vertex: " << dg_[jv].id;
+    ss << "Vertex: (" << jv << ")";
+    ss << dg_[jv].id;
     std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
     ss << " -> {";
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
@@ -530,9 +598,10 @@ void PlanningGraph::printGraph()
       ss << dg_[e].joint_end << ", ";
     }
     ss << "}";
-    logInform("%s", ss.str().c_str());
+    ROS_INFO("%s", ss.str().c_str());
   }
 
+  ROS_INFO("Graph InEdges:");
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
     DirectedGraph::vertex_descriptor jv = *vert_iter;
@@ -547,12 +616,12 @@ void PlanningGraph::printGraph()
     }
     ss << "} -> ";
     ss << "Vertex (" << jv << "): " << dg_[jv].id << "\n";
-    logInform("%s", ss.str().c_str());
+    ROS_INFO("%s", ss.str().c_str());
   }
 
   ss.str("");
   ss << "GRAPH EDGES (" << num_edges(dg_) << "): \n";
-  logInform("%s", ss.str().c_str());
+  ROS_INFO("%s", ss.str().c_str());
   //Tried to make this section more clear, instead of using tie, keeping all
   //the original types so it's more clear what is going on
   std::pair<EdgeIterator, EdgeIterator> ei = edges(dg_);
@@ -564,7 +633,7 @@ void PlanningGraph::printGraph()
     DirectedGraph::edge_descriptor e2 = *edge_iter;
     ss.str("");
     ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost;
-    logInform("%s", ss.str().c_str());
+    ROS_INFO("%s", ss.str().c_str());
   }
 
   ss.str("");
@@ -589,7 +658,9 @@ bool PlanningGraph::calculateJointSolutions()
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.source_trajectory_.get()->getJointPoses(*robot_model_, joint_poses);
 
-    logInform("CartID: %s: JointPoses count:%i", boost::uuids::to_string(trajectory_iter->first).c_str(), joint_poses.size());
+    TrajectoryPt::ID tempID = trajectory_iter->first;
+    ROS_INFO("CartID: %s: JointPoses count:%i", boost::uuids::to_string(tempID).c_str(), (int)(joint_poses.size()));
+
     if (joint_poses.size() == 0)
     {
       logWarn("no joint solution for this point... potential discontinuity in the graph");
@@ -644,15 +715,24 @@ bool PlanningGraph::calculateAllEdgeWeights(std::list<JointEdge> &edges)
     TrajectoryPt::ID start_cart_id = cart_link_iter->first; // should be equal to cart_link_iter->second.links_.id
     TrajectoryPt::ID end_cart_id = cart_link_iter->second.links_.id_next;
 
-    std::list<TrajectoryPt::ID> start_joint_ids = cart_link_iter->second.joints_;
-    std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[end_cart_id].joints_;
-
-    if(!calculateEdgeWeights(start_joint_ids, end_joint_ids, edges))
+    if(!end_cart_id.is_nil())
     {
-      logWarn("One or more joints lists in the cartesian point link is empty, ID:%s:[start ids: %i], ID:%s:[end ids: %i]",
-              boost::uuids::to_string(start_cart_id).c_str(),
-              start_joint_ids.size(),
-              boost::uuids::to_string(end_cart_id).c_str(), end_joint_ids.size());
+      std::list<TrajectoryPt::ID> start_joint_ids = cart_link_iter->second.joints_;
+      std::list<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[end_cart_id].joints_;
+
+      if(!calculateEdgeWeights(start_joint_ids, end_joint_ids, edges))
+      {
+        ROS_WARN("One or more joints lists in the cartesian point link is empty, ID:%s:[start ids: %d], ID:%s:[end ids: %d]",
+                boost::uuids::to_string(start_cart_id).c_str(),
+                (int)start_joint_ids.size(),
+                boost::uuids::to_string(end_cart_id).c_str(),
+                (int)end_joint_ids.size());
+      }
+    }
+    else
+    {
+      // not going to try to calculate from point to nil
+      ROS_INFO("Not calculating edge weights to nil ID");
     }
   }
 

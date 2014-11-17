@@ -116,6 +116,7 @@ public:
    * NOTE: should add other formats for output
    */
   void printGraph();
+  void printMaps();
 
 protected:
   boost::uuids::nil_generator generate_nil;
