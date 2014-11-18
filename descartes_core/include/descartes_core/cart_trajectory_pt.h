@@ -41,17 +41,27 @@ namespace descartes_core
  */
 struct ToleranceBase
 {
-  ToleranceBase(): x_upper(0.), y_upper(0.), z_upper(0.),
-                       x_lower(0.), y_lower(0.), z_lower(0.)
-  {}
 
   /**
-    @brief Tolerance constructor for points with symetric tolerance zones. See ::init
+    @brief Returns a tolerance for points with symetric tolerance zones.
+    @param x, y, z Nomial position
+    @param x_tol, y_tol, z_tol Full tolerance zone (upper/lower values determined by nominal
+            +/- tol/2.0
     */
-  ToleranceBase(const double x, const double y, const double z,
-                    const double x_tol, const double y_tol, const double z_tol)
+  template<typename T>
+  static T createSymmetric(double x, double y, double z,
+                                          double x_tol, double y_tol, double z_tol)
   {
-    init(x, y, z, x_tol, y_tol, z_tol);
+    double x_lower = x - x_tol/2.0;
+    double x_upper = x + x_tol/2.0;
+
+    double y_lower = y - y_tol/2.0;
+    double y_upper = y + y_tol/2.0;
+
+    double z_lower = z - z_tol/2.0;
+    double z_upper = z + z_tol/2.0;
+
+    return(T(x_lower, x_upper, y_lower, y_upper, z_lower, z_upper));
   }
 
   /**
@@ -59,45 +69,50 @@ struct ToleranceBase
     @param x, y, z Nominal position
     #param tol Total tolerance zone (assumed symetric about nominal)
     */
-  ToleranceBase(const double x, const double y, const double z, const double tol)
+  template<typename T>
+  static T createSymmetric(const double x, const double y, const double z,
+                                          const double tol)
   {
-    init(x, y, z, tol, tol, tol);
+    return(createSymmetric<T>(x, y, z, tol, tol, tol));
   }
-
 
   /**
     @brief Tolerance constructor for nomial points (no tolerance). See ::init
     @param x, y, z
     */
-  ToleranceBase(const double x, const double y, const double z)
+  template<typename T>
+  static T zeroTolerance(const double x, const double y, const double z)
   {
-    init(x, y, z, 0.0, 0.0, 0.0);
+    return(createSymmetric<T>(x, y, z, 0.0, 0.0, 0.0));
   }
 
-  double x_upper, y_upper, z_upper, x_lower, y_lower, z_lower;
 
   /**
-    @brief Initialize tolerance for points with symetric tolerance zones.
-    @param x, y, z Nomial position
-    @param x_tol, y_tol, z_tol Full tolerance zone (upper/lower values determined by nominal
-            +/- tol/2.0
+    @brief Default constructor, all upper/lower limits initialized to 0
     */
-  void init(double x, double y, double z, double x_tol, double y_tol, double z_tol)
+  ToleranceBase(): x_upper(0.), y_upper(0.), z_upper(0.),
+    x_lower(0.), y_lower(0.), z_lower(0.)
+  {}
+
+  /**
+    @brief Full construtor, all values set
+    @param x/y/z_upper/lower_lim Upper/lower limits for each coordinate.
+    */
+  ToleranceBase(double x_lower_lim, double  x_upper_lim, double y_lower_lim, double y_upper_lim,
+                double z_lower_lim, double z_upper_lim):
+    x_upper(x_upper_lim), y_upper(y_upper_lim), z_upper(z_upper_lim),
+    x_lower(x_lower_lim), y_lower(y_lower_lim), z_lower(z_lower_lim)
   {
-    x_lower = x - x_tol/2.0;
-    x_upper = x + x_tol/2.0;
+    ROS_DEBUG_STREAM("Creating fully defined Tolerance(base type)");
     ROS_DEBUG_STREAM("Initializing x tolerance (lower/upper)" << x_lower << "/" << x_upper);
-
-    y_lower = y - y_tol/2.0;
-    y_upper = y + y_tol/2.0;
     ROS_DEBUG_STREAM("Initializing y tolerance (lower/upper)" << y_lower << "/" << y_upper);
-
-    z_lower = z - z_tol/2.0;
-    z_upper = z + z_tol/2.0;
     ROS_DEBUG_STREAM("Initializing z tolerance (lower/upper)" << z_lower << "/" << z_upper);
   }
 
   void clear() {x_upper = y_upper = z_upper = x_lower = y_lower = z_lower = 0.;}
+
+  double x_upper, y_upper, z_upper, x_lower, y_lower, z_lower;
+
 };
 
 
@@ -109,17 +124,13 @@ struct PositionTolerance : public ToleranceBase
   PositionTolerance() : ToleranceBase()
   {}
 
-  PositionTolerance(const double x, const double y, const double z,
-                    const double x_tol, const double y_tol, const double z_tol) :
-    ToleranceBase(x, y, z, x_tol, y_tol, z_tol)
-  {}
+  PositionTolerance(double x_lower_lim, double  x_upper_lim, double y_lower_lim, double y_upper_lim,
+                    double z_lower_lim, double z_upper_lim):
+    ToleranceBase(x_lower_lim, x_upper_lim, y_lower_lim, y_upper_lim, z_lower_lim, z_upper_lim)
+  {
+    ROS_DEBUG_STREAM("Created fully defined Position Tolerance");
+  }
 
-  PositionTolerance(const double x, const double y, const double z, const double tol) :
-    ToleranceBase(x, y, z, tol)
-  {}
-
-  PositionTolerance(const double x, const double y, const double z) : ToleranceBase(x, y, z)
-  {}
 };
 
 /**@brief Description of a per-axis rotational tolerance on orientation
@@ -130,18 +141,12 @@ struct OrientationTolerance : public ToleranceBase
   OrientationTolerance() : ToleranceBase()
   {}
 
-  OrientationTolerance(const double x, const double y, const double z,
-                    const double x_tol, const double y_tol, const double z_tol) :
-    ToleranceBase(x, y, z, x_tol, y_tol, z_tol)
-  {}
-
-  OrientationTolerance(const double x, const double y, const double z, const double tol) :
-    ToleranceBase(x, y, z, tol)
-  {}
-
-  OrientationTolerance(const double x, const double y, const double z) :
-    ToleranceBase(x, y, z)
-  {}
+  OrientationTolerance(double x_lower_lim, double  x_upper_lim, double y_lower_lim, double y_upper_lim,
+                    double z_lower_lim, double z_upper_lim):
+    ToleranceBase(x_lower_lim, x_upper_lim, y_lower_lim, y_upper_lim, z_lower_lim, z_upper_lim)
+  {
+    ROS_DEBUG_STREAM("Created fully defined Orientation Tolerance");
+  }
 };
 
 /**@brief TolerancedFrame extends frame to include tolerances and constraints on position and orientation.
@@ -155,8 +160,9 @@ struct TolerancedFrame: public Frame
   TolerancedFrame(const Frame &a):
     Frame(a) {};
 
-  TolerancedFrame(PositionTolerance pos_tol, OrientationTolerance orient_tol) :
-    position_tolerance(pos_tol), orientation_tolerance(orient_tol){}
+  TolerancedFrame(const Eigen::Affine3d &a, const PositionTolerance pos_tol,
+                  const OrientationTolerance orient_tol) :
+    Frame(a), position_tolerance(pos_tol), orientation_tolerance(orient_tol){}
 
   PositionTolerance             position_tolerance;
   OrientationTolerance          orientation_tolerance;

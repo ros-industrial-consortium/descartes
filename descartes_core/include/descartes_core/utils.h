@@ -20,6 +20,7 @@
 #define UTILS_H_
 
 #include <boost/shared_ptr.hpp>
+#include <Eigen/Core>
 
 /** \def DESCARTES_CLASS_FORWARD
     Macro that forward declares a class XXX, and also defines two shared ptrs with named XXXPtr and XXXConstPtr  */
@@ -28,5 +29,32 @@
     class C;                        \
     typedef boost::shared_ptr<C> C##Ptr;        \
     typedef boost::shared_ptr<const C> C##ConstPtr;    \
+
+namespace descartes_core
+{
+namespace utils
+{
+
+/**
+  @brief Converts scalar translations and rotations to an Eigen Frame.  This is achieved by chaining a
+  translation with individual euler rotations in ZYX order (this is equivalent to fixed rotatins XYZ)
+  http://en.wikipedia.org/wiki/Euler_angles#Conversion_between_intrinsic_and_extrinsic_rotations
+
+  @param tx, ty, tz - translations in x, y, z respectively
+  @param rx, ry, rz - rotations about x, y, z, respectively
+  */
+static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz)
+{
+  Eigen::Affine3d rtn = Eigen::Translation3d(tx,ty,tz) *
+      Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+      Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
+      Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+  return rtn;
+}
+
+} //utils
+
+} //descartes_core
+
 
 #endif /* UTILS_H_ */

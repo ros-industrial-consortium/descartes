@@ -17,6 +17,7 @@
  */
 
 #include "descartes_core/cart_trajectory_pt.h"
+#include "descartes_core/utils.h"
 #include "descartes_core_test/cartesian_robot.h"
 #include <gtest/gtest.h>
 
@@ -28,7 +29,7 @@ using namespace descartes_core_test;
 
 TEST(CartTrajPt, construction)
 {
-CartTrajectoryPt def();
+  CartTrajectoryPt def();
 }
 
 TEST(CartTrajPt, getPoses)
@@ -50,19 +51,25 @@ TEST(CartTrajPt, getPoses)
                   << ", both: " << NUM_SAMPLED_BOTH);
 
   ROS_INFO_STREAM("Initializing fuzzy position point");
-  CartTrajectoryPt fuzzy_pos(TolerancedFrame( PositionTolerance(0.0, 0.0, 0.0, POS_TOL + EPSILON),
-                                       OrientationTolerance(0.0, 0.0, 0.0, 0.0)),
-                      POS_INC, ORIENT_INC);
+  CartTrajectoryPt fuzzy_pos(TolerancedFrame(
+                               utils::toFrame(0, 0, 0, 0, 0, 0),
+                               ToleranceBase::createSymmetric<PositionTolerance>(0.0, 0.0, 0.0, POS_TOL + EPSILON),
+                               ToleranceBase::createSymmetric<OrientationTolerance>(0.0, 0.0, 0.0, 0.0)),
+                             POS_INC, ORIENT_INC);
 
   ROS_INFO_STREAM("Initializing fuzzy orientation point");
-  CartTrajectoryPt fuzzy_orient(TolerancedFrame( PositionTolerance(0.0, 0.0, 0.0, 0.0),
-                                       OrientationTolerance(0.0, 0.0, 0.0, ORIENT_TOL + EPSILON)),
-                      POS_INC, ORIENT_INC);
+  CartTrajectoryPt fuzzy_orient(TolerancedFrame(
+                                  utils::toFrame(0, 0, 0, 0, 0, 0),
+                                  ToleranceBase::createSymmetric<PositionTolerance>(0.0, 0.0, 0.0, 0.0),
+                                  ToleranceBase::createSymmetric<OrientationTolerance>(0.0, 0.0, 0.0, ORIENT_TOL + EPSILON)),
+                                POS_INC, ORIENT_INC);
 
   ROS_INFO_STREAM("Initializing fuzzy position/orientation point");
-  CartTrajectoryPt fuzzy_both(TolerancedFrame( PositionTolerance(0.0, 0.0, 0.0, POS_TOL + EPSILON),
-                                       OrientationTolerance(0.0, 0.0, 0.0, ORIENT_TOL + EPSILON)),
-                      POS_INC, ORIENT_INC);
+  CartTrajectoryPt fuzzy_both(TolerancedFrame(
+                                utils::toFrame(0, 0, 0, 0, 0, 0),
+                                ToleranceBase::createSymmetric<PositionTolerance>(0.0, 0.0, 0.0, POS_TOL + EPSILON),
+                                ToleranceBase::createSymmetric<OrientationTolerance>(0.0, 0.0, 0.0, ORIENT_TOL + EPSILON)),
+                              POS_INC, ORIENT_INC);
 
 
   EigenSTL::vector_Affine3d solutions;
@@ -86,20 +93,20 @@ TEST(CartTrajPt, getPoses)
 
   // TODO: Add tests for cartesian points outside of the robot workspace.  These
   // tests below seem to work, but predicting the number of samples isn't working.
-//  const double WS_FRACTION = 0.5;  //Reduces robot workspace
-//  const int LIMIT_SAMPLED_POS = pow(((WS_FRACTION * POS_TOL)/POS_INC) + 1, 3.0);
-//  const int LIMIT_SAMPLED_ORIENT = pow(((WS_FRACTION * ORIENT_TOL)/ORIENT_INC) + 1, 3.0);
-//  const int LIMIT_SAMPLED_BOTH = LIMIT_SAMPLED_POS * LIMIT_SAMPLED_ORIENT;
+  //  const double WS_FRACTION = 0.5;  //Reduces robot workspace
+  //  const int LIMIT_SAMPLED_POS = pow(((WS_FRACTION * POS_TOL)/POS_INC) + 1, 3.0);
+  //  const int LIMIT_SAMPLED_ORIENT = pow(((WS_FRACTION * ORIENT_TOL)/ORIENT_INC) + 1, 3.0);
+  //  const int LIMIT_SAMPLED_BOTH = LIMIT_SAMPLED_POS * LIMIT_SAMPLED_ORIENT;
 
-//  CartesianRobot limited_robot(POS_TOL * WS_FRACTION + 2*EPSILON, ORIENT_TOL * WS_FRACTION + 2*EPSILON);
-//  fuzzy_pos.getCartesianPoses(limited_robot, solutions);
-//  EXPECT_EQ(solutions.size(), LIMIT_SAMPLED_POS);
+  //  CartesianRobot limited_robot(POS_TOL * WS_FRACTION + 2*EPSILON, ORIENT_TOL * WS_FRACTION + 2*EPSILON);
+  //  fuzzy_pos.getCartesianPoses(limited_robot, solutions);
+  //  EXPECT_EQ(solutions.size(), LIMIT_SAMPLED_POS);
 
-//  fuzzy_orient.getCartesianPoses(limited_robot, solutions);
-//  EXPECT_EQ(solutions.size(), LIMIT_SAMPLED_ORIENT);
+  //  fuzzy_orient.getCartesianPoses(limited_robot, solutions);
+  //  EXPECT_EQ(solutions.size(), LIMIT_SAMPLED_ORIENT);
 
-//  fuzzy_both.getCartesianPoses(limited_robot, solutions);
-//  EXPECT_EQ(solutions.size(), LIMIT_SAMPLED_BOTH);
+  //  fuzzy_both.getCartesianPoses(limited_robot, solutions);
+  //  EXPECT_EQ(solutions.size(), LIMIT_SAMPLED_BOTH);
 
 }
 
