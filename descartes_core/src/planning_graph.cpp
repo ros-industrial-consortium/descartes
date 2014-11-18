@@ -275,7 +275,9 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
 bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 {
   TrajectoryPt::ID modify_id = point.get()->getID();
-  ROS_DEBUG("Attempting to modify point:: %s", boost::uuids::to_string(modify_id).c_str());
+  ROS_INFO("Attempting to modify point:: %s", boost::uuids::to_string(modify_id).c_str());
+
+  printMaps();
 
   if (modify_id.is_nil())
   {
@@ -292,6 +294,8 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   // identify joint points at this cartesian point
   std::list<TrajectoryPt::ID> start_joint_ids = (*cartesian_point_link_)[modify_id].joints_;
 
+  ROS_INFO("start_joint_ids.size = %d", (int)start_joint_ids.size());
+
   // remove edges
   for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
       start_joint_iter != start_joint_ids.end(); start_joint_iter++)
@@ -299,12 +303,19 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
     // get the graph vertex descriptor
     DirectedGraph::vertex_descriptor jv = joint_solutions_map_[*start_joint_iter].second;
 
+    ROS_INFO("jv: %d", (int)jv);
+
+    // TODO: make this a standalone function to take a jv and return a list of edges to remove
     // remove out edges
     std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
+    std::vector<DirectedGraph::edge_descriptor> to_remove;
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
       DirectedGraph::edge_descriptor e = *out_edge;
-      boost:remove_edge(e, dg_);
+      ROS_INFO("REMOVE OUTEDGE: %s -> %s",
+               boost::uuids::to_string(dg_[e].joint_start).c_str(),
+               boost::uuids::to_string(dg_[e].joint_end).c_str());
+      to_remove.push_back(e);
     }
 
     // remove in edges
@@ -312,7 +323,15 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
       DirectedGraph::edge_descriptor e = *in_edge;
-      boost::remove_edge(e, dg_);
+      ROS_INFO("REMOVE INEDGE: %s -> %s",
+               boost::uuids::to_string(dg_[e].joint_start).c_str(),
+               boost::uuids::to_string(dg_[e].joint_end).c_str());
+      to_remove.push_back(e);
+    }
+
+    for(std::vector<DirectedGraph::edge_descriptor>::iterator e_iter = to_remove.begin(); e_iter != to_remove.end(); e_iter++)
+    {
+      boost:remove_edge(*e_iter, dg_);
     }
 
     // remove the graph vertex and joint point
