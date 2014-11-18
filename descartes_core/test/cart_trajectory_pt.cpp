@@ -110,3 +110,23 @@ TEST(CartTrajPt, getPoses)
 
 }
 
+
+TEST(CartTrajPt, zeroTolerance)
+{
+
+  ROS_INFO_STREAM("Initializing zero tolerance cartesian point");
+  CartTrajectoryPt zero_tol_pos(TolerancedFrame(
+                               utils::toFrame(0, 0, 0, 0, 0, 0),
+                               ToleranceBase::zeroTolerance<PositionTolerance>(0.0, 0.0, 0.0),
+                               ToleranceBase::zeroTolerance<OrientationTolerance>(0.0, 0.0, 0.0)),
+                             0, 0);
+
+  EigenSTL::vector_Affine3d solutions;
+  std::vector<std::vector<double> >joint_solutions;
+
+  CartesianRobot robot;
+  zero_tol_pos.getCartesianPoses(robot, solutions);
+  EXPECT_EQ(solutions.size(), 1);
+  zero_tol_pos.getJointPoses(robot,joint_solutions);
+  EXPECT_EQ(joint_solutions.size(), 1);
+}
