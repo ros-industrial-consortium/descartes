@@ -102,10 +102,7 @@ public:
 
   bool removeTrajectory(TrajectoryPtPtr point);
 
-  const CartesianMap& getCartesianMap()
-  {
-    return *cartesian_point_link_;
-  }
+  const CartesianMap& getCartesianMap();
 
   /** @brief Calculate and return the shortest path from the given joint solution indices
    * @param startIndex The index of the joint solution at which to start
