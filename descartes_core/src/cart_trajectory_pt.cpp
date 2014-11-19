@@ -31,25 +31,50 @@
 
 namespace descartes_core
 {
-EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double orient_increment,
+ EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double orient_increment,
                                   const double pos_increment)
 {
-  EigenSTL::vector_Affine3d rtn;
+
+   EigenSTL::vector_Affine3d rtn;
+
+   if(pos_increment < 0.0 || orient_increment < 0.0)
+   {
+     ROS_WARN_STREAM("Negative position/orientation intcrement: " << pos_increment
+                     << "/" << orient_increment);
+     rtn.clear();
+     return rtn;
+   }
+
   Eigen::Affine3d sampled_frame;
+
+  // Calculating the number of samples for each tolerance (position and orientation)
+  size_t ntx, nty, ntz, nrx, nry, nrz;
+
+  if(orient_increment > 0)
+  {
+    nrx = (frame.orientation_tolerance.x_upper - frame.orientation_tolerance.x_lower)/orient_increment + 1;
+    nry = (frame.orientation_tolerance.y_upper - frame.orientation_tolerance.y_lower)/orient_increment + 1;
+    nrz = (frame.orientation_tolerance.z_upper - frame.orientation_tolerance.z_lower)/orient_increment + 1;
+  }
+  else
+  {
+    nrx = nry = nrz = 1;
+  }
+
+  if(pos_increment > 0)
+  {
+    ntx = (frame.position_tolerance.x_upper - frame.position_tolerance.x_lower)/pos_increment + 1;
+    nty = (frame.position_tolerance.y_upper - frame.position_tolerance.y_lower)/pos_increment + 1;
+    ntz = (frame.position_tolerance.z_upper - frame.position_tolerance.z_lower)/pos_increment + 1;
+  }
+  else
+  {
+    ntx = nty = ntz = 1;
+  }
+
   // Estimating the number of samples base on tolerance zones and sampling increment.
-  int est_num_samples =
-      (
-        (
-          ((frame.orientation_tolerance.x_upper - frame.orientation_tolerance.x_lower)/orient_increment + 1) *
-          ((frame.orientation_tolerance.y_upper - frame.orientation_tolerance.y_lower)/orient_increment + 1) *
-          ((frame.orientation_tolerance.z_upper - frame.orientation_tolerance.z_lower)/orient_increment + 1)
-        ) *
-        (
-          ((frame.position_tolerance.x_upper - frame.position_tolerance.x_lower)/pos_increment + 1) *
-          ((frame.position_tolerance.y_upper - frame.position_tolerance.y_lower)/pos_increment + 1) *
-          ((frame.position_tolerance.z_upper - frame.position_tolerance.z_lower)/pos_increment + 1)
-        )
-      );
+  size_t est_num_samples = ntx * nty * ntz * nrx * nry * nrz;
+
   ROS_DEBUG_STREAM("Estimated number of samples: " << est_num_samples << ", reserving space");
   rtn.reserve(est_num_samples);
 
@@ -57,24 +82,26 @@ EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double or
   //since there could be round off error in the incrementing of samples.  As a result, the
   //exact upper bound may not be sampled.  Since this isn't a final implementation, this will
   //be ignored.
-  for(double rx = frame.orientation_tolerance.x_lower; rx <= frame.orientation_tolerance.x_upper;
-      rx += orient_increment)
+  double rx, ry, rz, tx, ty, tz;
+
+  for(size_t ii = 0; ii < nrx; ++ii)
   {
-    for(double ry = frame.orientation_tolerance.y_lower; ry <= frame.orientation_tolerance.y_upper;
-        ry += orient_increment)
+    rx = frame.orientation_tolerance.x_lower + orient_increment * ii;
+    for(size_t jj = 0; jj < nry; ++jj)
     {
-      for(double rz = frame.orientation_tolerance.z_lower; rz <= frame.orientation_tolerance.z_upper;
-          rz += orient_increment)
+      ry = frame.orientation_tolerance.y_lower + orient_increment * jj;
+      for(size_t kk = 0; kk < nrz; ++kk)
       {
-        for(double tx = frame.position_tolerance.x_lower; tx <= frame.position_tolerance.x_upper;
-            tx += pos_increment)
+        rz = frame.orientation_tolerance.z_lower + orient_increment * kk;
+        for(size_t ll = 0; ll < ntx; ++ll)
         {
-          for(double ty = frame.position_tolerance.y_lower; ty <= frame.position_tolerance.y_upper;
-              ty += pos_increment)
+          tx = frame.position_tolerance.x_lower + pos_increment * ll;
+          for(size_t mm = 0; mm < nty; ++mm)
           {
-            for(double tz = frame.position_tolerance.z_lower; tz <= frame.position_tolerance.z_upper;
-                tz += pos_increment)
+            ty = frame.position_tolerance.y_lower + pos_increment * mm;
+            for(size_t nn = 0; nn < ntz; ++nn)
             {
+              tz = frame.position_tolerance.z_lower + pos_increment * nn;
               sampled_frame = Eigen::Translation3d(tx,ty,tz) *
                   Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
                   Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *

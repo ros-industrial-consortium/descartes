@@ -75,17 +75,20 @@ TEST(CartTrajPt, getPoses)
   EigenSTL::vector_Affine3d solutions;
   std::vector<std::vector<double> >joint_solutions;
 
+  ROS_INFO_STREAM("Testing fuzzy pos point");
   CartesianRobot robot(POS_TOL+2*EPSILON, ORIENT_TOL+2*EPSILON);
   fuzzy_pos.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_POS);
   fuzzy_pos.getJointPoses(robot,joint_solutions);
   EXPECT_EQ(joint_solutions.size(), NUM_SAMPLED_POS);
 
+  ROS_INFO_STREAM("Testing fuzzy orient point");
   fuzzy_orient.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_ORIENT);
   fuzzy_orient.getJointPoses(robot,joint_solutions);
   EXPECT_EQ(joint_solutions.size(), NUM_SAMPLED_ORIENT);
 
+  ROS_INFO_STREAM("Testing fuzzy both point");
   fuzzy_both.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_BOTH);
   fuzzy_both.getJointPoses(robot,joint_solutions);
