@@ -27,6 +27,7 @@
 
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/trajectory_pt.h"
+#include "ros/console.h"
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;
@@ -34,30 +35,118 @@ typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> Orientat
 namespace descartes_core
 {
 
+/**@brief Description of a per-cartesian-axis tolerance.  This tolerance is not meant
+  to be used directly but rather used as a common base for positional/orientation
+  tolerances.
+ */
+struct ToleranceBase
+{
+
+  /**
+    @brief Returns a tolerance for points with symetric tolerance zones.
+    @param x, y, z Nomial position
+    @param x_tol, y_tol, z_tol Full tolerance zone (upper/lower values determined by nominal
+            +/- tol/2.0
+    */
+  template<typename T>
+  static T createSymmetric(double x, double y, double z,
+                                          double x_tol, double y_tol, double z_tol)
+  {
+    double x_lower = x - x_tol/2.0;
+    double x_upper = x + x_tol/2.0;
+
+    double y_lower = y - y_tol/2.0;
+    double y_upper = y + y_tol/2.0;
+
+    double z_lower = z - z_tol/2.0;
+    double z_upper = z + z_tol/2.0;
+
+    return(T(x_lower, x_upper, y_lower, y_upper, z_lower, z_upper));
+  }
+
+  /**
+    @brief Tolerance constructor for points with symetric tolerance zones. See ::init
+    @param x, y, z Nominal position
+    #param tol Total tolerance zone (assumed symetric about nominal)
+    */
+  template<typename T>
+  static T createSymmetric(const double x, const double y, const double z,
+                                          const double tol)
+  {
+    return(createSymmetric<T>(x, y, z, tol, tol, tol));
+  }
+
+  /**
+    @brief Tolerance constructor for nomial points (no tolerance). See ::init
+    @param x, y, z
+    */
+  template<typename T>
+  static T zeroTolerance(const double x, const double y, const double z)
+  {
+    return(createSymmetric<T>(x, y, z, 0.0, 0.0, 0.0));
+  }
+
+
+  /**
+    @brief Default constructor, all upper/lower limits initialized to 0
+    */
+  ToleranceBase(): x_upper(0.), y_upper(0.), z_upper(0.),
+    x_lower(0.), y_lower(0.), z_lower(0.)
+  {}
+
+  /**
+    @brief Full construtor, all values set
+    @param x/y/z_upper/lower_lim Upper/lower limits for each coordinate.
+    */
+  ToleranceBase(double x_lower_lim, double  x_upper_lim, double y_lower_lim, double y_upper_lim,
+                double z_lower_lim, double z_upper_lim):
+    x_upper(x_upper_lim), y_upper(y_upper_lim), z_upper(z_upper_lim),
+    x_lower(x_lower_lim), y_lower(y_lower_lim), z_lower(z_lower_lim)
+  {
+    ROS_DEBUG_STREAM("Creating fully defined Tolerance(base type)");
+    ROS_DEBUG_STREAM("Initializing x tolerance (lower/upper)" << x_lower << "/" << x_upper);
+    ROS_DEBUG_STREAM("Initializing y tolerance (lower/upper)" << y_lower << "/" << y_upper);
+    ROS_DEBUG_STREAM("Initializing z tolerance (lower/upper)" << z_lower << "/" << z_upper);
+  }
+
+  void clear() {x_upper = y_upper = z_upper = x_lower = y_lower = z_lower = 0.;}
+
+  double x_upper, y_upper, z_upper, x_lower, y_lower, z_lower;
+
+};
+
+
 /**@brief Description of a per-cartesian-axis linear tolerance on position
  * Combined with PositionConstraint to fully define pt position.
  */
-struct PositionTolerance
+struct PositionTolerance : public ToleranceBase
 {
-  PositionTolerance(): x_upper(0.), y_upper(0.), z_upper(0.),
-                       x_lower(0.), y_lower(0.), z_lower(0.)
+  PositionTolerance() : ToleranceBase()
   {}
-  double x_upper, y_upper, z_upper, x_lower, y_lower, z_lower;
 
-  void clear() {x_upper = y_upper = z_upper = x_lower = y_lower = z_lower = 0.;};
+  PositionTolerance(double x_lower_lim, double  x_upper_lim, double y_lower_lim, double y_upper_lim,
+                    double z_lower_lim, double z_upper_lim):
+    ToleranceBase(x_lower_lim, x_upper_lim, y_lower_lim, y_upper_lim, z_lower_lim, z_upper_lim)
+  {
+    ROS_DEBUG_STREAM("Created fully defined Position Tolerance");
+  }
+
 };
 
 /**@brief Description of a per-axis rotational tolerance on orientation
  * Combined with OrientationConstraint to fully define pt orientation.
  */
-struct OrientationTolerance
+struct OrientationTolerance : public ToleranceBase
 {
-  OrientationTolerance(): x_upper(0.), y_upper(0.), z_upper(0.),
-                          x_lower(0.), y_lower(0.), z_lower(0.)
+  OrientationTolerance() : ToleranceBase()
   {}
-  double x_upper, y_upper, z_upper, x_lower, y_lower, z_lower;
 
-  void clear() {x_upper = y_upper = z_upper = x_lower = y_lower = z_lower = 0.;};
+  OrientationTolerance(double x_lower_lim, double  x_upper_lim, double y_lower_lim, double y_upper_lim,
+                    double z_lower_lim, double z_upper_lim):
+    ToleranceBase(x_lower_lim, x_upper_lim, y_lower_lim, y_upper_lim, z_lower_lim, z_upper_lim)
+  {
+    ROS_DEBUG_STREAM("Created fully defined Orientation Tolerance");
+  }
 };
 
 /**@brief TolerancedFrame extends frame to include tolerances and constraints on position and orientation.
@@ -70,6 +159,10 @@ struct TolerancedFrame: public Frame
     Frame(a) {};
   TolerancedFrame(const Frame &a):
     Frame(a) {};
+
+  TolerancedFrame(const Eigen::Affine3d &a, const PositionTolerance pos_tol,
+                  const OrientationTolerance orient_tol) :
+    Frame(a), position_tolerance(pos_tol), orientation_tolerance(orient_tol){}
 
   PositionTolerance             position_tolerance;
   OrientationTolerance          orientation_tolerance;
@@ -110,18 +203,21 @@ public:
     @param wobj_pt Underconstrained transform from object base to goal point on object.
     @param tool_base Fixed transform from wrist/tool_plate to tool base
     @param tool_pt Underconstrained transform from tool_base to effective pt on tool.
+    @param pos_increment Position increment used for sampling
+    @param pos_increment Orientation increment used for sampling
     */
   CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool_base,
-                   const TolerancedFrame &tool_pt);
-
+                   const TolerancedFrame &tool_pt, double pos_increment, double orient_increment);
 
   /**
     @brief Partial constructor of cartesian trajectory point (all frames not specified by parameters
     are initialized to Identity).  This constructor should be utilized to specify the robot tip (toleranced)
     point relative to the robot base.
     @param wobj_pt Underconstrained transform from object base to goal point on object.
+    @param pos_increment Position increment used for sampling
+    @param pos_increment Orientation increment used for sampling
     */
-  CartTrajectoryPt(const TolerancedFrame &wobj_pt);
+  CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_increment, double orient_increment);
 
 
   /**
@@ -199,6 +295,8 @@ protected:
   Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
   TolerancedFrame               wobj_pt_;       /**<@brief Underconstrained transform from object base to goal point on object. */
 
+  double                        pos_increment_;    /**<@brief Sampling discretization in cartesian directions. */
+  double                        orient_increment_; /**<@brief Sampling discretization in angular orientation. */
 
 };
 
