@@ -55,19 +55,19 @@ struct CartesianPointRelationship
 };
 
 typedef boost::adjacency_list<boost::listS, /*edge container*/
-boost::vecS, /*vertex_container*/
-//boost::directedS, /*graph type*/
-    boost::bidirectionalS, JointVertex, /*vertex structure*/
-    JointEdge /*edge structure*/
-> DirectedGraph;
+  boost::vecS, /*vertex_container*/
+  boost::bidirectionalS, /*allows in_edge and out_edge*/
+  JointVertex, /*vertex structure*/
+  JointEdge /*edge structure*/
+> JointGraph;
 
-typedef boost::graph_traits<DirectedGraph>::vertex_iterator VertexIterator;
-typedef boost::graph_traits<DirectedGraph>::edge_iterator EdgeIterator;
-typedef boost::graph_traits<DirectedGraph>::out_edge_iterator OutEdgeIterator;
-typedef boost::graph_traits<DirectedGraph>::in_edge_iterator InEdgeIterator;
+typedef boost::graph_traits<JointGraph>::vertex_iterator VertexIterator;
+typedef boost::graph_traits<JointGraph>::edge_iterator EdgeIterator;
+typedef boost::graph_traits<JointGraph>::out_edge_iterator OutEdgeIterator;
+typedef boost::graph_traits<JointGraph>::in_edge_iterator InEdgeIterator;
 
 typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
-typedef std::pair<JointTrajectoryPt, DirectedGraph::vertex_descriptor> JointGraphVertexPair;
+typedef std::pair<JointTrajectoryPt, JointGraph::vertex_descriptor> JointGraphVertexPair;
 
 struct CartesianPointInformation
 {
@@ -127,7 +127,9 @@ protected:
 
   RobotModelConstPtr robot_model_;
 
-  DirectedGraph dg_;
+  JointGraph dg_;
+
+  int recalculateJointSolutionsVertexMap(std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
 
   /** @brief simple function for getting edge weights based on linear vector differences */
   double linearWeight(JointTrajectoryPt start, JointTrajectoryPt end);
@@ -140,13 +142,13 @@ protected:
 
   // maintains a map of joint solutions with it's corresponding graph vertex_descriptor
   //   one or more of these will exist for each element in trajectory_point_map
-  std::map<TrajectoryPt::ID, JointGraphVertexPair> joint_solutions_map_;
+  std::map<TrajectoryPt::ID, JointTrajectoryPt> joint_solutions_map_;
 
   /** @brief simple function to iterate over all graph vertices to find ones that do not have an incoming edge */
-  bool findStartVertices(std::list<int> &start_points);
+  bool findStartVertices(std::list<JointGraph::vertex_descriptor> &start_points);
 
   /** @brief simple function to iterate over all graph vertices to find ones that do not have an outgoing edge */
-  bool findEndVertices(std::list<int> &end_points);
+  bool findEndVertices(std::list<JointGraph::vertex_descriptor> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given TrajectoryPt list */
   bool calculateJointSolutions();
@@ -155,7 +157,8 @@ protected:
   bool populateGraphVertices();
 
   /** @brief calculate weights fro each start point to each end point */
-  bool calculateEdgeWeights(const std::list<TrajectoryPt::ID> &start_joints,const std::list<TrajectoryPt::ID> &end_joints, std::list<JointEdge> &edge_results);
+  bool calculateEdgeWeights(const std::list<TrajectoryPt::ID> &start_joints,
+                            const std::list<TrajectoryPt::ID> &end_joints, std::list<JointEdge> &edge_results);
 
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
   bool calculateAllEdgeWeights(std::list<JointEdge> &edges);

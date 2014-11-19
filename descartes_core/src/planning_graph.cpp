@@ -228,6 +228,9 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   ROS_DEBUG("New Next ID: %s", boost::uuids::to_string(point_link->id_next).c_str());
   ROS_DEBUG("New Previous ID: %s", boost::uuids::to_string(point_link->id_previous).c_str());
 
+  std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
+  int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
+
   if(!previous_id.is_nil() && !next_id.is_nil())
   {
     // remove graph edges from each joint at [id_previous] to joint at [id_next]
@@ -240,8 +243,7 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
           end_joint_iter != end_joint_ids.end(); end_joint_iter++)
       {
         std::cout << "Removing edge: " << *start_joint_iter << " -> " << *end_joint_iter << std::endl;
-        boost::remove_edge(joint_solutions_map_[*start_joint_iter].second, joint_solutions_map_[*end_joint_iter].second,
-                           dg_);
+        boost::remove_edge(joint_vertex_map[*start_joint_iter], joint_vertex_map[*end_joint_iter], dg_);
       }
     }
   }
@@ -263,15 +265,12 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
       JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
       //traj_solutions->push_back(new_pt->getID());
       (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt->getID());
-      JointGraphVertexPair *joint_vertex = new JointGraphVertexPair();
-      joint_vertex->first = *new_pt;
 
       // insert new vertices into graph
-      DirectedGraph::vertex_descriptor v = boost::add_vertex(dg_);
+      JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
       dg_[v].id = new_pt->getID();
-      joint_vertex->second = v;
 
-      joint_solutions_map_[new_pt->getID()] = *joint_vertex;
+      joint_solutions_map_[new_pt->getID()] = *new_pt;
     }
   }
 
@@ -303,8 +302,9 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   // insert new edges
   populateGraphEdges(edges);
 
-  printGraph();
-  printMaps();
+  // DEBUG LOGS
+//  printGraph();
+//  printMaps();
 
   CartesianMap test_map = getCartesianMap();
 
@@ -317,7 +317,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   TrajectoryPt::ID modify_id = point.get()->getID();
   ROS_INFO("Attempting to modify point:: %s", boost::uuids::to_string(modify_id).c_str());
 
-  printMaps();
+//  printMaps();
 
   if (modify_id.is_nil())
   {
@@ -337,20 +337,24 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
     ROS_INFO("Found ID: %s to modify...", boost::uuids::to_string(modify_id).c_str());
   }
 
+  std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
+  int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
+
   // identify joint points at this cartesian point
   std::list<TrajectoryPt::ID> start_joint_ids = (*cartesian_point_link_)[modify_id].joints_;
 
   ROS_INFO("start_joint_ids.size = %d", (int)start_joint_ids.size());
 
-  std::vector<DirectedGraph::edge_descriptor> to_remove_edges;
-  std::vector<DirectedGraph::vertex_descriptor> to_remove_vertices;
+  std::vector<JointGraph::edge_descriptor> to_remove_edges;
+  std::vector<JointGraph::vertex_descriptor> to_remove_vertices;
   // remove edges
   for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
       start_joint_iter != start_joint_ids.end(); start_joint_iter++)
   {
     // get the graph vertex descriptor
-    DirectedGraph::vertex_descriptor jv = joint_solutions_map_[*start_joint_iter].second;
+    JointGraph::vertex_descriptor jv = joint_vertex_map[*start_joint_iter];
 
+    // NOTE: cannot print jv as int when using listS
     ROS_INFO("jv: %d", (int)jv);
 
     // TODO: make this a standalone function to take a jv and return a list of edges to remove
@@ -359,7 +363,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
-      DirectedGraph::edge_descriptor e = *out_edge;
+      JointGraph::edge_descriptor e = *out_edge;
       ROS_INFO("REMOVE OUTEDGE: %s -> %s",
                boost::uuids::to_string(dg_[e].joint_start).c_str(),
                boost::uuids::to_string(dg_[e].joint_end).c_str());
@@ -370,7 +374,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
     std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
-      DirectedGraph::edge_descriptor e = *in_edge;
+      JointGraph::edge_descriptor e = *in_edge;
       ROS_INFO("REMOVE INEDGE: %s -> %s",
                boost::uuids::to_string(dg_[e].joint_start).c_str(),
                boost::uuids::to_string(dg_[e].joint_end).c_str());
@@ -379,19 +383,27 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 
     to_remove_vertices.push_back(jv);
     joint_solutions_map_.erase(*start_joint_iter);
+//    printMaps();
   }
-  for(std::vector<DirectedGraph::edge_descriptor>::iterator e_iter = to_remove_edges.begin(); e_iter != to_remove_edges.end(); e_iter++)
+  for(std::vector<JointGraph::edge_descriptor>::iterator e_iter = to_remove_edges.begin(); e_iter != to_remove_edges.end(); e_iter++)
   {
+    ROS_DEBUG("REMOVE EDGE: %d->%d", *e_iter);
     boost:remove_edge(*e_iter, dg_);
+    //printGraph();
   }
-  for(std::vector<DirectedGraph::vertex_descriptor>::iterator v_iter = to_remove_vertices.begin(); v_iter != to_remove_vertices.end(); v_iter++)
+  std::sort(to_remove_vertices.begin(), to_remove_vertices.end());
+  std::reverse(to_remove_vertices.begin(), to_remove_vertices.end());
+  for(std::vector<JointGraph::vertex_descriptor>::iterator v_iter = to_remove_vertices.begin(); v_iter != to_remove_vertices.end(); v_iter++)
   {
     // remove the graph vertex and joint point
+    // NOTE: cannot print jv as int when using listS
+    ROS_DEBUG("REMOVE VERTEX: %d", (int)(*v_iter));
     boost::remove_vertex(*v_iter, dg_);
+//    printGraph();
   }
+  (*cartesian_point_link_)[modify_id].joints_.clear();
 
   // get new joint points for this cartesian
-  std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
   std::vector<std::vector<double> > joint_poses;
   point.get()->getJointPoses(*robot_model_, joint_poses);
 
@@ -406,38 +418,51 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
       JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
-      traj_solutions->push_back(new_pt->getID());
-      JointGraphVertexPair *joint_vertex = new JointGraphVertexPair();
-      joint_vertex->first = *new_pt;
+      (*cartesian_point_link_)[modify_id].joints_.push_back(new_pt->getID());
 
       // insert new vertices into graph
-      DirectedGraph::vertex_descriptor v = boost::add_vertex(dg_);
+      JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
       dg_[v].id = new_pt->getID();
-      joint_vertex->second = v;
 
-      joint_solutions_map_[new_pt->getID()] = *joint_vertex;
+      joint_solutions_map_[new_pt->getID()] = *new_pt;
+      ROS_INFO("Added New Joint: %d", v);
+//      printMaps();
     }
   }
-  (*cartesian_point_link_)[modify_id].joints_ == *traj_solutions;
+  std::list<TrajectoryPt::ID> traj_solutions = (*cartesian_point_link_)[modify_id].joints_;
   (*cartesian_point_link_)[modify_id].source_trajectory_ = point;
   // don't need to modify links
 
-
-  std::list<JointEdge> edges;
   // recalculate edges(previous -> this; this -> next)
   TrajectoryPt::ID previous_cart_id = (*cartesian_point_link_)[modify_id].links_.id_previous; // should be equal to cart_link_iter->second.links_.id
   TrajectoryPt::ID next_cart_id = (*cartesian_point_link_)[modify_id].links_.id_next;
 
-  std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_cart_id].joints_;
-  std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_cart_id].joints_;
+  std::list<JointEdge> edges;
+  // recalculate edges(previous -> this; this -> next)
 
-  calculateEdgeWeights(previous_joint_ids, *traj_solutions, edges);
-  calculateEdgeWeights(*traj_solutions, next_joint_ids, edges);
+  ROS_INFO("NEW EDGES 0: %d", (int)edges.size());
+  if(!previous_cart_id.is_nil())
+  {
+    std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_cart_id].joints_;
+    ROS_INFO("Calculating previous -> new weights: %d -> %d", (int)previous_joint_ids.size(), (int)traj_solutions.size());
+    calculateEdgeWeights(previous_joint_ids, traj_solutions, edges);
+  }
 
+  ROS_INFO("NEW EDGES 1: %d", (int)edges.size());
+  if(!next_cart_id.is_nil())
+  {
+    std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_cart_id].joints_;
+    ROS_INFO("Calculating new -> next weights: %d -> %d", (int)traj_solutions.size(), (int)next_joint_ids.size());
+    calculateEdgeWeights(traj_solutions, next_joint_ids, edges);
+  }
+
+  ROS_INFO("NEW EDGES 2: %d", (int)edges.size());
   // insert new edges
   populateGraphEdges(edges);
 
-  printGraph();
+  // DEBUG LOGS
+//  printGraph();
+//  printMaps();
 }
 
 bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
@@ -462,19 +487,22 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
   ROS_DEBUG("Attempting to delete edges from %d vertices", (int)start_joint_ids.size());
 
+  std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
+  int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
+
   // remove edges
   for (std::list<TrajectoryPt::ID>::iterator start_joint_iter = start_joint_ids.begin();
       start_joint_iter != start_joint_ids.end(); start_joint_iter++)
   {
     // get the graph vertex descriptor
-    DirectedGraph::vertex_descriptor jv = joint_solutions_map_[*start_joint_iter].second;
+    JointGraph::vertex_descriptor jv = joint_vertex_map[*start_joint_iter];
 
     // remove out edges
     std::pair<OutEdgeIterator, OutEdgeIterator> out_ei = out_edges(jv, dg_);
-    std::vector<DirectedGraph::edge_descriptor> to_remove;
+    std::vector<JointGraph::edge_descriptor> to_remove;
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
-      DirectedGraph::edge_descriptor e = *out_edge;
+      JointGraph::edge_descriptor e = *out_edge;
       ROS_DEBUG("REMOVE OUTEDGE: %s -> %s",
                boost::uuids::to_string(dg_[e].joint_start).c_str(),
                boost::uuids::to_string(dg_[e].joint_end).c_str());
@@ -485,14 +513,14 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
     std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
-      DirectedGraph::edge_descriptor e = *in_edge;
+      JointGraph::edge_descriptor e = *in_edge;
       ROS_DEBUG("REMOVE INEDGE: %s -> %s",
                boost::uuids::to_string(dg_[e].joint_start).c_str(),
                boost::uuids::to_string(dg_[e].joint_end).c_str());
       to_remove.push_back(e);
     }
 
-    for(std::vector<DirectedGraph::edge_descriptor>::iterator e_iter = to_remove.begin(); e_iter != to_remove.end(); e_iter++)
+    for(std::vector<JointGraph::edge_descriptor>::iterator e_iter = to_remove.begin(); e_iter != to_remove.end(); e_iter++)
     {
       boost:remove_edge(*e_iter, dg_);
     }
@@ -507,54 +535,66 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   TrajectoryPt::ID previous_id = links.id_previous;
   TrajectoryPt::ID next_id = links.id_next;
 
-  // change previous_cartesian link to next_id
-  (*cartesian_point_link_)[previous_id].links_.id_next = next_id;
-  // change next_cartesian link to previous_id
-  (*cartesian_point_link_)[next_id].links_.id_previous = previous_id;
-
-  // TODO: calculate edges from new previous to new next
-  std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
-  std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_id].joints_;
+  if(!previous_id.is_nil())
+  {
+    // change previous_cartesian link to next_id
+    (*cartesian_point_link_)[previous_id].links_.id_next = next_id;
+  }
+  if(!next_id.is_nil())
+  {
+    // change next_cartesian link to previous_id
+    (*cartesian_point_link_)[next_id].links_.id_previous = previous_id;
+  }
 
   std::list<JointEdge> edges;
+  // recalculate edges(previous -> this; this -> next)
 
-  calculateEdgeWeights(previous_joint_ids, next_joint_ids, edges);
+  if(!previous_id.is_nil() && !next_id.is_nil())
+  {
+    std::list<TrajectoryPt::ID> previous_joint_ids = (*cartesian_point_link_)[previous_id].joints_;
+    std::list<TrajectoryPt::ID> next_joint_ids = (*cartesian_point_link_)[next_id].joints_;
+    calculateEdgeWeights(previous_joint_ids, next_joint_ids, edges);
+  }
+
+  // insert new edges
   populateGraphEdges(edges);
 
-  printGraph();
+  // DEBUG LOGS
+//  printGraph();
+//  printMaps();
 
   return true;
 }
 
-bool PlanningGraph::findStartVertices(std::list<int> &start_points)
+bool PlanningGraph::findStartVertices(std::list<JointGraph::vertex_descriptor> &start_points)
 {
   std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
-    DirectedGraph::vertex_descriptor jv = *vert_iter;
+    JointGraph::vertex_descriptor jv = *vert_iter;
 
     std::pair<InEdgeIterator, InEdgeIterator> in_ei = boost::in_edges(jv, dg_);
     if (in_ei.first == in_ei.second)
     {
       // debug
-      ROS_INFO("Graph start node: %d", (int)jv);
+      //ROS_INFO("Graph start node: %d", (int)jv);
       start_points.push_back(jv);
     }
   }
   return !start_points.empty();
 }
 
-bool PlanningGraph::findEndVertices(std::list<int> &end_points)
+bool PlanningGraph::findEndVertices(std::list<JointGraph::vertex_descriptor> &end_points)
 {
   std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
-    DirectedGraph::vertex_descriptor jv = *vert_iter;
+    JointGraph::vertex_descriptor jv = *vert_iter;
 
     std::pair<OutEdgeIterator, OutEdgeIterator> ei = boost::out_edges(jv, dg_);
     if (ei.first == ei.second)
     {
-      ROS_INFO("Graph end node: %d", (int)jv);
+      //ROS_INFO("Graph end node: %d", (int)jv);
       end_points.push_back(jv);
     }
   }
@@ -563,9 +603,9 @@ bool PlanningGraph::findEndVertices(std::list<int> &end_points)
 
 bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &path)
 {
-  std::list<int> start_points;
+  std::list<JointGraph::vertex_descriptor> start_points;
   findStartVertices(start_points);
-  std::list<int> end_points;
+  std::list<JointGraph::vertex_descriptor> end_points;
   findEndVertices(end_points);
 
   size_t num_vert = boost::num_vertices(dg_);
@@ -575,19 +615,19 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
   int i = 0;
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
-    DirectedGraph::vertex_descriptor jv = *vert_iter;
+    JointGraph::vertex_descriptor jv = *vert_iter;
     vertex_index_map[i++] = dg_[jv].id;
   }
 
   cost = std::numeric_limits<double>::max();
 
-  for (std::list<int>::iterator start = start_points.begin(); start != start_points.end(); start++)
+  for (std::list<JointGraph::vertex_descriptor>::iterator start = start_points.begin(); start != start_points.end(); start++)
   {
-    for (std::list<int>::iterator end = end_points.begin(); end != end_points.end(); end++)
+    for (std::list<JointGraph::vertex_descriptor>::iterator end = end_points.begin(); end != end_points.end(); end++)
     {
       //logInform("Checking path: S[%d] -> E[%d]", *start, *end);
       // initialize vectors to be used by dijkstra
-      std::vector<int> predecessors(num_vert);
+      std::vector<JointGraph::vertex_descriptor> predecessors(num_vert);
       std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
 
       dijkstra_shortest_paths(
@@ -603,18 +643,21 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
       // if the weight of this path of less than a previous one, replace the return path
       if (weight < cost)
       {
+        ROS_INFO("NEW PATH...");
         cost = weight;
         path.clear();
         // Add the destination point.
         int current = *end;
-        path.push_front(joint_solutions_map_[vertex_index_map[current]].first);
+        path.push_front(joint_solutions_map_[vertex_index_map[current]]);
 
+        ROS_INFO("Path: %d", current);
         // Starting from the destination point step through the predecessor map
         // until the source point is reached.
         while (current != *start)
         {
           current = predecessors[current];
-          path.push_front(joint_solutions_map_[vertex_index_map[current]].first);
+          ROS_INFO("Path: %d", current);
+          path.push_front(joint_solutions_map_[vertex_index_map[current]]);
         }
       }
     }
@@ -644,11 +687,29 @@ void PlanningGraph::printMaps()
              boost::uuids::to_string(c_iter->second.links_.id_next).c_str(),
              (int)c_iter->second.joints_.size());
   }
+
+//  for(std::map<TrajectoryPt::ID, JointGraphVertexPair>::iterator j_iter = joint_solutions_map_.begin();
+//      j_iter != joint_solutions_map_.end(); j_iter++ )
+//  {
+//    ROS_INFO("J_ID: %s [%d]", boost::uuids::to_string(j_iter->first).c_str(), j_iter->second.second);
+//  }
+}
+
+int PlanningGraph::recalculateJointSolutionsVertexMap(std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_map)
+{
+  std::pair<VertexIterator, VertexIterator> vi = vertices(dg_);
+
+  for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
+  {
+    JointGraph::vertex_descriptor jv = *vert_iter;
+    joint_map[dg_[jv].id] = jv;
+  }
 }
 
 // TODO: optionally output this to a .DOT file (viewable in GraphVIZ or comparable)
 void PlanningGraph::printGraph()
 {
+  ROS_INFO("\n\nPRINTING GRAPH\n\n");
   std::stringstream ss;
   ss << "GRAPH VERTICES (" << num_vertices(dg_) << "): ";
   ROS_INFO("%s", ss.str().c_str());
@@ -656,7 +717,7 @@ void PlanningGraph::printGraph()
   ROS_INFO("Graph OutEdges:");
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
-    DirectedGraph::vertex_descriptor jv = *vert_iter;
+    JointGraph::vertex_descriptor jv = *vert_iter;
     ss.str("");
     ss << "Vertex: (" << jv << ")";
     ss << dg_[jv].id;
@@ -664,8 +725,10 @@ void PlanningGraph::printGraph()
     ss << " -> {";
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
-      DirectedGraph::edge_descriptor e = *out_edge;
-      ss << dg_[e].joint_end << ", ";
+      JointGraph::edge_descriptor e = *out_edge;
+      //ss << dg_[e].joint_end << ", ";
+      ss << "[" << dg_[e].joint_end << "] , ";
+      //joint_solutions_map_[dg_[e].joint_end] <<
     }
     ss << "}";
     ROS_INFO("%s", ss.str().c_str());
@@ -674,21 +737,21 @@ void PlanningGraph::printGraph()
   ROS_INFO("Graph InEdges:");
   for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
   {
-    DirectedGraph::vertex_descriptor jv = *vert_iter;
+    JointGraph::vertex_descriptor jv = *vert_iter;
 
     std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
     ss.str("");
     ss << "{";
     for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
     {
-      DirectedGraph::edge_descriptor e = *in_edge;
-      ss << source(e, dg_) << ", ";
+      JointGraph::edge_descriptor e = *in_edge;
+      ss << source(e, dg_) << "[" << dg_[e].joint_start << "], ";
     }
     ss << "} -> ";
-    ss << "Vertex (" << jv << "): " << dg_[jv].id << "\n";
+    ss << "Vertex (" << jv << "): " ;//<<  dg_[jv].id;
     ROS_INFO("%s", ss.str().c_str());
   }
-
+/*
   ss.str("");
   ss << "GRAPH EDGES (" << num_edges(dg_) << "): \n";
   ROS_INFO("%s", ss.str().c_str());
@@ -697,16 +760,17 @@ void PlanningGraph::printGraph()
   std::pair<EdgeIterator, EdgeIterator> ei = edges(dg_);
   for (EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter)
   {
-    DirectedGraph::vertex_descriptor jv = source(*edge_iter, dg_);
-    DirectedGraph::edge_descriptor e = *out_edges(jv, dg_).first;
+    JointGraph::vertex_descriptor jv = source(*edge_iter, dg_);
+    JointGraph::edge_descriptor e = *out_edges(jv, dg_).first;
 
-    DirectedGraph::edge_descriptor e2 = *edge_iter;
+    JointGraph::edge_descriptor e2 = *edge_iter;
     ss.str("");
     ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost;
     ROS_INFO("%s", ss.str().c_str());
   }
-
+  ROS_INFO("\n\nEND PRINTING GRAPH\n\n");
   ss.str("");
+  */
 }
 
 bool PlanningGraph::calculateJointSolutions()
@@ -743,9 +807,7 @@ bool PlanningGraph::calculateJointSolutions()
         //get UUID from JointTrajPt (convert from std::vector<double>)
         JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
         traj_solutions->push_back(new_pt->getID());
-        JointGraphVertexPair *joint_vertex = new JointGraphVertexPair();
-        joint_vertex->first = *new_pt;
-        joint_solutions_map_[new_pt->getID()] = *joint_vertex;
+        joint_solutions_map_[new_pt->getID()] = *new_pt;
       }
     }
     trajectory_iter->second.joints_ = *traj_solutions;
@@ -760,18 +822,18 @@ bool PlanningGraph::calculateAllEdgeWeights(std::list<JointEdge> &edges)
   if (cartesian_point_link_->size() == 0)
   {
     // no linkings of cartesian points
-    logError("no trajectory point links defined");
+    ROS_ERROR("no trajectory point links defined");
     return false;
   }
   else
   {
-    logInform("Found %i trajectory point links",cartesian_point_link_->size());
+    ROS_DEBUG("Found %i trajectory point links",cartesian_point_link_->size());
   }
 
   if (joint_solutions_map_.size() == 0)
   {
     // no joint solutions to calculate transitions for
-    logError("no joint solutions available");
+    ROS_ERROR("no joint solutions available");
     return false;
   }
   else
@@ -813,7 +875,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
 {
   if(start_joints.empty() || end_joints.empty())
   {
-    logWarn("One or more joints lists is empty, Start Joints: %i, End Joints: %i",
+    ROS_WARN("One or more joints lists is empty, Start Joints: %i, End Joints: %i",
             start_joints.size(), end_joints.size());
     return false;
   }
@@ -826,10 +888,15 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
         next_joint_iter != end_joints.end(); next_joint_iter++)
     {
       double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter].first;
-      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter].first;
+      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter];
+      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter];
 
       transition_cost = linearWeight(start_joint, end_joint);
+
+      ROS_DEBUG("CALC EDGE WEIGHT: %s -> %s = %f",
+               boost::uuids::to_string(*previous_joint_iter).c_str(),
+               boost::uuids::to_string(*next_joint_iter).c_str(),
+               transition_cost);
       JointEdge *edge = new JointEdge();
       edge->joint_start = *previous_joint_iter;
       edge->joint_end = *next_joint_iter;
@@ -847,16 +914,15 @@ bool PlanningGraph::populateGraphVertices()
   if (joint_solutions_map_.size() == 0)
   {
     // no joints (vertices)
-    logError("no joint solutions defined, thus no graph vertices");
+    ROS_ERROR("no joint solutions defined, thus no graph vertices");
     return false;
   }
 
-  for (std::map<TrajectoryPt::ID, JointGraphVertexPair>::iterator joint_iter = joint_solutions_map_.begin();
+  for (std::map<TrajectoryPt::ID, JointTrajectoryPt>::iterator joint_iter = joint_solutions_map_.begin();
       joint_iter != joint_solutions_map_.end(); joint_iter++)
   {
-    DirectedGraph::vertex_descriptor v = boost::add_vertex(dg_);
-    dg_[v].id = joint_iter->first;
-    joint_iter->second.second = v;
+    JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
+    dg_[v].id = joint_iter->second.getID();
   }
 
   return true;
@@ -867,17 +933,20 @@ bool PlanningGraph::populateGraphEdges(const std::list<JointEdge> &edges)
   if (edges.size() == 0)
   {
     // no edges
-    logError("no graph edges defined");
+    ROS_ERROR("no graph edges defined");
     return false;
   }
 
+  std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
+  int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
+
   for (std::list<JointEdge>::const_iterator edge_iter = edges.begin(); edge_iter != edges.end(); edge_iter++)
   {
-    DirectedGraph::edge_descriptor e;
+    JointGraph::edge_descriptor e;
     bool b;
     // add graph links for structure
-    boost::tie(e, b) = boost::add_edge(joint_solutions_map_[edge_iter->joint_start].second,
-                                       joint_solutions_map_[edge_iter->joint_end].second, dg_);
+    boost::tie(e, b) = boost::add_edge(joint_vertex_map[edge_iter->joint_start],
+                                       joint_vertex_map[edge_iter->joint_end], dg_);
     // populate edge fields
     dg_[e].transition_cost = edge_iter->transition_cost;
     dg_[e].joint_start = edge_iter->joint_start;
@@ -911,7 +980,8 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
     }
     else
     {
-      logWarn("unequal joint pose vector lengths");
+      ROS_WARN("unequal joint pose vector lengths: %d != %d", (int)start_vector.size(), (int)end_vector.size());
+
       return std::numeric_limits<double>::max();
     }
   }
