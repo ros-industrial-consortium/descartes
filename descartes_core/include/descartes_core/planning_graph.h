@@ -67,7 +67,7 @@ typedef boost::graph_traits<JointGraph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<JointGraph>::in_edge_iterator InEdgeIterator;
 
 typedef boost::shared_ptr<TrajectoryPt> TrajectoryPtPtr;
-typedef std::pair<JointTrajectoryPt, JointGraph::vertex_descriptor> JointGraphVertexPair;
+//typedef std::pair<JointTrajectoryPt, JointGraph::vertex_descriptor> JointGraphVertexPair;
 
 struct CartesianPointInformation
 {
