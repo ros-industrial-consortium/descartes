@@ -102,7 +102,7 @@ namespace descartes_core
             for(size_t nn = 0; nn < ntz; ++nn)
             {
               tz = frame.position_tolerance.z_lower + pos_increment * nn;
-              sampled_frame = Eigen::Translation3d(tx,ty,tz) *
+              sampled_frame = frame.frame*Eigen::Translation3d(tx,ty,tz) *
                   Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
                   Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
                   Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
@@ -154,7 +154,9 @@ CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt):
 tool_base_(Eigen::Affine3d::Identity()),
 tool_pt_(Eigen::Affine3d::Identity()),
 wobj_base_(Eigen::Affine3d::Identity()),
-wobj_pt_(wobj_pt)
+wobj_pt_(wobj_pt),
+pos_increment_(0),
+orient_increment_(0)
 {}
 
 bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state,
