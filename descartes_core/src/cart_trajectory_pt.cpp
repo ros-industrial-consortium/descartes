@@ -52,9 +52,9 @@ namespace descartes_core
 
   if(orient_increment > 0)
   {
-    nrx = (frame.orientation_tolerance.x_upper - frame.orientation_tolerance.x_lower)/orient_increment + 1;
-    nry = (frame.orientation_tolerance.y_upper - frame.orientation_tolerance.y_lower)/orient_increment + 1;
-    nrz = (frame.orientation_tolerance.z_upper - frame.orientation_tolerance.z_lower)/orient_increment + 1;
+    nrx = ((frame.orientation_tolerance.x_upper - frame.orientation_tolerance.x_lower)/orient_increment) + 1;
+    nry = ((frame.orientation_tolerance.y_upper - frame.orientation_tolerance.y_lower)/orient_increment) + 1;
+    nrz = ((frame.orientation_tolerance.z_upper - frame.orientation_tolerance.z_lower)/orient_increment) + 1;
   }
   else
   {
@@ -63,9 +63,9 @@ namespace descartes_core
 
   if(pos_increment > 0)
   {
-    ntx = (frame.position_tolerance.x_upper - frame.position_tolerance.x_lower)/pos_increment + 1;
-    nty = (frame.position_tolerance.y_upper - frame.position_tolerance.y_lower)/pos_increment + 1;
-    ntz = (frame.position_tolerance.z_upper - frame.position_tolerance.z_lower)/pos_increment + 1;
+    ntx = ((frame.position_tolerance.x_upper - frame.position_tolerance.x_lower)/pos_increment) + 1;
+    nty = ((frame.position_tolerance.y_upper - frame.position_tolerance.y_lower)/pos_increment) + 1;
+    ntz = ((frame.position_tolerance.z_upper - frame.position_tolerance.z_lower)/pos_increment) + 1;
   }
   else
   {
@@ -102,7 +102,8 @@ namespace descartes_core
             for(size_t nn = 0; nn < ntz; ++nn)
             {
               tz = frame.position_tolerance.z_lower + pos_increment * nn;
-              sampled_frame = frame.frame*Eigen::Translation3d(tx,ty,tz) *
+
+              sampled_frame = Eigen::Translation3d(tx,ty,tz) *
                   Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
                   Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
                   Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
