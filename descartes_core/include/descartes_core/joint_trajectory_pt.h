@@ -27,6 +27,8 @@
 
 #include <vector>
 #include "descartes_core/trajectory_pt.h"
+#include "descartes_core/samplers/joint_pt_sampler_base.h"
+
 
 namespace descartes_core
 {
@@ -179,6 +181,29 @@ inline
     wobj_ = wobj;
   }
   /**@} (end Setters section) */
+
+  /** @name Sampling
+   * @{
+   */
+  /**@brief Assign a joint pt sampler to JointTrajectoryPt.
+   *
+   * If successful, @e sampler_ will be assigned to @e sampler.
+   *
+   * @param[in] sampler Shared ptr to a JointPtSampler.
+   * @return True if sampler is initialized with point data.
+   */
+  virtual
+  bool setSampler(const JointPtSamplerBasePtr &sampler);
+
+  /**@brief Get samples
+   *
+   * @param n Desired number of samples. Actual number of returned samples may be lower. A value of 0 means to get all available remaining samples.
+   * @return Set of joint position samples.
+   */
+  virtual
+  std::vector<std::vector<double> > sample(size_t n);
+  /** @} (end section) */
+
 protected:
   std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
   std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
@@ -189,6 +214,8 @@ protected:
   Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
   Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
   /** @} (end section) */
+
+  JointPtSamplerBasePtr         sampler_;               /**<@brief Joint Pt Sampler */
 
 };
 
