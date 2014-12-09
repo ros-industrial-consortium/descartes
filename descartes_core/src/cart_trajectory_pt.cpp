@@ -253,10 +253,73 @@ bool CartTrajectoryPt::isValid(const RobotModel &model) const
   return model.isValid(robot_pose);
 }
 
+EigenSTL::vector_Affine3d CartTrajectoryPt::sample(size_t n, CartPtSamplerBasePtr &sampler)
+{
+  Eigen::Affine3d sample;
+  EigenSTL::vector_Affine3d samples;
+  while (n==0 || samples.size()<n)
+  {
+    if (!sampler->sample(sample))
+    {
+      break;
+    }
+    //TODO check that sample is valid
+    samples.push_back(sample);
+  }
+  return samples;
+}
+
+EigenSTL::vector_Affine3d CartTrajectoryPt::sampleTool(size_t n)
+{
+  return sample(n, tool_sampler_);
+}
+
+EigenSTL::vector_Affine3d CartTrajectoryPt::sampleWobj(size_t n)
+{
+  return sample(n, wobj_sampler_);
+}
 
 bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
 {
   NOT_IMPLEMENTED_ERR(false);
+}
+
+bool CartTrajectoryPt::setToolSampler(const CartPtSamplerBasePtr &sampler)
+{
+  //TODO Figure out how to define and assign tolerance
+  std::vector<double> discretization(6);
+  for (size_t ii=0; ii<3; ++ii)
+  {
+    discretization[ii] = pos_increment_;
+    discretization[ii+3] = orient_increment_;
+  }
+  sampler->setSampleIncrement(discretization);
+  if (!sampler->initPositionData(tool_pt_.frame, tool_pt_.upperPositionBound(), tool_pt_.lowerPositionBound(), tool_pt_.upperRPYBound(), tool_pt_.lowerRPYBound()) )
+  {
+    return false;
+  }
+
+  tool_sampler_ = sampler;
+  return true;
+}
+
+bool CartTrajectoryPt::setWobjSampler(const CartPtSamplerBasePtr &sampler)
+{
+  //TODO Figure out how to define and assign tolerance
+  std::vector<double> discretization(6);
+  for (size_t ii=0; ii<3; ++ii)
+  {
+    discretization[ii] = pos_increment_;
+    discretization[ii+3] = orient_increment_;
+  }
+  sampler->setSampleIncrement(discretization);
+  if (!sampler->initPositionData(wobj_pt_.frame, wobj_pt_.upperPositionBound(), wobj_pt_.lowerPositionBound(), wobj_pt_.upperRPYBound(), wobj_pt_.lowerRPYBound()) )
+  {
+    return false;
+  }
+
+  wobj_sampler_ = sampler;
+  return true;
 }
 
 } /* namespace descartes_core */
