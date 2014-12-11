@@ -39,7 +39,8 @@
 namespace descartes_core
 {
 
-PlanningGraph::PlanningGraph(RobotModelConstPtr &model)
+PlanningGraph::PlanningGraph(RobotModelConstPtr &model):
+    cartesian_point_link_(NULL)
 {
   robot_model_ = model;
 }
