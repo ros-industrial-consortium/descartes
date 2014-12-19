@@ -133,3 +133,27 @@ TEST(CartTrajPt, zeroTolerance)
   zero_tol_pos.getJointPoses(robot,joint_solutions);
   EXPECT_EQ(joint_solutions.size(), 1);
 }
+
+TEST(CartTrajPt, closestJointPose)
+{
+  const double POS_TOL = 2.0;
+  const double POS_INC = 0.2;
+
+  const double ORIENT_TOL = 1.0;
+  const double ORIENT_INC = 0.2;
+
+  const double EPSILON = 0.001;
+
+  // declaring pose values
+  Eigen::Affine3d pose = descartes_core::utils::toFrame(4,5,2,0,0,M_PI/4);
+
+
+  ROS_INFO_STREAM("Initializing tolerance cartesian point");
+  CartTrajectoryPt cart_point(TolerancedFrame(
+                                utils::toFrame(0, 0, 0, 0, 0, 0),
+                                ToleranceBase::createSymmetric<PositionTolerance>(0.0, 0.0, 0.0, POS_TOL + EPSILON),
+                                ToleranceBase::createSymmetric<OrientationTolerance>(0.0, 0.0, 0.0, ORIENT_TOL + EPSILON)),
+                              POS_INC, ORIENT_INC);
+
+  EXPECT_EQ(true, true);
+}
