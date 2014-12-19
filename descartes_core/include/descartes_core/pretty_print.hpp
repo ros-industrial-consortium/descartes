@@ -197,8 +197,8 @@ namespace pretty_print
             if (delimiters_type::values.prefix != NULL)
                 stream << delimiters_type::values.prefix;
 
-            if (begin(_container) != end(_container))
-            for (TIter it = begin(_container), it_end = end(_container); ; )
+            if (pretty_print::begin(_container) != pretty_print::end(_container))
+            for (TIter it = pretty_print::begin(_container), it_end = pretty_print::end(_container); ; )
             {
                 stream << *it;
 
