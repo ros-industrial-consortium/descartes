@@ -209,8 +209,10 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 {
   Eigen::Affine3d nominal_pose,candidate_pose;
 
-  getNominalCartPose(seed_state,model,nominal_pose);
-  model.getFK(seed_state,candidate_pose);
+  if(!model.getFK(seed_state,candidate_pose))
+  {
+    return false;
+  }
 
   // getting pose values
   Eigen::Vector3d t = candidate_pose.translation();
@@ -221,12 +223,12 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
    std::make_tuple(t(0),wobj_pt_.position_tolerance.x_lower,wobj_pt_.position_tolerance.x_upper),
    std::make_tuple(t(1),wobj_pt_.position_tolerance.y_lower,wobj_pt_.position_tolerance.y_upper),
    std::make_tuple(t(2),wobj_pt_.position_tolerance.z_lower,wobj_pt_.position_tolerance.z_upper),
-   std::make_tuple(rpy(0),wobj_pt_.orientation_tolerance.x_lower,wobj_pt_.orientation_tolerance.x_upper),
+   std::make_tuple(rpy(2),wobj_pt_.orientation_tolerance.x_lower,wobj_pt_.orientation_tolerance.x_upper),
    std::make_tuple(rpy(1),wobj_pt_.orientation_tolerance.y_lower,wobj_pt_.orientation_tolerance.y_upper),
-   std::make_tuple(rpy(2),wobj_pt_.orientation_tolerance.z_lower,wobj_pt_.orientation_tolerance.z_upper)
+   std::make_tuple(rpy(0),wobj_pt_.orientation_tolerance.z_lower,wobj_pt_.orientation_tolerance.z_upper)
   };
 
-  std::vector<double> closest_pose_vals = {t(0),t(1),t(2),rpy(0),rpy(1),rpy(2)};
+  std::vector<double> closest_pose_vals = {t(0),t(1),t(2),rpy(2),rpy(1),rpy(0)};
   bool solve_ik = false;
   for(int i = 0; i < vals.size();i++)
   {
