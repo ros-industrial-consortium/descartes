@@ -228,5 +228,12 @@ bool MoveitStateAdapter::isValid(const Eigen::Affine3d &pose) const
   return getIK(pose, dummy);
 }
 
+int MoveitStateAdapter::getDOF() const
+{
+  const moveit::core::JointModelGroup* group;
+  group = robot_state_->getJointModelGroup(group_name_);
+  return group->getVariableCount();
+}
+
 } //descartes_moveit
 

@@ -89,6 +89,12 @@ public:
   virtual bool getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const = 0;
 
   /**
+   * @brief Returns number of DOFs
+   * @return Int
+   */
+  virtual int getDOF() const = 0;
+
+  /**
    * @brief Performs all necessary checks to determine joint pose is valid
    * @param joint_pose Pose to check
    * @return True if valid
