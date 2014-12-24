@@ -26,22 +26,45 @@
 #define SPARSE_PLANNER_H_
 
 #include <descartes_core/planning_graph.h>
+#include <tuple>
 
 namespace descartes_core
 {
 
 class SparsePlanner : public descartes_core::PlanningGraph
 {
+
 public:
-  SparsePlanner(RobotModelConstPtr &model);
+  typedef std::vector<std::tuple<int,TrajectoryPtPtr,JointTrajectoryPt> > SolutionArray;
+public:
+  SparsePlanner(RobotModelConstPtr &model,double sampling = 0.1f);
   virtual ~SparsePlanner();
 
-  bool setTrajectory(const std::vector<TrajectoryPt>& traj, double target_sampling = 0.1f);
+  void setSampling(double sampling);
+  bool setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj);
+  const std::map<TrajectoryPt::ID,JointTrajectoryPt>& getSolution();
 
-public:
+protected:
+
+  bool plan();
+  bool interpolateJointPose(const std::vector<double>& start,const std::vector<double>& end,
+                   double t,std::vector<double>& interp);
+  int interpolateSparseTrajectory(const SolutionArray& sparse_solution,int &sparse_index, int &point_pos);
+  void sampleTrajectory(double sampling,const std::vector<TrajectoryPtPtr>& sparse_trajectory_points,
+                        SolutionArray& solution_array);
+
+protected:
+
+  enum class InterpolationResult: int
+  {
+    ERROR = -1,
+    REPLAN,
+    SUCCESS
+  };
 
   double sampling_;
-  std::vector<TrajectoryPt> cart_points_;
+  std::vector<TrajectoryPtPtr> cart_points_;
+  SolutionArray sparse_solution_array_;
   std::map<TrajectoryPt::ID,JointTrajectoryPt> joint_points_map_;
 
 };

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(descartes_core)
 
 set(CMAKE_BUILD_TYPE Debug)
-
+add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
   console_bridge
   moveit_core
@@ -44,11 +44,10 @@ add_library(descartes_core
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
             src/planning_graph.cpp
+            src/sparse_planner.cpp
             src/robot_model.cpp
 )
-##Disabling planning graph due to issues with
-##Trajectory point ID
-##  src/planning_graph.cpp
+
 target_link_libraries(descartes_core
                       ${catkin_LIBRARIES}
 )
