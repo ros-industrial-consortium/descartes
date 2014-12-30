@@ -42,7 +42,11 @@ public:
 
   void setSampling(double sampling);
   bool setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj);
+  bool addTrajectoryPointAfter(TrajectoryPt::ID ref_id,TrajectoryPtPtr cp);
+  bool addTrajectoryPointBefore(TrajectoryPt::ID ref_id,TrajectoryPtPtr cp);
+  bool modifyTrajectoryPoint(TrajectoryPt::ID ref_id,TrajectoryPtPtr cp);
   const std::map<TrajectoryPt::ID,JointTrajectoryPt>& getSolution();
+  bool getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id,JointTrajectoryPt& j);
 
 protected:
 
@@ -52,6 +56,11 @@ protected:
   int interpolateSparseTrajectory(const SolutionArray& sparse_solution,int &sparse_index, int &point_pos);
   void sampleTrajectory(double sampling,const std::vector<TrajectoryPtPtr>& sparse_trajectory_points,
                         SolutionArray& solution_array);
+
+  int getPointIndex(const TrajectoryPt::ID& ref_id);
+  int getSparsePointIndex(const TrajectoryPt::ID& ref_id);
+
+  bool getOrderedSparseTrajectory(std::vector<TrajectoryPtPtr>& sparse_array);
 
 protected:
 
