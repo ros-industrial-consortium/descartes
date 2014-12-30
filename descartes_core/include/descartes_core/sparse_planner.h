@@ -42,9 +42,10 @@ public:
 
   void setSampling(double sampling);
   bool setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj);
-  bool addTrajectoryPointAfter(TrajectoryPt::ID ref_id,TrajectoryPtPtr cp);
-  bool addTrajectoryPointBefore(TrajectoryPt::ID ref_id,TrajectoryPtPtr cp);
-  bool modifyTrajectoryPoint(TrajectoryPt::ID ref_id,TrajectoryPtPtr cp);
+  bool addTrajectoryPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
+  bool addTrajectoryPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
+  bool modifyTrajectoryPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
+  bool removeTrajectoryPoint(const TrajectoryPt::ID& ref_id);
   const std::map<TrajectoryPt::ID,JointTrajectoryPt>& getSolution();
   bool getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id,JointTrajectoryPt& j);
 
@@ -54,13 +55,16 @@ protected:
   bool interpolateJointPose(const std::vector<double>& start,const std::vector<double>& end,
                    double t,std::vector<double>& interp);
   int interpolateSparseTrajectory(const SolutionArray& sparse_solution,int &sparse_index, int &point_pos);
-  void sampleTrajectory(double sampling,const std::vector<TrajectoryPtPtr>& sparse_trajectory_points,
-                        SolutionArray& solution_array);
+  void sampleTrajectory(double sampling,const std::vector<TrajectoryPtPtr>& dense_trajectory_array,
+                        std::vector<TrajectoryPtPtr>& sparse_trajectory_array);
 
-  int getPointIndex(const TrajectoryPt::ID& ref_id);
+  int getDensePointIndex(const TrajectoryPt::ID& ref_id);
   int getSparsePointIndex(const TrajectoryPt::ID& ref_id);
+  int findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id,bool skip_equal = true);
+  bool isInSparseTrajectory(const TrajectoryPt::ID& ref_id);
 
-  bool getOrderedSparseTrajectory(std::vector<TrajectoryPtPtr>& sparse_array);
+  bool getOrderedSparseCartesianArray(std::vector<TrajectoryPtPtr>& sparse_array);
+  bool getSparseSolutionArray(SolutionArray& sparse_solution_array);
 
 protected:
 
