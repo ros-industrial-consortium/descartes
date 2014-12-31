@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <console_bridge/console.h>
 #include <ros/console.h>
+#include <boost/uuid/uuid_io.hpp>
 #include "descartes_core/cart_trajectory_pt.h"
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
@@ -243,6 +244,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
       {
         solve_ik =  true;
         closest_pose_vals[i] = v < lower ? lower : upper;
+        ROS_DEBUG("Cartesian nominal [%i] exceeded bounds: [val: %f, lower: %f, upper: %f]",i,v,lower,upper);
       }
     }
     else
@@ -250,6 +252,8 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
       if(std::abs(v-lower) > EQUALITY_TOLERANCE)
       {
         solve_ik =  true;
+        ROS_DEBUG("Cartesian nominals [%i] differ: [val: %f, lower: %f, upper: %f]",i,v,lower,upper);
+        closest_pose_vals[i] = lower;
       }
     }
   }
@@ -262,9 +266,9 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
                                                                  closest_pose_vals[3],
                                                                  closest_pose_vals[4],
                                                                  closest_pose_vals[5]);
-
     if(!model.getIK(closest_pose,seed_state,joint_pose))
     {
+      ROS_ERROR_STREAM("Ik failed on closest pose");
       return false;
     }
   }

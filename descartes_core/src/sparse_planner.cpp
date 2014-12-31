@@ -248,9 +248,9 @@ bool SparsePlanner::isInSparseTrajectory(const TrajectoryPt::ID& ref_id)
 int SparsePlanner::getDensePointIndex(const TrajectoryPt::ID& ref_id)
 {
   int index = INVALID_INDEX;
-  auto predicate = [ref_id](TrajectoryPtPtr cp)
+  auto predicate = [&ref_id](TrajectoryPtPtr cp)
     {
-      return ref_id== cp->getID();
+      return ref_id == cp->getID();
     };
 
   auto pos = std::find_if(cart_points_.begin(),cart_points_.end(),predicate);
@@ -317,9 +317,13 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
   std::vector<TrajectoryPtPtr> sparse_cart_points;
   double cost;
 
-  if(!getShortestPath(cost,sparse_joint_points) ||
-      !getOrderedSparseArray(sparse_cart_points) ||
-      (sparse_joint_points.size() != sparse_cart_points.size()))
+  if(getShortestPath(cost,sparse_joint_points) &&
+      getOrderedSparseArray(sparse_cart_points) &&
+      (sparse_joint_points.size() == sparse_cart_points.size()))
+  {
+    ROS_INFO_STREAM("Sparse solution was found");
+  }
+  else
   {
     ROS_ERROR_STREAM("Failed to find sparse joint solution");
     return false;
@@ -331,7 +335,7 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
   sparse_solution_array.reserve(sparse_cart_points.size());
   for(auto& item : sparse_joint_points)
   {
-    TrajectoryPtPtr cp = sparse_cart_points[i];
+    TrajectoryPtPtr cp = sparse_cart_points[i++];
     JointTrajectoryPt& jp = item;
     index = getDensePointIndex(cp->getID());
 
@@ -340,9 +344,15 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
       ROS_ERROR_STREAM("Cartesian point "<<cp->getID()<<" not found");
       return false;
     }
+    else
+    {
+      ROS_DEBUG_STREAM("Point with dense index "<<index<<" and id "<< cp->getID()<< " added to sparse");
+    }
 
     sparse_solution_array.push_back(std::make_tuple(index,cp,jp));
   }
+
+  ROS_WARN_STREAM("Sparse joint solution created successfully with "<<sparse_solution_array.size() <<" points");
 
   return true;
 }
@@ -400,6 +410,7 @@ bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, J
   }
   else
   {
+    ROS_ERROR_STREAM("Solution for point "<<cart_id<<" was not found");
     return false;
   }
 
@@ -529,6 +540,7 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
 
     // interpolating
     int step = end_index - start_index;
+    ROS_DEBUG_STREAM("Interpolation parameters: step : "<<step<<", start index "<<start_index<<", end index "<<end_index);
     for(int j = 1; (j < step) && ( (start_index + j) < cart_points_.size()); j++)
     {
       int pos = start_index+j;
@@ -542,18 +554,20 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
       TrajectoryPtPtr cart_point = cart_points_[pos];
       if(cart_point->getClosestJointPose(rough_interp,*robot_model_,aprox_interp))
       {
+        ROS_DEBUG_STREAM("Interpolated point at position "<<pos);
         joint_points_map_.insert(std::make_pair(cart_point->getID(),JointTrajectoryPt(aprox_interp)));
       }
       else
       {
           sparse_index = k;
           point_pos = pos;
+          ROS_WARN_STREAM("Couldn't find a closest joint pose for point "<< cart_point->getID()<<", replanning");
           return (int)InterpolationResult::REPLAN;
       }
     }
 
     // adding end joint point to solution
-    joint_points_map_.insert(std::make_pair(end_tpoint->getID(),start_jpoint));
+    joint_points_map_.insert(std::make_pair(end_tpoint->getID(),end_jpoint));
   }
 
   return (int)InterpolationResult::SUCCESS;

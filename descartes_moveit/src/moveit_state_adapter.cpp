@@ -41,6 +41,8 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
   {
+    joint_model_group_ptr->printGroupInfo();
+
     const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
     if (tool_frame_ != link_names.back())
     {
