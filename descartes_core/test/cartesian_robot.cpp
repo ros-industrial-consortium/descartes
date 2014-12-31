@@ -96,7 +96,10 @@ namespace descartes_core_test
     return rtn;
   }
 
-
+  int CartesianRobot::getDOF() const
+  {
+    return 6;
+  }
 
   bool CartesianRobot::isValid(const std::vector<double> &joint_pose) const
   {

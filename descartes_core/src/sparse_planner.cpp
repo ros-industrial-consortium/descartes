@@ -59,8 +59,8 @@ bool SparsePlanner::setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj
 
   if(insertGraph(&sparse_trajectory_array) && plan())
   {
-    int planned_count = sparse_trajectory_array.size();
-    int interp_count = cart_points_.size()  - sparse_trajectory_array.size();
+    int planned_count = sparse_solution_array_.size();
+    int interp_count = cart_points_.size()  - sparse_solution_array_.size();
     ROS_INFO("Sparse plan succeeded with %i planned point and %i interpolated points",planned_count,interp_count);
   }
   else
@@ -409,11 +409,17 @@ bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, J
 void SparsePlanner::sampleTrajectory(double sampling,const std::vector<TrajectoryPtPtr>& dense_trajectory_array,
                       std::vector<TrajectoryPtPtr>& sparse_trajectory_array)
 {
-  int skip = dense_trajectory_array.size()/sampling;
+  std::stringstream ss;
+  int skip = std::ceil(double(1.0f)/sampling);
+  ROS_INFO_STREAM("Sampling skip val: "<<skip<< " from sampling val: "<<sampling);
+  ss<<"[";
   for(int i = 0; i < dense_trajectory_array.size();i+=skip)
   {
     sparse_trajectory_array.push_back(dense_trajectory_array[i]);
+    ss<<i<<" ";
   }
+  ss<<"]";
+  ROS_INFO_STREAM("Sparse Indices:\n"<<ss.str());
 
   // add the last one
   if(sparse_trajectory_array.back()->getID() != dense_trajectory_array.back()->getID())
@@ -498,7 +504,7 @@ bool SparsePlanner::plan()
 
   }
 
-  return true;
+  return succeeded;
 }
 
 int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solution_array,int &sparse_index, int &point_pos)
