@@ -49,7 +49,7 @@ void SparsePlanner::setSampling(double sampling)
   sampling_ = sampling;
 }
 
-bool SparsePlanner::setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj)
+bool SparsePlanner::setPoints(const std::vector<TrajectoryPtPtr>& traj)
 {
   cart_points_.assign(traj.begin(),traj.end());
   std::vector<TrajectoryPtPtr> sparse_trajectory_array;
@@ -70,7 +70,7 @@ bool SparsePlanner::setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj
   return true;
 }
 
-bool SparsePlanner::addTrajectoryPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
   int sparse_index;
   int index;
@@ -113,7 +113,7 @@ bool SparsePlanner::addTrajectoryPointAfter(const TrajectoryPt::ID& ref_id,Traje
   return true;
 }
 
-bool SparsePlanner::addTrajectoryPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
   int sparse_index;
   int index;
@@ -154,7 +154,7 @@ bool SparsePlanner::addTrajectoryPointBefore(const TrajectoryPt::ID& ref_id,Traj
   return true;
 }
 
-bool SparsePlanner::removeTrajectoryPoint(const TrajectoryPt::ID& ref_id)
+bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
 {
   int index = getDensePointIndex(ref_id);
   if(index == INVALID_INDEX)
@@ -191,7 +191,7 @@ bool SparsePlanner::removeTrajectoryPoint(const TrajectoryPt::ID& ref_id)
   return true;
 }
 
-bool SparsePlanner::modifyTrajectoryPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
   int sparse_index;
   TrajectoryPt::ID prev_id, next_id;
@@ -318,7 +318,7 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
   double cost;
 
   if(!getShortestPath(cost,sparse_joint_points) ||
-      !getOrderedSparseCartesianArray(sparse_cart_points) ||
+      !getOrderedSparseArray(sparse_cart_points) ||
       (sparse_joint_points.size() != sparse_cart_points.size()))
   {
     ROS_ERROR_STREAM("Failed to find sparse joint solution");
@@ -347,7 +347,7 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
   return true;
 }
 
-bool SparsePlanner::getOrderedSparseCartesianArray(std::vector<TrajectoryPtPtr>& sparse_array)
+bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array)
 {
   const CartesianMap& cart_map = getCartesianMap();
   TrajectoryPt::ID first_id = boost::uuids::nil_uuid();

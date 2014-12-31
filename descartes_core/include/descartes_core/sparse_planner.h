@@ -41,11 +41,11 @@ public:
   virtual ~SparsePlanner();
 
   void setSampling(double sampling);
-  bool setTrajectoryPoints(const std::vector<TrajectoryPtPtr>& traj);
-  bool addTrajectoryPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
-  bool addTrajectoryPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
-  bool modifyTrajectoryPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
-  bool removeTrajectoryPoint(const TrajectoryPt::ID& ref_id);
+  bool setPoints(const std::vector<TrajectoryPtPtr>& traj);
+  bool addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
+  bool addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
+  bool modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp);
+  bool removePoint(const TrajectoryPt::ID& ref_id);
   const std::map<TrajectoryPt::ID,JointTrajectoryPt>& getSolution();
   bool getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id,JointTrajectoryPt& j);
 
@@ -63,7 +63,7 @@ protected:
   int findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id,bool skip_equal = true);
   bool isInSparseTrajectory(const TrajectoryPt::ID& ref_id);
 
-  bool getOrderedSparseCartesianArray(std::vector<TrajectoryPtPtr>& sparse_array);
+  bool getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array);
   bool getSparseSolutionArray(SolutionArray& sparse_solution_array);
 
 protected:

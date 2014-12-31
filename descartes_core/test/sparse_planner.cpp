@@ -74,5 +74,5 @@ TEST(SparsePlanner, setTrajectoryPoints)
   descartes_core::SparsePlanner planner(robot);
 
   ROS_INFO_STREAM("Testing setTrajectoryPoints() with "<<NUM_DENSE_POINTS<<" dense points");
-  EXPECT_TRUE(planner.setTrajectoryPoints(TEST_TRAJECTORY));
+  EXPECT_TRUE(planner.setPoints(TEST_TRAJECTORY));
 }
