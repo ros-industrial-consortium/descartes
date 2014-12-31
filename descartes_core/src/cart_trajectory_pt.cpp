@@ -22,12 +22,16 @@
  *      Author: Dan Solomon
  */
 
+#include <tuple>
+#include <map>
+#include <algorithm>
 #include <console_bridge/console.h>
 #include <ros/console.h>
 #include "descartes_core/cart_trajectory_pt.h"
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
+const double EQUALITY_TOLERANCE = 0.0001f;
 
 namespace descartes_core
 {
@@ -203,7 +207,73 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
                                            const RobotModel &model,
                                            std::vector<double> &joint_pose) const
 {
-  NOT_IMPLEMENTED_ERR(false);
+  Eigen::Affine3d nominal_pose,candidate_pose;
+
+  if(!model.getFK(seed_state,candidate_pose))
+  {
+    return false;
+  }
+
+  // getting pose values
+  Eigen::Vector3d t = candidate_pose.translation();
+  Eigen::Vector3d rpy = candidate_pose.rotation().eulerAngles(2,1,0);
+
+  std::vector< std::tuple<double,double,double> > vals =
+  {
+   std::make_tuple(t(0),wobj_pt_.position_tolerance.x_lower,wobj_pt_.position_tolerance.x_upper),
+   std::make_tuple(t(1),wobj_pt_.position_tolerance.y_lower,wobj_pt_.position_tolerance.y_upper),
+   std::make_tuple(t(2),wobj_pt_.position_tolerance.z_lower,wobj_pt_.position_tolerance.z_upper),
+   std::make_tuple(rpy(2),wobj_pt_.orientation_tolerance.x_lower,wobj_pt_.orientation_tolerance.x_upper),
+   std::make_tuple(rpy(1),wobj_pt_.orientation_tolerance.y_lower,wobj_pt_.orientation_tolerance.y_upper),
+   std::make_tuple(rpy(0),wobj_pt_.orientation_tolerance.z_lower,wobj_pt_.orientation_tolerance.z_upper)
+  };
+
+  std::vector<double> closest_pose_vals = {t(0),t(1),t(2),rpy(2),rpy(1),rpy(0)};
+  bool solve_ik = false;
+  for(int i = 0; i < vals.size();i++)
+  {
+    auto &lower = std::get<1>(vals[i]);
+    auto &upper = std::get<2>(vals[i]);
+    auto &v = std::get<0>(vals[i]);
+
+    if( std::abs(upper -lower) > EQUALITY_TOLERANCE)
+    {
+      auto bounds = std::make_pair(lower,upper);
+      if(std::minmax({lower,v,upper}) != bounds)
+      {
+        solve_ik =  true;
+        closest_pose_vals[i] = v < lower ? lower : upper;
+      }
+    }
+    else
+    {
+      if(std::abs(v-lower) > EQUALITY_TOLERANCE)
+      {
+        solve_ik =  true;
+      }
+    }
+  }
+
+  if(solve_ik)
+  {
+    Eigen::Affine3d closest_pose = descartes_core::utils::toFrame(closest_pose_vals[0],
+                                                                 closest_pose_vals[1],
+                                                                 closest_pose_vals[2],
+                                                                 closest_pose_vals[3],
+                                                                 closest_pose_vals[4],
+                                                                 closest_pose_vals[5]);
+
+    if(!model.getIK(closest_pose,seed_state,joint_pose))
+    {
+      return false;
+    }
+  }
+  else
+  {
+    joint_pose.assign(seed_state.begin(),seed_state.end());
+  }
+
+  return true;
 }
 
 bool CartTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,

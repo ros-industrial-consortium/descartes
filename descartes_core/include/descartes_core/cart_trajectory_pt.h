@@ -70,8 +70,8 @@ struct ToleranceBase
     #param tol Total tolerance zone (assumed symetric about nominal)
     */
   template<typename T>
-  static T createSymmetric(const double x, const double y, const double z,
-                                          const double tol)
+  static T createSymmetric(const double& x, const double& y, const double& z,
+                                          const double& tol)
   {
     return(createSymmetric<T>(x, y, z, tol, tol, tol));
   }
@@ -81,7 +81,7 @@ struct ToleranceBase
     @param x, y, z
     */
   template<typename T>
-  static T zeroTolerance(const double x, const double y, const double z)
+  static T zeroTolerance(const double& x, const double& y, const double& z)
   {
     return(createSymmetric<T>(x, y, z, 0.0, 0.0, 0.0));
   }
@@ -174,8 +174,8 @@ struct TolerancedFrame: public Frame
     orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rpy(2),rpy(1),rpy(0),0);
   };
 
-  TolerancedFrame(const Eigen::Affine3d &a, const PositionTolerance pos_tol,
-                  const OrientationTolerance orient_tol) :
+  TolerancedFrame(const Eigen::Affine3d &a, const PositionTolerance &pos_tol,
+                  const OrientationTolerance &orient_tol) :
     Frame(a), position_tolerance(pos_tol), orientation_tolerance(orient_tol){}
 
   PositionTolerance             position_tolerance;
