@@ -298,7 +298,7 @@ int SparsePlanner::findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id,bo
       }
       else
       {
-        return dense_index < std::get<0>(t);
+        return dense_index <= std::get<0>(t);
       }
     };
 
@@ -306,6 +306,10 @@ int SparsePlanner::findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id,bo
   if(pos != sparse_solution_array_.end())
   {
     index = std::distance(sparse_solution_array_.begin(), pos);
+  }
+  else
+  {
+    index = sparse_solution_array_.size()-1; // last
   }
 
   return index;
