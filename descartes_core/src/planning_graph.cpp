@@ -39,6 +39,9 @@
 namespace descartes_core
 {
 
+const double MAX_JOINT_DIFF = M_PI;
+const double MAX_EXCEEDED_PENALTY = 10000.0f;
+
 PlanningGraph::PlanningGraph(RobotModelConstPtr &model):
     cartesian_point_link_(NULL)
 {
@@ -76,8 +79,6 @@ const CartesianMap& PlanningGraph::getCartesianMap()
     done = (cart_id.is_nil());
     ROS_DEBUG("Next CID: %s", boost::uuids::to_string(cart_id).c_str());
   }
-
-  ROS_INFO("Count returned: %d", (int)to_return->size());
 
   return *to_return;
 }
@@ -915,6 +916,14 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
 
       transition_cost = linearWeight(start_joint, end_joint);
 
+/*
+      if(transition_cost < std::numeric_limits<double>::max())
+      {
+        ROS_WARN_STREAM("Edge Transition exceeded maximum allowed cost, ignoring");
+        continue;
+      }
+*/
+
       ROS_DEBUG("CALC EDGE WEIGHT: %s -> %s = %f",
                boost::uuids::to_string(*previous_joint_iter).c_str(),
                boost::uuids::to_string(*next_joint_iter).c_str(),
@@ -995,9 +1004,19 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
     if (start_vector.size() == end_vector.size())
     {
       double vector_diff = 0;
+      double joint_diff = 0;
       for (int i = 0; i < start_vector.size(); i++)
       {
-        vector_diff += fabs(end_vector[i] - start_vector[i]);
+        joint_diff = fabs(end_vector[i] - start_vector[i]);
+        if(joint_diff > MAX_JOINT_DIFF)
+        {
+          //return std::numeric_limits<double>::max();
+          vector_diff +=  MAX_EXCEEDED_PENALTY * joint_diff ;
+        }
+        else
+        {
+          vector_diff += joint_diff ;
+        }
       }
       return vector_diff;
     }

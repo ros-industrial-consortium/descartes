@@ -320,12 +320,17 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
   std::list<JointTrajectoryPt> sparse_joint_points;
   std::vector<TrajectoryPtPtr> sparse_cart_points;
   double cost;
-
-  if(getShortestPath(cost,sparse_joint_points) &&
-      getOrderedSparseArray(sparse_cart_points) &&
-      (sparse_joint_points.size() == sparse_cart_points.size()))
+  ros::Time start_time = ros::Time::now();
+  if(getShortestPath(cost,sparse_joint_points))
   {
-    ROS_INFO_STREAM("Sparse solution was found");
+    ROS_INFO_STREAM("Sparse solution was found in "<<(ros::Time::now() - start_time).toSec()<<" seconds");
+    bool success = getOrderedSparseArray(sparse_cart_points) && (sparse_joint_points.size() == sparse_cart_points.size());
+    if(!success)
+    {
+      ROS_ERROR_STREAM("Failed to retrieve sparse solution due to unequal array sizes, cartetian pts: "<<
+                       sparse_cart_points.size()<<", joints pts: "<<sparse_joint_points.size());
+      return false;
+    }
   }
   else
   {
@@ -355,9 +360,6 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
 
     sparse_solution_array.push_back(std::make_tuple(index,cp,jp));
   }
-
-  ROS_WARN_STREAM("Sparse joint solution created successfully with "<<sparse_solution_array.size() <<" points");
-
   return true;
 }
 
@@ -469,13 +471,14 @@ bool SparsePlanner::plan()
   bool replan = true;
   bool succeeded = false;
   int replanning_attempts = 0;
+  ros::Time start_time = ros::Time::now();
   while(replan && (replanning_attempts++ < MAX_REPLANNING_ATTEMPTS) && getSparseSolutionArray(sparse_solution_array_))
   {
     int sparse_index, point_pos;
     int result = interpolateSparseTrajectory(sparse_solution_array_,sparse_index,point_pos);
     TrajectoryPt::ID prev_id, next_id;
     TrajectoryPtPtr cart_point;
-    auto sparse_iter = sparse_solution_array_.begin();
+    //auto sparse_iter = sparse_solution_array_.begin();
     switch(result)
     {
       case int(InterpolationResult::REPLAN):
@@ -508,6 +511,7 @@ bool SparsePlanner::plan()
 
           break;
       case int(InterpolationResult::SUCCESS):
+          ROS_INFO_STREAM("Path plannning completed in "<<(ros::Time::now() - start_time).toSec()<<" seconds");
           replan = false;
           succeeded = true;
           break;
