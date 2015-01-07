@@ -903,6 +903,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
     return false;
   }
 
+
   // calculate edges for previous vertices to this set of vertices
   for (std::list<TrajectoryPt::ID>::const_iterator previous_joint_iter = start_joints.begin();
       previous_joint_iter != start_joints.end(); previous_joint_iter++)
@@ -915,14 +916,6 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
       JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter];
 
       transition_cost = linearWeight(start_joint, end_joint);
-
-/*
-      if(transition_cost < std::numeric_limits<double>::max())
-      {
-        ROS_WARN_STREAM("Edge Transition exceeded maximum allowed cost, ignoring");
-        continue;
-      }
-*/
 
       ROS_DEBUG("CALC EDGE WEIGHT: %s -> %s = %f",
                boost::uuids::to_string(*previous_joint_iter).c_str(),
@@ -1007,11 +1000,10 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
       double joint_diff = 0;
       for (int i = 0; i < start_vector.size(); i++)
       {
-        joint_diff = fabs(end_vector[i] - start_vector[i]);
+        joint_diff = std::abs(end_vector[i] - start_vector[i]);
         if(joint_diff > MAX_JOINT_DIFF)
         {
-          //return std::numeric_limits<double>::max();
-          vector_diff +=  MAX_EXCEEDED_PENALTY * joint_diff ;
+          return MAX_EXCEEDED_PENALTY;
         }
         else
         {
