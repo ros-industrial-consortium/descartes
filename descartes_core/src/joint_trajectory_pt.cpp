@@ -69,7 +69,12 @@ bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state
 bool JointTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
                                            const RobotModel &model, Eigen::Affine3d &pose) const
 {
-  NOT_IMPLEMENTED_ERR(false)
+  std::vector<double> joints;
+  for(auto& tj: joint_position_)
+  {
+    joints.push_back(tj.nominal);
+  }
+  return model.getFK(joints,pose);
 }
 
 void JointTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
