@@ -29,6 +29,7 @@
 #include <ros/console.h>
 #include <boost/uuid/uuid_io.hpp>
 #include "descartes_core/cart_trajectory_pt.h"
+#include <descartes_core/utils.h>
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
@@ -108,10 +109,12 @@ namespace descartes_core
             {
               tz = frame.position_tolerance.z_lower + pos_increment * nn;
 
-              sampled_frame = Eigen::Translation3d(tx,ty,tz) *
-                  Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+/*              sampled_frame = Eigen::Translation3d(tx,ty,tz) *
+                  Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) *
                   Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
-                  Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+                  Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());*/
+              sampled_frame = descartes_core::utils::toFrame(tx,ty, tz,
+                                             rx, ry, rz,descartes_core::utils::EulerConventions::XYZ);
               rtn.push_back(sampled_frame);
             }
           }
@@ -217,19 +220,19 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 
   // getting pose values
   Eigen::Vector3d t = candidate_pose.translation();
-  Eigen::Vector3d rpy = candidate_pose.rotation().eulerAngles(2,1,0);
+  Eigen::Vector3d rpy = candidate_pose.rotation().eulerAngles(0,1,2);
 
   std::vector< std::tuple<double,double,double> > vals =
   {
    std::make_tuple(t(0),wobj_pt_.position_tolerance.x_lower,wobj_pt_.position_tolerance.x_upper),
    std::make_tuple(t(1),wobj_pt_.position_tolerance.y_lower,wobj_pt_.position_tolerance.y_upper),
    std::make_tuple(t(2),wobj_pt_.position_tolerance.z_lower,wobj_pt_.position_tolerance.z_upper),
-   std::make_tuple(rpy(2),wobj_pt_.orientation_tolerance.x_lower,wobj_pt_.orientation_tolerance.x_upper),
+   std::make_tuple(rpy(0),wobj_pt_.orientation_tolerance.x_lower,wobj_pt_.orientation_tolerance.x_upper),
    std::make_tuple(rpy(1),wobj_pt_.orientation_tolerance.y_lower,wobj_pt_.orientation_tolerance.y_upper),
-   std::make_tuple(rpy(0),wobj_pt_.orientation_tolerance.z_lower,wobj_pt_.orientation_tolerance.z_upper)
+   std::make_tuple(rpy(2),wobj_pt_.orientation_tolerance.z_lower,wobj_pt_.orientation_tolerance.z_upper)
   };
 
-  std::vector<double> closest_pose_vals = {t(0),t(1),t(2),rpy(2),rpy(1),rpy(0)};
+  std::vector<double> closest_pose_vals = {t(0),t(1),t(2),rpy(0),rpy(1),rpy(2)};
   bool solve_ik = false;
   for(int i = 0; i < vals.size();i++)
   {
@@ -260,12 +263,14 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 
   if(solve_ik)
   {
+
     Eigen::Affine3d closest_pose = descartes_core::utils::toFrame(closest_pose_vals[0],
                                                                  closest_pose_vals[1],
                                                                  closest_pose_vals[2],
                                                                  closest_pose_vals[3],
                                                                  closest_pose_vals[4],
-                                                                 closest_pose_vals[5]);
+                                                                 closest_pose_vals[5],
+                                                                 descartes_core::utils::EulerConventions::XYZ);
     if(!model.getIK(closest_pose,seed_state,joint_pose))
     {
       ROS_ERROR_STREAM("Ik failed on closest pose");

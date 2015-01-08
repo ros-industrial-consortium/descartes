@@ -160,18 +160,18 @@ struct TolerancedFrame: public Frame
   {
     Eigen::Vector3d t = a.translation();
     Eigen::Matrix3d m = a.rotation();
-    Eigen::Vector3d rpy = m.eulerAngles(2,1,0);
+    Eigen::Vector3d rxyz = m.eulerAngles(0,1,2);
     position_tolerance =  ToleranceBase::createSymmetric<PositionTolerance>(t(0),t(1),t(2),0);
-    orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rpy(2),rpy(1),rpy(0),0);
+    orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rxyz(0),rxyz(1),rxyz(2),0);
   };
   TolerancedFrame(const Frame &a):
     Frame(a)
   {
     Eigen::Vector3d t = a.frame.translation();
     Eigen::Matrix3d m = a.frame.rotation();
-    Eigen::Vector3d rpy = m.eulerAngles(2,1,0);
+    Eigen::Vector3d rxyz = m.eulerAngles(0,1,2);
     position_tolerance =  ToleranceBase::createSymmetric<PositionTolerance>(t(0),t(1),t(2),0);
-    orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rpy(2),rpy(1),rpy(0),0);
+    orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rxyz(0),rxyz(1),rxyz(2),0);
   };
 
   TolerancedFrame(const Eigen::Affine3d &a, const PositionTolerance &pos_tol,
