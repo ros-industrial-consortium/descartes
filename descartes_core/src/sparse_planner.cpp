@@ -29,7 +29,7 @@
 namespace descartes_core
 {
 
-const int MAX_REPLANNING_ATTEMPTS = 100;
+//const int MAX_REPLANNING_ATTEMPTS = 100;
 const int INVALID_INDEX = -1;
 
 SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
@@ -51,6 +51,7 @@ void SparsePlanner::setSampling(double sampling)
 
 bool SparsePlanner::setPoints(const std::vector<TrajectoryPtPtr>& traj)
 {
+  ros::Time start_time = ros::Time::now();
   cart_points_.assign(traj.begin(),traj.end());
   std::vector<TrajectoryPtPtr> sparse_trajectory_array;
   sampleTrajectory(sampling_,cart_points_,sparse_trajectory_array);
@@ -61,17 +62,21 @@ bool SparsePlanner::setPoints(const std::vector<TrajectoryPtPtr>& traj)
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
-    ROS_INFO("Sparse plan succeeded with %i planned point and %i interpolated points",planned_count,interp_count);
+    ROS_INFO("Sparse planner succeeded with %i planned point and %i interpolated points in %f seconds",planned_count,interp_count,
+             (ros::Time::now() - start_time).toSec());
   }
   else
   {
     return false;
   }
+
+
   return true;
 }
 
 bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
+  ros::Time start_time = ros::Time::now();
   int sparse_index;
   int index;
   TrajectoryPt::ID prev_id, next_id;
@@ -103,7 +108,8 @@ bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
-    ROS_INFO("Sparse plan succeeded with %i planned point and %i interpolated points",planned_count,interp_count);
+    ROS_INFO("Sparse planner add operation succeeded, %i planned point and %i interpolated points in %f seconds",
+             planned_count,interp_count,(ros::Time::now() -start_time).toSec());
   }
   else
   {
@@ -115,6 +121,7 @@ bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr
 
 bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
+  ros::Time start_time = ros::Time::now();
   int sparse_index;
   int index;
   TrajectoryPt::ID prev_id, next_id;
@@ -144,7 +151,8 @@ bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPt
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
-    ROS_INFO("Sparse plan succeeded with %i planned point and %i interpolated points",planned_count,interp_count);
+    ROS_INFO("Sparse planner add operation succeeded, %i planned point and %i interpolated points in %f seconds",
+             planned_count,interp_count,(ros::Time::now() -start_time).toSec());
   }
   else
   {
@@ -156,6 +164,7 @@ bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPt
 
 bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
 {
+  ros::Time start_time = ros::Time::now();
   int index = getDensePointIndex(ref_id);
   if(index == INVALID_INDEX)
   {
@@ -181,7 +190,8 @@ bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
-    ROS_INFO("Sparse plan succeeded with %i planned point and %i interpolated points",planned_count,interp_count);
+    ROS_INFO("Sparse planner remove operation succeeded, %i planned point and %i interpolated points in %f seconds",
+             planned_count,interp_count,(ros::Time::now() -start_time).toSec());
   }
   else
   {
@@ -193,6 +203,7 @@ bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
 
 bool SparsePlanner::modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
+  ros::Time start_time = ros::Time::now();
   int sparse_index;
   TrajectoryPt::ID prev_id, next_id;
 
@@ -224,7 +235,8 @@ bool SparsePlanner::modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr c
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
-    ROS_INFO("Sparse plan succeeded with %i planned point and %i interpolated points",planned_count,interp_count);
+    ROS_INFO("Sparse planner modify operation succeeded, %i planned point and %i interpolated points in %f seconds",
+             planned_count,interp_count,(ros::Time::now() -start_time).toSec());
   }
   else
   {
@@ -470,15 +482,14 @@ bool SparsePlanner::plan()
   // solving coarse trajectory
   bool replan = true;
   bool succeeded = false;
+  int max_replanning_attempts = cart_points_.size()/2;
   int replanning_attempts = 0;
-  ros::Time start_time = ros::Time::now();
-  while(replan && (replanning_attempts++ < MAX_REPLANNING_ATTEMPTS) && getSparseSolutionArray(sparse_solution_array_))
+  while(replan && getSparseSolutionArray(sparse_solution_array_))
   {
     int sparse_index, point_pos;
     int result = interpolateSparseTrajectory(sparse_solution_array_,sparse_index,point_pos);
     TrajectoryPt::ID prev_id, next_id;
     TrajectoryPtPtr cart_point;
-    //auto sparse_iter = sparse_solution_array_.begin();
     switch(result)
     {
       case int(InterpolationResult::REPLAN):
@@ -504,14 +515,13 @@ bool SparsePlanner::plan()
           }
           else
           {
-            ROS_INFO_STREAM("Adding point "<<point_pos <<"to sparse trajectory failed, aborting");
+            ROS_ERROR_STREAM("Adding point "<<point_pos <<"to sparse trajectory failed, aborting");
             replan = false;
             succeeded = false;
           }
 
           break;
       case int(InterpolationResult::SUCCESS):
-          ROS_INFO_STREAM("Path plannning completed in "<<(ros::Time::now() - start_time).toSec()<<" seconds");
           replan = false;
           succeeded = true;
           break;
@@ -519,6 +529,14 @@ bool SparsePlanner::plan()
           replan = false;
           succeeded = false;
           break;
+    }
+
+    if(replanning_attempts++ > max_replanning_attempts)
+    {
+      ROS_ERROR_STREAM("Maximum number of replanning attempts exceeded, aborting");
+      replan = false;
+      succeeded = false;
+      break;
     }
 
   }
