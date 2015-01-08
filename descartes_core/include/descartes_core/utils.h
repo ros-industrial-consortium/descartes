@@ -43,12 +43,53 @@ namespace utils
   @param tx, ty, tz - translations in x, y, z respectively
   @param rx, ry, rz - rotations about x, y, z, respectively
   */
-static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz)
+namespace EulerConventions
 {
-  Eigen::Affine3d rtn = Eigen::Translation3d(tx,ty,tz) *
-      Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
-      Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
-      Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+  enum EulerConvention
+  {
+    XYZ = 0,
+    ZYX,
+    ZXZ
+  };
+}
+
+typedef EulerConventions::EulerConvention EulerConvention;
+
+static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
+                               int convention = int(EulerConventions::ZYX))
+{
+  Eigen::Affine3d rtn;
+
+  switch(convention)
+  {
+    case EulerConventions::XYZ:
+      rtn = Eigen::Translation3d(tx,ty,tz) *
+          Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) *
+          Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
+          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
+      break;
+
+    case EulerConventions::ZYX:
+      rtn = Eigen::Translation3d(tx,ty,tz) *
+          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+          Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
+          Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+      break;
+
+    case EulerConventions::ZXZ:
+      rtn = Eigen::Translation3d(tx,ty,tz) *
+          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+          Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) *
+          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
+      break;
+
+    default:
+      logError("Invalid euler convention entry %i",convention);
+      break;
+
+  }
+
+
   return rtn;
 }
 
