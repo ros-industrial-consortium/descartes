@@ -86,7 +86,14 @@ bool JointTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_stat
                                             const RobotModel &model,
                                             std::vector<double> &joint_pose) const
 {
-  joint_pose.assign(seed_state.begin(),seed_state.end());
+  if(joint_position_.empty())
+  {
+    return false;
+  }
+  else
+  {
+    return getNominalJointPose(seed_state,model,joint_pose);
+  }
 }
 
 bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state,
