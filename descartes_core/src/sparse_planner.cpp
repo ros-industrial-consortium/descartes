@@ -31,6 +31,7 @@ namespace descartes_core
 
 //const int MAX_REPLANNING_ATTEMPTS = 100;
 const int INVALID_INDEX = -1;
+const double MAX_JOINT_CHANGE = M_PI_4;
 
 SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
     PlanningGraph(model),
@@ -544,6 +545,25 @@ bool SparsePlanner::plan()
   return succeeded;
 }
 
+bool SparsePlanner::checkJointChanges(const std::vector<double>& s1,
+                                      const std::vector<double>& s2, const double& max_change)
+{
+  if(s1.size()!=s2.size())
+  {
+    return false;
+  }
+
+  for(int i = 0; i < s1.size();i++)
+  {
+    if(std::abs(s1[i] - s2[i])> max_change)
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solution_array,int &sparse_index, int &point_pos)
 {
   // populating full path
@@ -578,16 +598,29 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
       }
 
       TrajectoryPtPtr cart_point = cart_points_[pos];
-      if(cart_point->getClosestJointPose(rough_interp,*robot_model_,aprox_interp))
+      if(cart_point->getClosestJointPose(rough_interp,*robot_model_,aprox_interp) )
       {
-        ROS_DEBUG_STREAM("Interpolated point at position "<<pos);
-        joint_points_map_.insert(std::make_pair(cart_point->getID(),JointTrajectoryPt(aprox_interp)));
+        if(checkJointChanges(rough_interp,aprox_interp,MAX_JOINT_CHANGE))
+        {
+          ROS_DEBUG_STREAM("Interpolated point at position "<<pos);
+          joint_points_map_.insert(std::make_pair(cart_point->getID(),JointTrajectoryPt(aprox_interp)));
+        }
+        else
+        {
+          ROS_WARN_STREAM("Joint changes greater that "<<MAX_JOINT_CHANGE<<" detected for point "<<pos<<
+                          ", replanning");
+          sparse_index = k;
+          point_pos = pos;
+          return (int)InterpolationResult::REPLAN;
+        }
+
       }
       else
       {
+
+          ROS_WARN_STREAM("Couldn't find a closest joint pose for point "<< cart_point->getID()<<", replanning");
           sparse_index = k;
           point_pos = pos;
-          ROS_WARN_STREAM("Couldn't find a closest joint pose for point "<< cart_point->getID()<<", replanning");
           return (int)InterpolationResult::REPLAN;
       }
     }

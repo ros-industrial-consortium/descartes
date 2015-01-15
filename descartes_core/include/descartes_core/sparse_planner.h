@@ -62,6 +62,8 @@ protected:
   int getSparsePointIndex(const TrajectoryPt::ID& ref_id);
   int findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id,bool skip_equal = true);
   bool isInSparseTrajectory(const TrajectoryPt::ID& ref_id);
+  bool checkJointChanges(const std::vector<double>& s1,
+                                        const std::vector<double>& s2, const double& max_change);
 
   bool getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array);
   bool getSparseSolutionArray(SolutionArray& sparse_solution_array);
