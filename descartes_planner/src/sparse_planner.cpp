@@ -19,17 +19,18 @@
  * sparse_planner.cpp
  *
  *  Created on: Dec 17, 2014
- *      Author: ros developer 
+ *      Author: Jorge Nicho 
  */
 
-#include <descartes_core/sparse_planner.h>
+#include <descartes_planner/sparse_planner.h>
 #include <boost/uuid/uuid_io.hpp>
 #include <algorithm>
 
-namespace descartes_core
+using namespace descartes_core;
+using namespace descartes_trajectory;
+namespace descartes_planner
 {
 
-//const int MAX_REPLANNING_ATTEMPTS = 100;
 const int INVALID_INDEX = -1;
 const double MAX_JOINT_CHANGE = M_PI_4;
 
@@ -632,4 +633,4 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
   return (int)InterpolationResult::SUCCESS;
 }
 
-} /* namespace descartes_core */
+} /* namespace descartes_planner */

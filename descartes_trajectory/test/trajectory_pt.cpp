@@ -17,12 +17,13 @@
  */
 
 #include "descartes_core/trajectory_pt.h"
-#include "descartes_core/cart_trajectory_pt.h"
-#include "descartes_core/joint_trajectory_pt.h"
+#include "descartes_trajectory/cart_trajectory_pt.h"
+#include "descartes_trajectory/joint_trajectory_pt.h"
 #include "ros/console.h"
 #include <gtest/gtest.h>
 
 using namespace descartes_core;
+using namespace descartes_trajectory;
 
 // Factory methods for trajectory point construction
 template <class T>

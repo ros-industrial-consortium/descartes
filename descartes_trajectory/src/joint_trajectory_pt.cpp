@@ -23,12 +23,12 @@
  */
 
 #include <console_bridge/console.h>
-#include "descartes_core/joint_trajectory_pt.h"
+#include "descartes_trajectory/joint_trajectory_pt.h"
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
-
-namespace descartes_core
+using namespace descartes_core;
+namespace descartes_trajectory
 {
 
 JointTrajectoryPt::JointTrajectoryPt():
@@ -157,4 +157,4 @@ bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretizat
   return true;
 }
 
-} /* namespace descartes_core */
+} /* namespace descartes_trajectory */

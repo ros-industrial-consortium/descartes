@@ -22,7 +22,7 @@
  *      Author: Dan Solomon
  */
 
-#include "descartes_core/planning_graph.h"
+#include "descartes_planner/planning_graph.h"
 
 #include <stdio.h>
 #include <iomanip>
@@ -36,7 +36,9 @@
 #include <boost/uuid/uuid_io.hpp> // streaming operators
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-namespace descartes_core
+using namespace descartes_core;
+using namespace descartes_trajectory;
+namespace descartes_planner
 {
 
 const double MAX_JOINT_DIFF = M_PI;
@@ -1025,4 +1027,4 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
     return std::numeric_limits<double>::max();
   }
 }
-} /* namespace descartes_core */
+} /* namespace descartes_planner */

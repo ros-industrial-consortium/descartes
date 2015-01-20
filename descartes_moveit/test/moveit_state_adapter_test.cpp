@@ -17,7 +17,7 @@
  */
 
 #include "descartes_moveit/moveit_state_adapter.h"
-#include "descartes_core_test/robot_model_test.hpp"
+#include "descartes_trajectory_test/robot_model_test.hpp"
 #include "moveit/robot_model_loader/robot_model_loader.h"
 #include <gtest/gtest.h>
 

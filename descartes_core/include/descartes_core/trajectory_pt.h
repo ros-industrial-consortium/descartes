@@ -31,7 +31,6 @@
 #include <vector>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-
 #include "descartes_core/robot_model.h"
 #include "descartes_core/trajectory_pt_transition.h"
 
@@ -68,6 +67,7 @@ struct Frame
  * In order to implement this easily, each process point should keep track of the TrajectoryPt id, and
  * provide an interpolation method between points.
  */
+DESCARTES_CLASS_FORWARD(TrajectoryPt);
 class TrajectoryPt
 {
 public:

@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-#include "descartes_core/joint_trajectory_pt.h"
+#include "descartes_trajectory/joint_trajectory_pt.h"
 #include <gtest/gtest.h>
 
 
 using namespace descartes_core;
+using namespace descartes_trajectory;
 
 
 TEST(JointTrajPt, construction)

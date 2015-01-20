@@ -16,26 +16,10 @@
  * limitations under the License.
  */
 
-#include "descartes_core_test/cartesian_robot.h"
-#include "descartes_core_test/robot_model_test.hpp"
+#include <gtest/gtest.h>
 
-
-using namespace descartes_core;
-
-using testing::Types;
-
-namespace descartes_core_test
+int main(int argc, char **argv)
 {
-
-template <>
-RobotModelPtr CreateRobotModel<CartesianRobot>()
-{
-  return RobotModelPtr(new CartesianRobot());
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
-
-template<class T>
-class CartesianRobotModelTest : public descartes_core_test::RobotModelTest<T>{};
-
-INSTANTIATE_TYPED_TEST_CASE_P(CartesianRobotModelTest, RobotModelTest, CartesianRobot);
-
-} //descartes_core_test

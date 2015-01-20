@@ -28,14 +28,16 @@
 #include <console_bridge/console.h>
 #include <ros/console.h>
 #include <boost/uuid/uuid_io.hpp>
-#include "descartes_core/cart_trajectory_pt.h"
+#include "descartes_trajectory/cart_trajectory_pt.h"
 #include <descartes_core/utils.h>
 
 #define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
 
 const double EQUALITY_TOLERANCE = 0.0001f;
 
-namespace descartes_core
+using namespace descartes_core;
+
+namespace descartes_trajectory
 {
  EigenSTL::vector_Affine3d uniform(const TolerancedFrame & frame, const double orient_increment,
                                   const double pos_increment)
@@ -342,4 +344,4 @@ bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretizati
   NOT_IMPLEMENTED_ERR(false);
 }
 
-} /* namespace descartes_core */
+} /* namespace descartes_trajectory */

@@ -20,7 +20,8 @@
 #define MOVEIT_STATE_ADPATER_H_
 
 #include "descartes_core/robot_model.h"
-#include <descartes_core/cart_trajectory_pt.h>
+#include <descartes_trajectory/cart_trajectory_pt.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 #include "moveit/robot_model/robot_model.h"
 #include "moveit/kinematics_base/kinematics_base.h"
 #include <string>
@@ -33,6 +34,18 @@ namespace descartes_moveit
  */
 class MoveitStateAdapter : public descartes_core::RobotModel
 {
+
+public:
+
+  /**
+    * Compares two vectors for equality (within +/- tolerance).  abs(lhs - rhs) > tol
+    * @param lhs
+    * @param rhs
+    * @param tol +/- tolerance for floating point equality
+    */
+  static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
+                                        const double tol);
+
 public:
 
   /**
@@ -48,7 +61,9 @@ public:
   virtual ~MoveitStateAdapter()
   {
   }
-  ;
+
+  virtual void initialize(const std::string robot_description, const std::string& group_name,
+                          const std::string& world_frame,const std::string& tcp_frame);
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -86,6 +101,8 @@ protected:
    * each function call
    */
   mutable moveit::core::RobotStatePtr robot_state_;
+  robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
+  robot_model::RobotModelConstPtr robot_model_ptr_;
 
   /**
    * @brief Planning group name
