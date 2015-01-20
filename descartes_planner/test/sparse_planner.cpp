@@ -17,19 +17,20 @@
  */
 
 #include <descartes_planner/sparse_planner.h>
-#include "descartes_core/cart_trajectory_pt.h"
-#include "descartes_core/utils.h"
-#include "descartes_core_test/cartesian_robot.h"
+#include <descartes_trajectory/cart_trajectory_pt.h>
+#include <descartes_core/utils.h>
+#include <descartes_trajectory_test/cartesian_robot.h>
 #include <gtest/gtest.h>
 #include <tuple>
 
 using namespace descartes_core;
+using namespace descartes_trajectory;
 typedef std::vector<descartes_core::TrajectoryPtPtr> Trajectory;
 const int NUM_DENSE_POINTS = 1000;
 Trajectory createTestTrajectory();
 Trajectory TEST_TRAJECTORY = createTestTrajectory();
 
-class TestPoint: public descartes_core::CartTrajectoryPt
+class TestPoint: public descartes_trajectory::CartTrajectoryPt
 {
 public:
   TestPoint(const std::vector<double>& joints)
@@ -88,7 +89,7 @@ Trajectory createTestTrajectory()
 
 TEST(SparsePlanner, setTrajectoryPoints)
 {
-  RobotModelConstPtr robot(new descartes_core_test::CartesianRobot(0,0));
+  RobotModelConstPtr robot(new descartes_trajectory_test::CartesianRobot(0,0));
   descartes_planner::SparsePlanner planner(robot);
 
   ROS_INFO_STREAM("Testing setTrajectoryPoints() with "<<NUM_DENSE_POINTS<<" dense points");

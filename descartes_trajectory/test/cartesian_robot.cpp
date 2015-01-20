@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "descartes_core_test/cartesian_robot.h"
+#include "descartes_trajectory_test/cartesian_robot.h"
 #include "descartes_core/pretty_print.hpp"
 #include "eigen_conversions/eigen_kdl.h"
 #include "ros/console.h"
@@ -28,6 +28,12 @@ namespace descartes_trajectory_test
   {
     ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
                      << ", orientation: " << orient_range_);
+  }
+
+  bool CartesianRobot::initialize(const std::string robot_description, const std::string& group_name,
+                          const std::string& world_frame,const std::string& tcp_frame)
+  {
+    return true;
   }
 
   CartesianRobot::CartesianRobot(double pos_range, double orient_range) :

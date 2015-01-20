@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#include "descartes_core_test/cartesian_robot.h"
-#include "descartes_core_test/robot_model_test.hpp"
+#include "descartes_trajectory_test/cartesian_robot.h"
+#include "descartes_trajectory_test/robot_model_test.hpp"
 
 
 using namespace descartes_core;

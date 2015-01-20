@@ -91,7 +91,7 @@ public:
    */
   virtual bool isValid(const Eigen::Affine3d &pose) const = 0;
 
-  virtual void initialize(const std::string robot_description, const std::string& group_name,
+  virtual bool initialize(const std::string robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame) = 0;
 
 protected:

@@ -29,30 +29,6 @@
 namespace descartes_moveit
 {
 
-bool MoveitStateAdapter::equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                               const double tol)
-{
-  bool rtn = false;
-  if( lhs.size() == rhs.size() )
-  {
-    rtn = true;
-    for(size_t ii = 0; ii < lhs.size(); ++ii)
-    {
-      if(std::fabs(lhs[ii]-rhs[ii]) > tol)
-      {
-        rtn = false;
-        break;
-      }
-    }
-
-  }
-  else
-  {
-    rtn = false;
-  }
-  return rtn;
-}
-
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & world_frame,
                                        const size_t sample_iterations) :
@@ -96,7 +72,7 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
 
 
 
-void MoveitStateAdapter::initialize(const std::string robot_description, const std::string& group_name,
+bool MoveitStateAdapter::initialize(const std::string robot_description, const std::string& group_name,
                                     const std::string& world_frame,const std::string& tcp_frame)
 {
 
@@ -137,8 +113,7 @@ void MoveitStateAdapter::initialize(const std::string robot_description, const s
     msg << "Possible group names: " << robot_state_->getRobotModel()->getJointModelGroupNames();
     logError(msg.str().c_str());
   }
-  return;
-
+  return true;
 }
 
 bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
@@ -202,7 +177,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
         bool match_found = false;
         for(joint_pose_it = joint_poses.begin(); joint_pose_it != joint_poses.end(); ++joint_pose_it)
         {
-          if( equal(joint_pose, (*joint_pose_it), epsilon) )
+          if( descartes_core::utils::equal(joint_pose, (*joint_pose_it), epsilon) )
           {
             logDebug("Found matching, potential solution is not new");
             match_found = true;

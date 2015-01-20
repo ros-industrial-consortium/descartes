@@ -64,6 +64,6 @@ if(CATKIN_ENABLE_TESTING)
   set(UTEST_SPARSE_PLANER_SRC_FILES test/utest.cpp
       test/sparse_planner.cpp)
   catkin_add_gtest(${PROJECT_NAME}_sparse_planner_utest ${UTEST_SPARSE_PLANER_SRC_FILES})
-  target_link_libraries(${PROJECT_NAME}_sparse_planner_utest descartes_core)
+  target_link_libraries(${PROJECT_NAME}_sparse_planner_utest descartes_planner)
 
 endif()

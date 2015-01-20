@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_moveit)
 
+add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   tf
@@ -9,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_trajectory
   moveit_ros_planning
 )
+
 find_package(rosconsole_bridge REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
