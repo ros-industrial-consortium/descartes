@@ -21,7 +21,7 @@
 
 #include "descartes_core/robot_model.h"
 
-namespace descartes_core_test
+namespace descartes_trajectory_test
 {
 
 /**@brief Cartesian Robot used for test purposes.  This is a simple robot with simple kinematics.  Each

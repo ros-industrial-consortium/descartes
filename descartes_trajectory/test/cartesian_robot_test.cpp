@@ -15,35 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * trajectory.h
- *
- *  Created on: Jun 5, 2014
- *      Author: Dan Solomon
- */
 
-#ifndef TRAJECTORY_PATH_H_
-#define TRAJECTORY_PATH_H_
+#include "descartes_core_test/cartesian_robot.h"
+#include "descartes_core_test/robot_model_test.hpp"
 
-#include <vector>
-#include "descartes_core/trajectory_pt.h"
 
-namespace descartes_core
+using namespace descartes_core;
+
+using testing::Types;
+
+namespace descartes_trajectory_test
 {
 
-typedef std::vector<TrajectoryPt> TrajectoryPtVector;
-
-class TrajectoryPath
+template <>
+RobotModelPtr CreateRobotModel<CartesianRobot>()
 {
-public:
-  TrajectoryPath() {};
-  virtual ~TrajectoryPath() {};
+  return RobotModelPtr(new CartesianRobot());
+}
 
-protected:
-  TrajectoryPtVector pts_;
-};
+template<class T>
+class CartesianRobotModelTest : public descartes_trajectory_test::RobotModelTest<T>{};
 
-} /* namespace descartes_core */
+INSTANTIATE_TYPED_TEST_CASE_P(CartesianRobotModelTest, RobotModelTest, CartesianRobot);
 
-
-#endif /* TRAJECTORY_PATH_H_ */
+} //descartes_trajectory_test

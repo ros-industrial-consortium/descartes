@@ -32,7 +32,7 @@
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;
 
-namespace descartes_core
+namespace descartes_trajectory
 {
 
 /**@brief Description of a per-cartesian-axis tolerance.  This tolerance is not meant
@@ -152,11 +152,11 @@ struct OrientationTolerance : public ToleranceBase
 /**@brief TolerancedFrame extends frame to include tolerances and constraints on position and orientation.
  * Samplers that are called on this object should sample within tolerance, and check if result satisfies constraints.
  */
-struct TolerancedFrame: public Frame
+struct TolerancedFrame: public descartes_core::Frame
 {
   TolerancedFrame(){};
   TolerancedFrame(const Eigen::Affine3d &a):
-    Frame(a)
+    descartes_core::Frame(a)
   {
     Eigen::Vector3d t = a.translation();
     Eigen::Matrix3d m = a.rotation();
@@ -164,8 +164,8 @@ struct TolerancedFrame: public Frame
     position_tolerance =  ToleranceBase::createSymmetric<PositionTolerance>(t(0),t(1),t(2),0);
     orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rxyz(0),rxyz(1),rxyz(2),0);
   };
-  TolerancedFrame(const Frame &a):
-    Frame(a)
+  TolerancedFrame(const descartes_core::Frame &a):
+    descartes_core::Frame(a)
   {
     Eigen::Vector3d t = a.frame.translation();
     Eigen::Matrix3d m = a.frame.rotation();
@@ -200,7 +200,7 @@ struct TolerancedFrame: public Frame
  *
  * The get*Pose methods of CartTrajectoryPt try to set joint positions of a robot such that @e tool_pt_ is coincident with @e wobj_pt_.
  */
-class CartTrajectoryPt : public TrajectoryPt
+class CartTrajectoryPt : public descartes_core::TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -220,7 +220,7 @@ public:
     @param pos_increment Position increment used for sampling
     @param pos_increment Orientation increment used for sampling
     */
-  CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool_base,
+  CartTrajectoryPt(const descartes_core::Frame &wobj_base, const TolerancedFrame &wobj_pt, const descartes_core::Frame &tool_base,
                    const TolerancedFrame &tool_pt, double pos_increment, double orient_increment);
 
   /**
@@ -240,7 +240,7 @@ public:
     point relative to the robot base.
     @param wobj_pt Underconstrained transform from object base to goal point on object.
     */
-  CartTrajectoryPt(const Frame &wobj_pt);
+  CartTrajectoryPt(const descartes_core::Frame &wobj_pt);
 
 
   virtual ~CartTrajectoryPt() {};
@@ -252,14 +252,14 @@ public:
 
     //TODO complete
     virtual bool getClosestCartPose(const std::vector<double> &seed_state,
-                                      const RobotModel &model, Eigen::Affine3d &pose) const;
+                                      const descartes_core::RobotModel &model, Eigen::Affine3d &pose) const;
 
     //TODO complete
     virtual bool getNominalCartPose(const std::vector<double> &seed_state,
-                                      const RobotModel &model, Eigen::Affine3d &pose) const;
+                                      const descartes_core::RobotModel &model, Eigen::Affine3d &pose) const;
 
     //TODO complete
-    virtual void getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
+    virtual void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
     /** @} (end section) */
 
     /**@name Getters for joint pose(s)
@@ -268,20 +268,20 @@ public:
 
     //TODO complete
     virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                       const RobotModel &model,
+                                       const descartes_core::RobotModel &model,
                                        std::vector<double> &joint_pose) const;
     //TODO complete
     virtual bool getNominalJointPose(const std::vector<double> &seed_state,
-                                       const RobotModel &model,
+                                       const descartes_core::RobotModel &model,
                                        std::vector<double> &joint_pose) const;
 
     //TODO complete
-    virtual void getJointPoses(const RobotModel &model,
+    virtual void getJointPoses(const descartes_core::RobotModel &model,
                                  std::vector<std::vector<double> > &joint_poses) const;
     /** @} (end section) */
 
     //TODO complete
-    virtual bool isValid(const RobotModel &model) const;
+    virtual bool isValid(const descartes_core::RobotModel &model) const;
   /**@brief Set discretization. Cartesian points can have position and angular discretization.
    * @param discretization Vector of discretization values. Must be length 2 or 6 (position/orientation or separate xyzrpy).
    * @return True if vector is valid length/values. TODO what are valid values?
@@ -289,14 +289,14 @@ public:
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
   inline
-  void setTool(const Frame &base, const TolerancedFrame &pt)
+  void setTool(const descartes_core::Frame &base, const TolerancedFrame &pt)
   {
     tool_base_ = base;
     tool_pt_ = pt;
   }
 
   inline
-  void setWobj(const Frame &base, const TolerancedFrame &pt)
+  void setWobj(const descartes_core::Frame &base, const TolerancedFrame &pt)
   {
     wobj_base_ = base;
     wobj_pt_ = pt;
@@ -304,9 +304,9 @@ public:
 
 
 protected:
-  Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */
+  descartes_core::Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */
   TolerancedFrame               tool_pt_;       /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
-  Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
+  descartes_core::Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
   TolerancedFrame               wobj_pt_;       /**<@brief Underconstrained transform from object base to goal point on object. */
 
   double                        pos_increment_;    /**<@brief Sampling discretization in cartesian directions. */
@@ -314,7 +314,7 @@ protected:
 
 };
 
-} /* namespace descartes_core */
+} /* namespace descartes_trajectory */
 
 
 

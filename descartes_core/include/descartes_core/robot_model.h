@@ -41,24 +41,7 @@ class RobotModel
 {
 public:
 
-
-  /**
-    * Compares two vectors for equality (within +/- tolerance).  abs(lhs - rhs) > tol
-    * @param lhs
-    * @param rhs
-    * @param tol +/- tolerance for floating point equality
-    */
-  static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                                        const double tol);
-
-  RobotModel()
-  {
-  }
-  ;
-  virtual ~RobotModel()
-  {
-  }
-  ;
+  virtual ~RobotModel(){}
 
   /**
    * @brief Returns the joint pose closest to the seed pose for a desired affine pose
@@ -107,6 +90,13 @@ public:
    * @return True if valid
    */
   virtual bool isValid(const Eigen::Affine3d &pose) const = 0;
+
+  virtual void initialize(const std::string robot_description, const std::string& group_name,
+                          const std::string& world_frame,const std::string& tcp_frame) = 0;
+
+protected:
+
+  RobotModel(){}
 
 };
 

@@ -22,18 +22,10 @@
  *      Author: Dan Solomon
  */
 
-#include "descartes_core/trajectory_pt_transition.h"
+#include "descartes_trajectory/trajectory_pt_transition.h"
 
-namespace descartes_core
+namespace descartes_trajectory
 {
-  TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
-  {
 
-  }
 
-  TrajectoryPtTransition::~TrajectoryPtTransition()
-  {
-
-  }
-
-} /* namespace descartes_core */
+} /* namespace descartes_trajectory */

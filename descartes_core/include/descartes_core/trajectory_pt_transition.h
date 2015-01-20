@@ -64,8 +64,14 @@ typedef Interpolations::Interpolation Interpolation;
 class TrajectoryPtTransition
 {
 public:
-  TrajectoryPtTransition();
-  virtual ~TrajectoryPtTransition();
+
+  TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
+  {
+  }
+
+  virtual ~TrajectoryPtTransition()
+  {
+  }
 
 private:
   VelocityConstraint            lin_vel_;               // Constraint on linear velocity
@@ -76,7 +82,7 @@ private:
 
 typedef boost::shared_ptr<TrajectoryPtTransition> TrajectoryPtTransitionPtr;
 
-} /* namespace descartes_core */
+} /* namespace descartes_trajectory */
 
 
 #endif /* TRAJECTORY_PT_TRANSITION_H_ */

@@ -15,35 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * trajectory_path.cpp
+ *
+ *  Created on: Jun 5, 2014
+ *      Author: Dan Solomon
+ */
 
-#include "descartes_core/robot_model.h"
+#include "descartes_trajectory/trajectory.h"
 
-namespace descartes_core
+namespace descartes_trajectory
 {
-
-bool RobotModel::equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                               const double tol)
-{
-  bool rtn = false;
-  if( lhs.size() == rhs.size() )
-  {
-    rtn = true;
-    for(size_t ii = 0; ii < lhs.size(); ++ii)
-    {
-      if(std::fabs(lhs[ii]-rhs[ii]) > tol)
-      {
-        rtn = false;
-        break;
-      }
-    }
-
-  }
-  else
-  {
-    rtn = false;
-  }
-  return rtn;
-}
-
-} //descartes_core
-
+} /* namespace descartes_trajectory */

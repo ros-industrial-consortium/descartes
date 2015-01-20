@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   cmake_modules
   descartes_core
+  descartes_trajectory
   moveit_ros_planning
 )
 find_package(rosconsole_bridge REQUIRED)

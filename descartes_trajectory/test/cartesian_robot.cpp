@@ -21,7 +21,7 @@
 #include "eigen_conversions/eigen_kdl.h"
 #include "ros/console.h"
 
-namespace descartes_core_test
+namespace descartes_trajectory_test
 {
 
   CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2)
@@ -147,5 +147,5 @@ namespace descartes_core_test
     return rtn;
   }
 
-} //descartes_core_test
+} //descartes_trajectory_test
 
