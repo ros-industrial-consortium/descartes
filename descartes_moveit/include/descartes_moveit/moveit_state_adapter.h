@@ -35,16 +35,6 @@ namespace descartes_moveit
 class MoveitStateAdapter : public descartes_core::RobotModel
 {
 
-public:
-
-  /**
-    * Compares two vectors for equality (within +/- tolerance).  abs(lhs - rhs) > tol
-    * @param lhs
-    * @param rhs
-    * @param tol +/- tolerance for floating point equality
-    */
-  static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                                        const double tol);
 
 public:
 
@@ -62,7 +52,7 @@ public:
   {
   }
 
-  virtual void initialize(const std::string robot_description, const std::string& group_name,
+  virtual bool initialize(const std::string robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame);
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,

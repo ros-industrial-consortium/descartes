@@ -43,6 +43,7 @@ add_library(descartes_trajectory
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
+            test/cartesian_robot.cpp
 )
 
 target_link_libraries(descartes_trajectory
@@ -66,6 +67,6 @@ if(CATKIN_ENABLE_TESTING)
       test/cartesian_robot.cpp
       test/cartesian_robot_test.cpp)
   catkin_add_gtest(${PROJECT_NAME}_utest ${UTEST_SRC_FILES})
-  target_link_libraries(${PROJECT_NAME}_utest descartes_core)
+  target_link_libraries(${PROJECT_NAME}_utest descartes_trajectory)
 
 endif()

@@ -93,6 +93,36 @@ static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, doubl
   return rtn;
 }
 
+/**
+  * Compares two vectors for equality (within +/- tolerance).  abs(lhs - rhs) > tol
+  * @param lhs
+  * @param rhs
+  * @param tol +/- tolerance for floating point equality
+  */
+static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
+                                      const double tol)
+{
+  bool rtn = false;
+  if( lhs.size() == rhs.size() )
+  {
+    rtn = true;
+    for(size_t ii = 0; ii < lhs.size(); ++ii)
+    {
+      if(std::fabs(lhs[ii]-rhs[ii]) > tol)
+      {
+        rtn = false;
+        break;
+      }
+    }
+
+  }
+  else
+  {
+    rtn = false;
+  }
+  return rtn;
+}
+
 } //utils
 
 } //descartes_core
