@@ -38,6 +38,8 @@ class MoveitStateAdapter : public descartes_core::RobotModel
 
 public:
 
+  MoveitStateAdapter();
+
   /**
    * Constructor for Moveit state adapters (implements Descartes robot model interface)
    * @param robot_state robot state object utilized for kinematic/dynamic state checking
@@ -48,6 +50,7 @@ public:
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                     const std::string & tool_frame, const std::string & world_frame,
                      size_t sample_iterations = 10);
+
   virtual ~MoveitStateAdapter()
   {
   }
@@ -69,14 +72,6 @@ public:
   virtual int getDOF() const;
 
 protected:
-
-  /**
-   * @brief Default constructor hidden
-   */
-  MoveitStateAdapter()
-  {
-  }
-  ;
 
   /**
    * Gets IK solution (assumes robot state is pre-seeded)

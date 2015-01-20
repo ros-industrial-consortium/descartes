@@ -26,8 +26,15 @@
 
 #define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
 
+const static int SAMPLE_ITERATIONS = 10;
+
 namespace descartes_moveit
 {
+
+MoveitStateAdapter::MoveitStateAdapter()
+{
+
+}
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & world_frame,
@@ -70,8 +77,6 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   return;
 }
 
-
-
 bool MoveitStateAdapter::initialize(const std::string robot_description, const std::string& group_name,
                                     const std::string& world_frame,const std::string& tcp_frame)
 {
@@ -82,7 +87,7 @@ bool MoveitStateAdapter::initialize(const std::string robot_description, const s
   group_name_ = group_name;
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
-  sample_iterations_ = 10;
+  sample_iterations_ = SAMPLE_ITERATIONS;
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
