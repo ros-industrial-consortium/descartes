@@ -16,11 +16,13 @@
  * limitations under the License.
  */
 
+#include <ros/node_handle.h>
 #include <descartes_planner/sparse_planner.h>
 #include <descartes_trajectory/cart_trajectory_pt.h>
 #include <descartes_core/utils.h>
 #include <descartes_trajectory_test/cartesian_robot.h>
 #include <gtest/gtest.h>
+#include <descartes_core/pretty_print.hpp>
 #include <tuple>
 
 using namespace descartes_core;
@@ -29,6 +31,22 @@ typedef std::vector<descartes_core::TrajectoryPtPtr> Trajectory;
 const int NUM_DENSE_POINTS = 1000;
 Trajectory createTestTrajectory();
 Trajectory TEST_TRAJECTORY = createTestTrajectory();
+
+class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
+{
+public:
+  ThreeDOFRobot():
+    descartes_trajectory_test::CartesianRobot(0,0,3)
+  {
+
+  }
+
+  virtual ~ThreeDOFRobot()
+  {
+
+  }
+
+};
 
 class TestPoint: public descartes_trajectory::CartTrajectoryPt
 {
@@ -51,6 +69,14 @@ public:
     joint_pose.clear();
     joint_pose.assign(vals_.begin(),vals_.end());
     return true;
+  }
+
+  virtual void getJointPoses(const RobotModel &model,
+                                       std::vector<std::vector<double> > &joint_poses) const
+  {
+    joint_poses.clear();
+    joint_poses.push_back(vals_);
+
   }
 
 protected:
@@ -81,6 +107,7 @@ Trajectory createTestTrajectory()
     {
       joint_vals[j] = std::get<0>(joint_bounds[j]) + deltas[j]*i;
     }
+
     TrajectoryPtPtr tp(new TestPoint(joint_vals));
     traj.push_back(tp);
   }
@@ -89,7 +116,8 @@ Trajectory createTestTrajectory()
 
 TEST(SparsePlanner, setTrajectoryPoints)
 {
-  RobotModelConstPtr robot(new descartes_trajectory_test::CartesianRobot(0,0));
+  ros::Time::init();
+  RobotModelConstPtr robot(new ThreeDOFRobot());
   descartes_planner::SparsePlanner planner(robot);
 
   ROS_INFO_STREAM("Testing setTrajectoryPoints() with "<<NUM_DENSE_POINTS<<" dense points");

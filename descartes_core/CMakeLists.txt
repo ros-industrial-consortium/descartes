@@ -16,7 +16,6 @@ find_package(Eigen REQUIRED)
 catkin_package(
   INCLUDE_DIRS
     include
-    test
   LIBRARIES
     descartes_core
   CATKIN_DEPENDS

@@ -462,7 +462,13 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
 bool SparsePlanner::interpolateJointPose(const std::vector<double>& start,const std::vector<double>& end,
     double t,std::vector<double>& interp)
 {
-  if(start.size() != end.size() && (t > 1 || t < 0))
+  if(start.size() != end.size() )
+  {
+    ROS_ERROR_STREAM("Joint arrays have unequal size, interpolation failed");
+    return false;
+  }
+
+  if((t > 1 || t < 0))
   {
     return false;
   }
@@ -551,6 +557,7 @@ bool SparsePlanner::checkJointChanges(const std::vector<double>& s1,
 {
   if(s1.size()!=s2.size())
   {
+    ROS_ERROR_STREAM("Joint arrays have unequal size, failed to check for large joint changes");
     return false;
   }
 

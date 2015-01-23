@@ -34,7 +34,7 @@ public:
 
   CartesianRobot();
 
-  CartesianRobot(double pos_range, double orient_range)  ;
+  CartesianRobot(double pos_range, double orient_range, int dof = 6)  ;
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -53,6 +53,7 @@ public:
                                          const std::string& world_frame,const std::string& tcp_frame);
   double pos_range_;
   double orient_range_;
+  int dof_;
 
 };
 
