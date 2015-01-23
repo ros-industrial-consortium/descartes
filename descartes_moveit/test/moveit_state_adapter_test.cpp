@@ -27,7 +27,7 @@ using namespace descartes_core;
 
 using testing::Types;
 
-namespace descartes_moveit_test
+namespace descartes_trajectory_test
 {
 // This variable must be global in order for the test to pass.
 // Destructing the robot model results in a boost mutex exception:
@@ -40,7 +40,7 @@ namespace descartes_moveit_test
 robot_model_loader::RobotModelLoaderPtr robot_;
 
 template <>
-RobotModelPtr CreateRobotModel<MoveitStateAdapter>()
+RobotModelPtr CreateRobotModel<descartes_moveit::MoveitStateAdapter>()
 {
   robot_model::RobotModelPtr moveit_model_;
   robot_state::RobotStatePtr state_;
@@ -63,6 +63,6 @@ RobotModelPtr CreateRobotModel<MoveitStateAdapter>()
 template<class T>
 class MoveitRobotModelTest : public descartes_trajectory_test::RobotModelTest<T>{};
 
-INSTANTIATE_TYPED_TEST_CASE_P(MoveitRobotModelTest, descartes_trajectory_test::RobotModelTest, MoveitStateAdapter);
+INSTANTIATE_TYPED_TEST_CASE_P(MoveitRobotModelTest, RobotModelTest, MoveitStateAdapter);
 
 } //descartes_moveit_test

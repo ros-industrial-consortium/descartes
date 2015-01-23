@@ -24,7 +24,7 @@
 namespace descartes_trajectory_test
 {
 
-  CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2)
+  CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2), dof_(6)
   {
     ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
                      << ", orientation: " << orient_range_);
@@ -36,8 +36,8 @@ namespace descartes_trajectory_test
     return true;
   }
 
-  CartesianRobot::CartesianRobot(double pos_range, double orient_range) :
-    pos_range_(pos_range), orient_range_(orient_range)
+  CartesianRobot::CartesianRobot(double pos_range, double orient_range, int dof) :
+    pos_range_(pos_range), orient_range_(orient_range), dof_(dof)
   {
     ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
                      << ", orientation: " << orient_range_);
@@ -104,7 +104,7 @@ namespace descartes_trajectory_test
 
   int CartesianRobot::getDOF() const
   {
-    return 6;
+    return dof_;
   }
 
   bool CartesianRobot::isValid(const std::vector<double> &joint_pose) const
@@ -114,7 +114,7 @@ namespace descartes_trajectory_test
     double pos_limit = pos_range_/2.0;
     double orient_limit = orient_range_/2.0;
 
-    if(6 == joint_pose.size())
+    if(dof_ == joint_pose.size())
     {
 
       rtn = ( fabs(joint_pose[0]) <= pos_limit &&
@@ -126,7 +126,7 @@ namespace descartes_trajectory_test
     }
     else
     {
-      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() << "exceeds 6");
+      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() << "exceeds "<<dof_);
     }
 
     return rtn;
