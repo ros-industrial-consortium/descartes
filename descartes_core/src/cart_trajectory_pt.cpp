@@ -215,6 +215,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 
   if(!model.getFK(seed_state,candidate_pose))
   {
+    ROS_ERROR_STREAM("FK failed for seed pose for closest joint pose");
     return false;
   }
 
