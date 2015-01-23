@@ -133,3 +133,36 @@ TEST(CartTrajPt, zeroTolerance)
   zero_tol_pos.getJointPoses(robot,joint_solutions);
   EXPECT_EQ(joint_solutions.size(), 1);
 }
+
+TEST(CartTrajPt, closestJointPose)
+{
+  const double POS_TOL = 0.5f;
+  const double POS_INC = 0.2;
+  const double ORIENT_TOL = 1.0;
+  const double ORIENT_INC = 0.2;
+  CartesianRobot robot(10,4);
+
+  // declaring pose values
+  const double x = 4.0f;
+  const double y = 5.0f;
+  const double z = 2.0f;
+  const double rx = 0.0f;
+  const double ry = 0.0f;
+  const double rz = M_PI/4;
+  std::vector<double> joint_pose                                                                                                                                                                                                                                                                                                                                                                                                                                                                = {x,y,z,rx,ry,rz};
+  Eigen::Affine3d frame_pose = descartes_core::utils::toFrame(x,y,z,rx,ry,rz);
+
+  ROS_INFO_STREAM("Initializing tolerance cartesian point");
+  CartTrajectoryPt cart_point(TolerancedFrame(
+                                utils::toFrame(x,y,z,rx,ry,rz),
+                                ToleranceBase::createSymmetric<PositionTolerance>(x,y,z, POS_TOL),
+                                ToleranceBase::createSymmetric<OrientationTolerance>(rx,ry,rz, ORIENT_TOL)),
+                              POS_INC, ORIENT_INC);
+
+  ROS_INFO_STREAM("Testing getClosestJointPose(...)");
+  std::vector<double> closest_joint_pose;
+  EXPECT_TRUE(cart_point.getClosestJointPose(joint_pose,robot,closest_joint_pose));
+
+  ROS_INFO_STREAM("Testing equality between seed joint pose and closest joint pose");
+  EXPECT_EQ(joint_pose,closest_joint_pose);
+}

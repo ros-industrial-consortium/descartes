@@ -47,6 +47,8 @@ public:
 
   virtual bool isValid(const Eigen::Affine3d &pose) const;
 
+  virtual int getDOF() const;
+
   double pos_range_;
   double orient_range_;
 

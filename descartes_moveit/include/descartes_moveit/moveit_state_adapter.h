@@ -61,6 +61,8 @@ public:
 
   virtual bool isValid(const Eigen::Affine3d &pose) const;
 
+  virtual int getDOF() const;
+
 protected:
 
   /**

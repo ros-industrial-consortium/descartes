@@ -41,6 +41,8 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
   {
+    joint_model_group_ptr->printGroupInfo();
+
     const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
     if (tool_frame_ != link_names.back())
     {
@@ -226,6 +228,13 @@ bool MoveitStateAdapter::isValid(const Eigen::Affine3d &pose) const
   //TODO: Could check robot extents first as a quick check
   std::vector<double> dummy;
   return getIK(pose, dummy);
+}
+
+int MoveitStateAdapter::getDOF() const
+{
+  const moveit::core::JointModelGroup* group;
+  group = robot_state_->getJointModelGroup(group_name_);
+  return group->getVariableCount();
 }
 
 } //descartes_moveit
