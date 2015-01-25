@@ -25,9 +25,11 @@
 #ifndef CART_TRAJECTORY_PT_H_
 #define CART_TRAJECTORY_PT_H_
 
+#include <eigen_stl_containers/eigen_stl_vector_container.h>
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
+#include <ros/console.h>
 #include "descartes_core/trajectory_pt.h"
-#include "ros/console.h"
+#include "descartes_core/samplers/cart_pt_sampler_base.h"
 
 typedef boost::shared_ptr<kinematic_constraints::PositionConstraint> PositionConstraintPtr;
 typedef boost::shared_ptr<kinematic_constraints::OrientationConstraint> OrientationConstraintPtr;
@@ -182,6 +184,28 @@ struct TolerancedFrame: public Frame
   OrientationTolerance          orientation_tolerance;
   PositionConstraintPtr         position_constraint;
   OrientationConstraintPtr      orientation_constraint;
+
+  Eigen::Vector3d upperPositionBound() const
+  {
+    return frame.translation() + Eigen::Vector3d(position_tolerance.x_upper, position_tolerance.y_upper, position_tolerance.z_upper);
+  }
+
+  Eigen::Vector3d lowerPositionBound() const
+  {
+    return frame.translation() - Eigen::Vector3d(position_tolerance.x_lower, position_tolerance.y_lower, position_tolerance.z_lower);
+  }
+
+  Eigen::Vector3d upperRPYBound() const
+  {
+    Eigen::Vector3d rpy = frame.rotation().eulerAngles(2,1,0);
+    return Eigen::Vector3d(rpy(2), rpy(1), rpy(0)) + Eigen::Vector3d(orientation_tolerance.x_upper, orientation_tolerance.y_upper, orientation_tolerance.z_upper);  //TODO check that this is correct
+  }
+
+  Eigen::Vector3d lowerRPYBound() const
+  {
+    Eigen::Vector3d rpy = frame.rotation().eulerAngles(2,1,0);
+    return Eigen::Vector3d(rpy(2), rpy(1), rpy(0)) - Eigen::Vector3d(orientation_tolerance.x_lower, orientation_tolerance.y_lower, orientation_tolerance.z_lower);  //TODO check that this is correct
+  }
 };
 
 
@@ -302,6 +326,36 @@ public:
     wobj_pt_ = pt;
   }
 
+  /** @name Sampling
+   * @{
+   */
+  /**@brief Assign a Cartesian pt sampler for tool frame of CartTrajectoryPt (similar to @e setWobjSampler).
+   *
+   * If successful, @e tool_sampler_ will be assigned to @e sampler.
+   *
+   * @param[in] sampler Shared ptr to a CartPtSampler.
+   * @return True if sampler is initialized with point data.
+   */
+  virtual
+  bool setToolSampler(const CartPtSamplerBasePtr &sampler);
+  virtual
+  bool setWobjSampler(const CartPtSamplerBasePtr &sampler);
+
+
+  /**@brief Get samples. This implementation is called by sampleTool() and sampleGoal().
+   *
+   * @param n Number of times to perform sampling. Actual number of returned samples may be different. A value of 0 means to get all available remaining samples.
+   * @param sampler_ Sampler to use for sampling.
+   * @return Set of Cartesian frame samples.
+   */
+  virtual
+  EigenSTL::vector_Affine3d sample(size_t n, CartPtSamplerBasePtr &sampler_);
+  virtual
+  EigenSTL::vector_Affine3d sampleTool(size_t n);
+  virtual
+  EigenSTL::vector_Affine3d sampleWobj(size_t n);
+
+  /** @} (end section) */
 
 protected:
   Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */
@@ -311,6 +365,9 @@ protected:
 
   double                        pos_increment_;    /**<@brief Sampling discretization in cartesian directions. */
   double                        orient_increment_; /**<@brief Sampling discretization in angular orientation. */
+
+  CartPtSamplerBasePtr          tool_sampler_,  /**<@brief Cartesian sampler for tool frame. */
+                                wobj_sampler_;  /**<@brief Cartesian sampler for wobj frame. */
 
 };
 

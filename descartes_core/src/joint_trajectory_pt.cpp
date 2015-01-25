@@ -128,9 +128,25 @@ bool JointTrajectoryPt::isValid(const RobotModel &model) const
 return model.isValid(lower) && model.isValid(upper);
 }
 
+std::vector<std::vector<double> > JointTrajectoryPt::sample(size_t n)
+{
+  std::vector<double> sample;
+  std::vector<std::vector<double> > samples;
+  while (n==0 || samples.size()<n)
+  {
+    if (!sampler_->sample(sample) )
+    {
+      break;
+    }
+    //TODO check that sample is valid. All samples returned by current sampler should be valid, but that cannot be assured in the future
+    samples.push_back(sample);
+  }
+  return samples;
+}
+
 bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
 {
-  if (discretization.size() != 1 || discretization.size() != joint_position_.size())
+  if (discretization.size() != 1 && discretization.size() != joint_position_.size())
   {
     logError("discretization must be size 1 or same size as joint count.");
     return false;
@@ -154,6 +170,29 @@ bool JointTrajectoryPt::setDiscretization(const std::vector<double> &discretizat
 
   discretization_ = discretization;
 
+  return true;
+}
+
+bool JointTrajectoryPt::setSampler(const JointPtSamplerBasePtr &sampler)
+{
+  size_t n = joint_position_.size();
+  std::vector<double> nominal(n), upper_bound(n), lower_bound(n);
+  for (size_t ii=0; ii<n; ++ii)
+  {
+    nominal[ii] = joint_position_[ii].nominal;
+    lower_bound[ii] = joint_position_[ii].lowerBound();
+    upper_bound[ii] = joint_position_[ii].upperBound();
+  }
+
+  //Note: It might be better if trajectory point doesn't know or care about discretization.
+  //TODO Assign discretization externally before calling setSampler().
+  sampler->setSampleIncrement(discretization_);
+  if (!sampler->initPositionData(nominal, upper_bound, lower_bound) )
+  {
+    return false;
+  }
+
+  sampler_ = sampler;
   return true;
 }
 
