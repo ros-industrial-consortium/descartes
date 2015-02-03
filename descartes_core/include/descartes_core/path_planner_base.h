@@ -20,16 +20,29 @@ class PathPlannerBase
 public:
   virtual ~PathPlannerBase(){}
 
-  virtual bool initialize(RobotModelConstPtr &model,const std::vector<TrajectoryPtPtr>& traj,
-            double sampling = 0.1f) = 0;
+  /**
+   * @brief Plans a path for the given robot model through the points in the input trajectory.
+   * @param model robot model implementation for which to plan a path
+   * @param sampling This value will be interpreted differently by each planner specialization.
+   */
+  virtual bool initialize(RobotModelConstPtr &model, double sampling = 0.1f) = 0;
 
-  virtual bool addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp) = 0;
-  virtual bool addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp) = 0;
+  /**
+   * @brief Generates a robot path from the trajectory.
+   * @param traj the points used to plan the robot path
+   */
+  virtual bool planPath(const std::vector<TrajectoryPtPtr>& traj) = 0;
+
+  /**
+   * @brief Returns the robot path generated from the input trajectory
+   * @param path Array of path points
+   */
+  virtual bool getPath(std::vector<TrajectoryPtPtr>& path) = 0;
+
+  virtual bool addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+  virtual bool addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
   virtual bool remove(const TrajectoryPt::ID& ref_id) = 0;
-  virtual bool modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp) = 0;
-  virtual bool get(const CartTrajectoryPt::ID& cart_id,TrajectoryPtPtr& j);
-  virtual bool get(int index, TrajectoryPtPtr& j = 0);
-  virtual int size() = 0;
+  virtual bool modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
 
 protected:
   PathPlannerBase(){}
