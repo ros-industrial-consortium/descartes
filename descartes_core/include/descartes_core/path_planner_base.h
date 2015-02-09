@@ -14,6 +14,26 @@
 
 namespace descartes_core
 {
+namespace PlannerErrors
+{
+enum PlannerError
+{
+  OK = 1,
+  IK_NOT_AVAILABLE= -1,
+  FX_NOT_AVAILABLE = -2,
+  SELF_COLLISION_FOUND = -3 ,
+  ENVIRONMENT_COLLISION_FOUND ,
+  PLANNING_TIMEOUT ,
+  EMPTY_TRAJECTORY,
+  SPEED_LIMIT_EXCEEDED,
+  ACCELERATION_LIMIT_EXCEEDED,
+  MAX_TRAJECTORY_SIZE_EXCEEDED ,
+  UKNOWN = -99
+};
+}
+typedef PlannerErrors::PlannerError PlannerError;
+
+typedef std::map<std::string,std::string> PlannerConfig;
 
 class PathPlannerBase
 {
@@ -23,26 +43,69 @@ public:
   /**
    * @brief Plans a path for the given robot model through the points in the input trajectory.
    * @param model robot model implementation for which to plan a path
-   * @param sampling This value will be interpreted differently by each planner specialization.
    */
-  virtual bool initialize(RobotModelConstPtr &model, double sampling = 0.1f) = 0;
+  virtual bool initialize(RobotModelConstPtr &model) = 0;
+
+  /**
+   * @brief Configure the planner's parameters. Should return 'true' when all the entries were properly parsed.
+   * @param config A map containing the parameter/value pairs.
+   */
+  virtual bool setConfig( const PlannerConfig& config) = 0;
+
+  /**
+   * @brief Get the current configuration parameters used by the planner
+   * @param config A map containing the current parameter/value pairs.
+   */
+  virtual void getConfig(PlannerConfig& config) = 0;
 
   /**
    * @brief Generates a robot path from the trajectory.
    * @param traj the points used to plan the robot path
+   * @error_code Integer flag which indicates the type of error encountered during planning.
    */
   virtual bool planPath(const std::vector<TrajectoryPtPtr>& traj) = 0;
 
   /**
-   * @brief Returns the robot path generated from the input trajectory
-   * @param path Array of path points
+   * @brief Returns the last robot path generated from the input trajectory
+   * @param path Array that contains the points in the robot path
    */
-  virtual bool getPath(std::vector<TrajectoryPtPtr>& path) = 0;
+  virtual bool getPath(const std::vector<TrajectoryPtPtr>& path) = 0;
 
+  /**
+   * @brief Add a point to the current path after the point with 'ref_id'.
+   * @param ref_id ID of the reference point
+   */
   virtual bool addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+
+  /**
+   * @brief Add a point to the current path before the point with 'ref_id'.
+   * @param ref_id ID of the reference point
+   */
   virtual bool addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+
+  /**
+   * @brief Removes the point with 'ref_id' from the path.
+   * @param ref_id ID of the reference point
+   */
   virtual bool remove(const TrajectoryPt::ID& ref_id) = 0;
+
+  /**
+   * @brief Modifies the point with 'ref_id'.
+   * @param ref_id ID of the reference point
+   */
   virtual bool modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+
+
+  /**
+   * @brief Returns the last error code.
+   */
+  virtual int getErrorCode() = 0;
+
+  /**
+   * @brief Gets the error message corresponding to the error code.
+   * @param error_code Integer code from the PlannerError enumeration.
+   */
+  static virtual bool getErrorMessage(int error_code, std::string& msg) = 0;
 
 protected:
   PathPlannerBase(){}
