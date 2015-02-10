@@ -24,6 +24,7 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include "moveit/robot_model/robot_model.h"
 #include "moveit/kinematics_base/kinematics_base.h"
+#include <moveit/planning_scene/planning_scene.h>
 #include <string>
 
 namespace descartes_moveit
@@ -39,17 +40,6 @@ class MoveitStateAdapter : public descartes_core::RobotModel
 public:
 
   MoveitStateAdapter();
-
-  /**
-   * Constructor for Moveit state adapters (implements Descartes robot model interface)
-   * @param robot_state robot state object utilized for kinematic/dynamic state checking
-   * @param group_name planning group name
-   * @param tool_frame tool frame name
-   * @param world_frame work object frame name
-   */
-  MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                    const std::string & tool_frame, const std::string & world_frame,
-                     size_t sample_iterations = 10);
 
   virtual ~MoveitStateAdapter()
   {
@@ -71,6 +61,11 @@ public:
 
   virtual int getDOF() const;
 
+  virtual bool setOptions(const descartes_core::RobotModelOptions& options);
+
+  virtual descartes_core::RobotModelOptions getOptions();
+
+
 protected:
 
   /**
@@ -86,6 +81,7 @@ protected:
    * each function call
    */
   mutable moveit::core::RobotStatePtr robot_state_;
+  planning_scene::PlanningScenePtr planning_scene_;
   robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
   robot_model::RobotModelConstPtr robot_model_ptr_;
 
@@ -113,6 +109,8 @@ protected:
    * @brief Joint solution sample iterations for returning "all" joints
    */
   size_t sample_iterations_;
+
+  descartes_core::RobotModelOptions options_;
 
 };
 
