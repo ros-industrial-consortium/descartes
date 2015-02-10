@@ -21,14 +21,14 @@ public:
 
   virtual ~DensePlanner();
 
-  virtual bool initialize(descartes_core::RobotModelConstPtr &model,const descartes_core::PlannerConfig& config);
+  virtual bool initialize(descartes_core::RobotModelConstPtr &model);
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config);
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
   virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path);
   virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
   virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
-  virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
+  virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id);
   virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
   virtual int getErrorCode();
   virtual bool getErrorMessage(int error_code, std::string& msg);
@@ -37,6 +37,7 @@ protected:
 
   descartes_core::TrajectoryPt::ID getPrevious(const descartes_core::TrajectoryPt::ID& ref_id);
   descartes_core::TrajectoryPt::ID getNext(const descartes_core::TrajectoryPt::ID& ref_id);
+  descartes_core::TrajectoryPtPtr get(const descartes_core::TrajectoryPt::ID& ref_id);
   bool updatePath();
 
 

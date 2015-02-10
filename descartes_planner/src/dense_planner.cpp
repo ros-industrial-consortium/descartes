@@ -31,11 +31,10 @@ DensePlanner::~DensePlanner()
 
 }
 
-bool DensePlanner::initialize(descartes_core::RobotModelConstPtr &model,const descartes_core::PlannerConfig& config)
+bool DensePlanner::initialize(descartes_core::RobotModelConstPtr &model)
 {
   planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(
       new descartes_planner::PlanningGraph(model));
-  setConfig(config);
   error_code_ = descartes_core::PlannerErrors::EMPTY_PATH;
   return true;
 }
@@ -170,8 +169,34 @@ descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::Tra
   return id;
 }
 
+descartes_core::TrajectoryPtPtr DensePlanner::get(const descartes_core::TrajectoryPt::ID& ref_id)
+{
+  descartes_core::TrajectoryPtPtr p;
+  auto predicate = [&ref_id](descartes_core::TrajectoryPtPtr p)
+    {
+      return ref_id == p->getID();
+    };
+
+  auto pos = std::find_if(path_.begin(),path_.end()-2,predicate);
+  if(pos == path_.end() )
+  {
+    p.reset();
+  }
+  else
+  {
+    p  =  *pos;
+  }
+  return p;
+}
+
 bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj)
 {
+  if(error_code_ == descartes_core::PlannerError::UNINITIALIZED)
+  {
+    ROS_ERROR_STREAM("Planner has not been initialized");
+    return false;
+  }
+
   double cost;
   path_.clear();
   error_code_ = descartes_core::PlannerError::EMPTY_PATH;
@@ -266,14 +291,15 @@ bool DensePlanner::addBefore(const descartes_core::TrajectoryPt::ID& ref_id, des
   return true;
 }
 
-bool DensePlanner::remove(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp)
+bool DensePlanner::remove(const descartes_core::TrajectoryPt::ID& ref_id)
 {
   if(path_.empty())
   {
     return false;
   }
 
-  if(!ref_id.is_nil())
+  descartes_core::TrajectoryPtPtr tp = get(ref_id);
+  if(tp)
   {
     tp->setID(ref_id);
     if(planning_graph_->removeTrajectory(tp))

@@ -24,10 +24,14 @@ enum PlannerError
   SELF_COLLISION_FOUND = -3 ,
   ENVIRONMENT_COLLISION_FOUND = -4  ,
   PLANNING_TIMEOUT = -5,
-  EMPTY_TRAJECTORY = -6,
+  EMPTY_PATH = -6,
   SPEED_LIMIT_EXCEEDED = -7,
   ACCELERATION_LIMIT_EXCEEDED = -8,
   MAX_TRAJECTORY_SIZE_EXCEEDED = -9 ,
+  UNINITIALIZED = -10,
+  INVALID_ID = -11,
+  INCOMPLETE_PATH = -12,
+  INVALID_CONFIGURATION_PARAMETER = -13,
   UKNOWN = -99
 };
 }
@@ -35,14 +39,17 @@ typedef PlannerErrors::PlannerError PlannerError;
 
 typedef std::map<std::string,std::string> PlannerConfig;
 
+
+DESCARTES_CLASS_FORWARD(PathPlannerBase);
 class PathPlannerBase
 {
 public:
   virtual ~PathPlannerBase(){}
 
   /**
-   * @brief Plans a path for the given robot model through the points in the input trajectory.
+   * @brief Plans a path for the given robot model and configuration parameters.
    * @param model robot model implementation for which to plan a path
+   * @param config A map containing the parameter/value pairs.
    */
   virtual bool initialize(RobotModelConstPtr &model) = 0;
 
@@ -69,7 +76,7 @@ public:
    * @brief Returns the last robot path generated from the input trajectory
    * @param path Array that contains the points in the robot path
    */
-  virtual bool getPath(const std::vector<TrajectoryPtPtr>& path) = 0;
+  virtual bool getPath(std::vector<TrajectoryPtPtr>& path) = 0;
 
   /**
    * @brief Add a point to the current path after the point with 'ref_id'.
@@ -95,7 +102,6 @@ public:
    */
   virtual bool modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
 
-
   /**
    * @brief Returns the last error code.
    */
@@ -105,7 +111,7 @@ public:
    * @brief Gets the error message corresponding to the error code.
    * @param error_code Integer code from the PlannerError enumeration.
    */
-  static virtual bool getErrorMessage(int error_code, std::string& msg) = 0;
+  virtual bool getErrorMessage(int error_code, std::string& msg) = 0;
 
 protected:
   PathPlannerBase(){}

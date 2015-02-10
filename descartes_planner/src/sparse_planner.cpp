@@ -33,12 +33,81 @@ namespace descartes_planner
 
 const int INVALID_INDEX = -1;
 const double MAX_JOINT_CHANGE = M_PI_4;
+const double DEFAULT_SAMPLING = 0.1f;
 
 SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
-    PlanningGraph(model),
-    sampling_(sampling)
+    sampling_(sampling),
+    error_code_(descartes_core::PlannerError::UNINITIALIZED)
 {
+  error_map_ = {
+                 {PlannerError::OK,"OK"},
+                 {PlannerError::EMPTY_PATH,"No path plan has been generated"},
+                 {PlannerError::INVALID_ID,"ID is nil or isn't part of the path"},
+                 {PlannerError::IK_NOT_AVAILABLE,"One or more ik solutions could not be found"},
+                 {PlannerError::UNINITIALIZED,"Planner has not been initialized with a robot model"},
+                 {PlannerError::INCOMPLETE_PATH,"Input trajectory and output path point cound differ"}
+               };
 
+  initialize(model);
+  config_ = {{"sampling",std::to_string(sampling)}};
+}
+
+SparsePlanner::SparsePlanner():
+    sampling_(DEFAULT_SAMPLING),
+    error_code_(descartes_core::PlannerError::UNINITIALIZED)
+{
+  error_map_ = {
+                 {PlannerError::OK,"OK"},
+                 {PlannerError::EMPTY_PATH,"No path plan has been generated"},
+                 {PlannerError::INVALID_ID,"ID is nil or isn't part of the path"},
+                 {PlannerError::IK_NOT_AVAILABLE,"One or more ik solutions could not be found"},
+                 {PlannerError::UNINITIALIZED,"Planner has not been initialized with a robot model"},
+                 {PlannerError::INCOMPLETE_PATH,"Input trajectory and output path point cound differ"}
+               };
+
+  config_ = {{"sampling",std::to_string(DEFAULT_SAMPLING)}};
+}
+
+bool SparsePlanner::initialize(RobotModelConstPtr &model)
+{
+  planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(new descartes_planner::PlanningGraph(model));
+  error_code_ = PlannerError::EMPTY_PATH;
+  return true;
+}
+
+bool SparsePlanner::setConfig(const descartes_core::PlannerConfig& config)
+{
+  std::stringstream ss;
+  static std::vector<std::string> keys = {"sampling"};
+
+  // verifying keys
+  for(auto k: keys)
+  {
+    if(config.count(k)==0)
+    {
+      error_code_ = descartes_core::PlannerError::INVALID_CONFIGURATION_PARAMETER;
+      return false;
+    }
+  }
+
+  // translating string values
+  try
+  {
+    sampling_ = std::stod(config.at("sampling"));
+  }
+  catch(std::invalid_argument& exp)
+  {
+    ROS_ERROR_STREAM("Unable to parse configuration value(s)");
+    error_code_ = descartes_core::PlannerError::INVALID_CONFIGURATION_PARAMETER;
+    return false;
+  }
+
+  return true;
+}
+
+void SparsePlanner::getConfig(descartes_core::PlannerConfig& config)
+{
+  config = config_;
 }
 
 SparsePlanner::~SparsePlanner()
@@ -51,8 +120,14 @@ void SparsePlanner::setSampling(double sampling)
   sampling_ = sampling;
 }
 
-bool SparsePlanner::setPoints(const std::vector<TrajectoryPtPtr>& traj)
+bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
 {
+  if(error_code_ == descartes_core::PlannerError::UNINITIALIZED)
+  {
+    ROS_ERROR_STREAM("Planner has not been initialized");
+    return false;
+  }
+
   ros::Time start_time = ros::Time::now();
   cart_points_.assign(traj.begin(),traj.end());
   std::vector<TrajectoryPtPtr> sparse_trajectory_array;
@@ -60,7 +135,7 @@ bool SparsePlanner::setPoints(const std::vector<TrajectoryPtPtr>& traj)
   ROS_INFO_STREAM("Sampled trajectory contains "<<sparse_trajectory_array.size()<<" points from "<<cart_points_.size()<<
                   " points in the dense trajectory");
 
-  if(insertGraph(&sparse_trajectory_array) && plan())
+  if(planning_graph_->insertGraph(&sparse_trajectory_array) && plan())
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
@@ -76,7 +151,7 @@ bool SparsePlanner::setPoints(const std::vector<TrajectoryPtPtr>& traj)
   return true;
 }
 
-bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
   ros::Time start_time = ros::Time::now();
   int sparse_index;
@@ -106,7 +181,7 @@ bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr
   cart_points_.insert(pos,cp);
 
   // replanning
-  if(addTrajectory(cp,prev_id,next_id) && plan())
+  if(planning_graph_->addTrajectory(cp,prev_id,next_id) && plan())
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
@@ -121,7 +196,7 @@ bool SparsePlanner::addPointAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr
   return true;
 }
 
-bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
   ros::Time start_time = ros::Time::now();
   int sparse_index;
@@ -149,7 +224,7 @@ bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPt
   std::advance(pos,index);
   cart_points_.insert(pos,cp);
 
-  if(addTrajectory(cp,prev_id,next_id) && plan())
+  if(planning_graph_->addTrajectory(cp,prev_id,next_id) && plan())
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
@@ -164,7 +239,7 @@ bool SparsePlanner::addPointBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPt
   return true;
 }
 
-bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
+bool SparsePlanner::remove(const TrajectoryPt::ID& ref_id)
 {
   ros::Time start_time = ros::Time::now();
   int index = getDensePointIndex(ref_id);
@@ -176,7 +251,7 @@ bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
 
   if(isInSparseTrajectory(ref_id))
   {
-    if(!removeTrajectory(cart_points_[index]))
+    if(!planning_graph_->removeTrajectory(cart_points_[index]))
     {
       ROS_ERROR_STREAM("Failed to removed point "<<ref_id<<" from sparse trajectory, aborting");
       return false;
@@ -203,7 +278,7 @@ bool SparsePlanner::removePoint(const TrajectoryPt::ID& ref_id)
   return true;
 }
 
-bool SparsePlanner::modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
 {
   ros::Time start_time = ros::Time::now();
   int sparse_index;
@@ -216,7 +291,7 @@ bool SparsePlanner::modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr c
     sparse_index = findNearestSparsePointIndex(ref_id);
     prev_id = std::get<1>(sparse_solution_array_[sparse_index - 1])->getID();
     next_id = std::get<1>(sparse_solution_array_[sparse_index])->getID();
-    if(!addTrajectory(cp,prev_id,next_id))
+    if(!planning_graph_->addTrajectory(cp,prev_id,next_id))
     {
       ROS_ERROR_STREAM("Failed to add point to sparse trajectory, aborting");
       return false;
@@ -224,7 +299,7 @@ bool SparsePlanner::modifyPoint(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr c
   }
   else
   {
-    if(!modifyTrajectory(cp))
+    if(!planning_graph_->modifyTrajectory(cp))
     {
       ROS_ERROR_STREAM("Failed to modify point in sparse trajectory, aborting");
       return false;
@@ -335,7 +410,7 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
   std::vector<TrajectoryPtPtr> sparse_cart_points;
   double cost;
   ros::Time start_time = ros::Time::now();
-  if(getShortestPath(cost,sparse_joint_points))
+  if(planning_graph_->getShortestPath(cost,sparse_joint_points))
   {
     ROS_INFO_STREAM("Sparse solution was found in "<<(ros::Time::now() - start_time).toSec()<<" seconds");
     bool success = getOrderedSparseArray(sparse_cart_points) && (sparse_joint_points.size() == sparse_cart_points.size());
@@ -379,7 +454,7 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
 
 bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array)
 {
-  const CartesianMap& cart_map = getCartesianMap();
+  const CartesianMap& cart_map = planning_graph_->getCartesianMap();
   TrajectoryPt::ID first_id = boost::uuids::nil_uuid();
   auto predicate = [&first_id](const std::pair<TrajectoryPt::ID,CartesianPointInformation>& p)
     {
@@ -434,6 +509,43 @@ bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, J
     return false;
   }
 
+  return true;
+}
+
+bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path)
+{
+  if(cart_points_.empty() || joint_points_map_.empty())
+  {
+    error_code_ = descartes_core::PlannerError::EMPTY_PATH;
+    return false;
+  }
+
+  path.resize(cart_points_.size());
+  for(int i = 0; i < cart_points_.size();i++)
+  {
+    TrajectoryPtPtr p = cart_points_[i];
+    JointTrajectoryPt& j = joint_points_map_[p->getID()];
+    path[i] = TrajectoryPtPtr(new JointTrajectoryPt(j));
+  }
+
+  return true;
+}
+
+int SparsePlanner::getErrorCode()
+{
+  return error_code_;
+}
+
+bool SparsePlanner::getErrorMessage(int error_code, std::string& msg)
+{
+  if(error_map_.count(error_code)>0)
+  {
+    msg = error_map_[error_code];
+  }
+  else
+  {
+    return false;
+  }
   return true;
 }
 
@@ -515,7 +627,7 @@ bool SparsePlanner::plan()
             next_id = std::get<1>(sparse_solution_array_[sparse_index])->getID();
           }
 
-          if(addTrajectory(cart_point,prev_id,next_id))
+          if(planning_graph_->addTrajectory(cart_point,prev_id,next_id))
           {
             sparse_solution_array_.clear();
             ROS_INFO_STREAM("Added new point to sparse trajectory from dense trajectory at position "<<
@@ -576,7 +688,8 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
 {
   // populating full path
   joint_points_map_.clear();
-  std::vector<double> start_jpose, end_jpose, rough_interp, aprox_interp, seed_pose(robot_model_->getDOF(),0);
+  descartes_core::RobotModelConstPtr robot_model = planning_graph_->getRobotModel();
+  std::vector<double> start_jpose, end_jpose, rough_interp, aprox_interp, seed_pose(robot_model->getDOF(),0);
   for(int k = 1; k < sparse_solution_array.size(); k++)
   {
     auto start_index = std::get<0>(sparse_solution_array[k-1]);
@@ -586,8 +699,9 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
     const JointTrajectoryPt& start_jpoint = std::get<2>(sparse_solution_array[k-1]);
     const JointTrajectoryPt& end_jpoint = std::get<2>(sparse_solution_array[k]);
 
-    start_jpoint.getNominalJointPose(seed_pose,*robot_model_,start_jpose);
-    end_jpoint.getNominalJointPose(seed_pose,*robot_model_,end_jpose);
+
+    start_jpoint.getNominalJointPose(seed_pose,*robot_model,start_jpose);
+    end_jpoint.getNominalJointPose(seed_pose,*robot_model,end_jpose);
 
     // adding start joint point to solution
     joint_points_map_.insert(std::make_pair(start_tpoint->getID(),start_jpoint));
@@ -606,7 +720,7 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
       }
 
       TrajectoryPtPtr cart_point = cart_points_[pos];
-      if(cart_point->getClosestJointPose(rough_interp,*robot_model_,aprox_interp) )
+      if(cart_point->getClosestJointPose(rough_interp,*robot_model,aprox_interp) )
       {
         if(checkJointChanges(rough_interp,aprox_interp,MAX_JOINT_CHANGE))
         {
