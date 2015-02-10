@@ -26,6 +26,8 @@
 namespace descartes_core
 {
 
+typedef std::map<std::string,std::string> RobotModelOptions;
+
 DESCARTES_CLASS_FORWARD(RobotModel);
 
 /**@brief RobotModel defines the interface to a kinematics/dynamics functions.  Implementations
@@ -101,6 +103,16 @@ public:
    */
   virtual bool initialize(const std::string robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame) = 0;
+
+  /* @brief sets the configuration options.
+   * @param options map containing the key/value option pairs.
+   */
+  virtual bool setOptions(const RobotModelOptions& options) = 0;
+
+  /* @brief returns the current options used by this robot model
+   * @return RobotModelOptions map
+   */
+  virtual RobotModelOptions getOptions() = 0;
 
 protected:
 
