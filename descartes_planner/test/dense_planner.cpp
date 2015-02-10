@@ -17,7 +17,7 @@
  */
 
 #include <ros/node_handle.h>
-#include <descartes_planner/sparse_planner.h>
+#include <descartes_planner/dense_planner.h>
 #include <descartes_trajectory/cart_trajectory_pt.h>
 #include <descartes_core/utils.h>
 #include <descartes_trajectory_test/cartesian_robot.h>
@@ -28,10 +28,10 @@
 using namespace descartes_core;
 using namespace descartes_trajectory;
 typedef std::vector<descartes_core::TrajectoryPtPtr> Trajectory;
-const int NUM_DENSE_POINTS = 1000;
+const int NUM_DENSE_POINTS = 100;
 Trajectory createTestTrajectory();
 Trajectory TEST_TRAJECTORY = createTestTrajectory();
-descartes_planner::SparsePlanner Planner;
+descartes_planner::DensePlanner Planner;
 
 class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
 {
@@ -115,14 +115,14 @@ Trajectory createTestTrajectory()
   return traj;
 }
 
-TEST(SparsePlanner, initialize)
+TEST(DensePlanner, initialize)
 {
   ros::Time::init();
   RobotModelConstPtr robot(new ThreeDOFRobot());
   EXPECT_TRUE(Planner.initialize(robot));
 }
 
-TEST(SparsePlanner, configure)
+TEST(DensePlanner, configure)
 {
   descartes_core::PlannerConfig config;
   Planner.getConfig(config);
@@ -130,7 +130,7 @@ TEST(SparsePlanner, configure)
 }
 
 
-TEST(SparsePlanner, planPath)
+TEST(DensePlanner, planPath)
 {
   ROS_INFO_STREAM("Testing planPath() with "<<NUM_DENSE_POINTS<<" points");
   EXPECT_TRUE(Planner.planPath(TEST_TRAJECTORY));
