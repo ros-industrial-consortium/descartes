@@ -64,7 +64,6 @@ namespace descartes_trajectory_test
     else
     {
       rtn = false;
-      ROS_WARN("IK calculated pose, not valid");
     }
     return rtn;
   }
@@ -151,6 +150,16 @@ namespace descartes_trajectory_test
             fabs(Y) <= orient_limit );
 
     return rtn;
+  }
+
+  bool CartesianRobot::setOptions(const descartes_core::RobotModelOptions& options)
+  {
+    return true;
+  }
+
+  descartes_core::RobotModelOptions CartesianRobot::getOptions()
+  {
+    return descartes_core::RobotModelOptions();
   }
 
 } //descartes_trajectory_test
