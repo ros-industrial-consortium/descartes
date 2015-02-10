@@ -58,7 +58,7 @@ PlanningGraph::~PlanningGraph()
   }
 }
 
-const CartesianMap& PlanningGraph::getCartesianMap()
+CartesianMap PlanningGraph::getCartesianMap()
 {
   TrajectoryPt::ID cart_id = generate_nil();
   for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
@@ -72,17 +72,22 @@ const CartesianMap& PlanningGraph::getCartesianMap()
     }
   }
 
-  CartesianMap *to_return = new CartesianMap();
+  CartesianMap to_return = CartesianMap();
   bool done = false;
   while(!done)
   {
-    (*to_return)[cart_id] = (*cartesian_point_link_)[cart_id];
+    to_return[cart_id] = (*cartesian_point_link_)[cart_id];
     cart_id = (*cartesian_point_link_)[cart_id].links_.id_previous;
     done = (cart_id.is_nil());
     ROS_DEBUG("Next CID: %s", boost::uuids::to_string(cart_id).c_str());
   }
 
-  return *to_return;
+  return to_return;
+}
+
+descartes_core::RobotModelConstPtr PlanningGraph::getRobotModel()
+{
+  return robot_model_;
 }
 
 bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
