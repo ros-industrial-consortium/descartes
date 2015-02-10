@@ -99,7 +99,7 @@ public:
 
   bool removeTrajectory(descartes_core::TrajectoryPtPtr point);
 
-  const CartesianMap& getCartesianMap();
+  CartesianMap getCartesianMap();
 
   bool getCartesianTrajectory(std::vector<descartes_core::TrajectoryPtPtr>& traj);
 
@@ -120,6 +120,8 @@ public:
    */
   void printGraph();
   void printMaps();
+
+  descartes_core::RobotModelConstPtr getRobotModel();
 
 protected:
   boost::uuids::nil_generator generate_nil;
