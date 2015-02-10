@@ -42,6 +42,7 @@ include_directories(include
 add_library(descartes_planner
             src/planning_graph.cpp
             src/sparse_planner.cpp
+            src/dense_planner.cpp
 )
 
 target_link_libraries(descartes_planner

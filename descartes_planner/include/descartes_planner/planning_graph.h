@@ -66,9 +66,6 @@ typedef boost::graph_traits<JointGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<JointGraph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<JointGraph>::in_edge_iterator InEdgeIterator;
 
-//typedef boost::shared_ptr<descartes_core::TrajectoryPt> TrajectoryPtPtr;
-
-
 struct CartesianPointInformation
 {
   CartesianPointRelationship links_;
@@ -90,7 +87,7 @@ public:
    * @param points list of trajectory points to be used to construct the graph
    * @return True if the graph was successfully created
    */
-  bool insertGraph(std::vector<descartes_core::TrajectoryPtPtr> *points);
+  bool insertGraph(const std::vector<descartes_core::TrajectoryPtPtr> *points);
 
   /** @brief adds a single trajectory point to the graph
    * @param point The new point to add to the graph
@@ -103,6 +100,8 @@ public:
   bool removeTrajectory(descartes_core::TrajectoryPtPtr point);
 
   const CartesianMap& getCartesianMap();
+
+  bool getCartesianTrajectory(std::vector<descartes_core::TrajectoryPtPtr>& traj);
 
   /** @brief Calculate and return the shortest path from the given joint solution indices
    * @param startIndex The index of the joint solution at which to start
