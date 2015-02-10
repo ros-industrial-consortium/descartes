@@ -34,6 +34,7 @@ namespace descartes_planner
 const int INVALID_INDEX = -1;
 const double MAX_JOINT_CHANGE = M_PI_4;
 const double DEFAULT_SAMPLING = 0.1f;
+const std::string SAMPLING_CONFIG = "sampling";
 
 SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
     sampling_(sampling),
@@ -49,7 +50,7 @@ SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
                };
 
   initialize(model);
-  config_ = {{"sampling",std::to_string(sampling)}};
+  config_ = {{SAMPLING_CONFIG,std::to_string(sampling)}};
 }
 
 SparsePlanner::SparsePlanner():
@@ -65,7 +66,7 @@ SparsePlanner::SparsePlanner():
                  {PlannerError::INCOMPLETE_PATH,"Input trajectory and output path point cound differ"}
                };
 
-  config_ = {{"sampling",std::to_string(DEFAULT_SAMPLING)}};
+  config_ = {{SAMPLING_CONFIG,std::to_string(DEFAULT_SAMPLING)}};
 }
 
 bool SparsePlanner::initialize(RobotModelConstPtr &model)
@@ -78,12 +79,12 @@ bool SparsePlanner::initialize(RobotModelConstPtr &model)
 bool SparsePlanner::setConfig(const descartes_core::PlannerConfig& config)
 {
   std::stringstream ss;
-  static std::vector<std::string> keys = {"sampling"};
+  static std::vector<std::string> keys = {SAMPLING_CONFIG};
 
   // verifying keys
-  for(auto k: keys)
+  for(auto kv: config_)
   {
-    if(config.count(k)==0)
+    if(config.count(kv.first)==0)
     {
       error_code_ = descartes_core::PlannerError::INVALID_CONFIGURATION_PARAMETER;
       return false;
@@ -93,7 +94,8 @@ bool SparsePlanner::setConfig(const descartes_core::PlannerConfig& config)
   // translating string values
   try
   {
-    sampling_ = std::stod(config.at("sampling"));
+    config_[SAMPLING_CONFIG] = config.at(SAMPLING_CONFIG);
+    sampling_ = std::stod(config.at(SAMPLING_CONFIG));
   }
   catch(std::invalid_argument& exp)
   {
