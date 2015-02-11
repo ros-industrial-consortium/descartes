@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   console_bridge
   moveit_core
   roscpp
+  pluginlib
 )
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
@@ -43,6 +44,7 @@ add_library(descartes_planner
             src/planning_graph.cpp
             src/sparse_planner.cpp
             src/dense_planner.cpp
+            src/plugin_init.cpp
 )
 
 target_link_libraries(descartes_planner
