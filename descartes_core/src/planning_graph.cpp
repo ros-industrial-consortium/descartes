@@ -45,9 +45,9 @@ namespace
   using ConstTrajectorIterator = std::vector<descartes_core::TrajectoryPtPtr>::const_iterator;
 
   VecJointSolutions
-  calculateJointSolutions(descartes_core::RobotModelPtr model, 
-                          ConstTrajectorIterator begin,
-                          ConstTrajectorIterator end)
+  rangeCalculateJointSolutions(descartes_core::RobotModelPtr model, 
+                               ConstTrajectorIterator begin,
+                               ConstTrajectorIterator end)
   {
     VecJointSolutions solutions;
     solutions.reserve(std::distance(begin, end));
@@ -91,7 +91,7 @@ namespace
       // Create a seperate copy of the robot state for this worker
       descartes_core::RobotModelPtr state_copy = model.clone();
       // Launch task
-      futures[i] = std::async(std::launch::async, calculateJointSolutions, state_copy, start, end);
+      futures[i] = std::async(std::launch::async, rangeCalculateJointSolutions, state_copy, start, end);
     }
 
     // Wait for solutions
