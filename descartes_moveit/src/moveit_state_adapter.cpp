@@ -86,7 +86,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
 
 
   if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose,
-                              tool_frame_))
+                              tool_frame_, 1, 0.05))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
@@ -235,6 +235,11 @@ int MoveitStateAdapter::getDOF() const
   const moveit::core::JointModelGroup* group;
   group = robot_state_->getJointModelGroup(group_name_);
   return group->getVariableCount();
+}
+
+descartes_core::RobotModelPtr MoveitStateAdapter::clone() const
+{
+  return descartes_core::RobotModelPtr(new MoveitStateAdapter(*robot_state_, group_name_, tool_frame_, world_frame_, sample_iterations_));
 }
 
 } //descartes_moveit
