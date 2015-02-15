@@ -65,7 +65,7 @@ namespace
   }
 
   VecJointSolutions
-  parallelCalculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr> trajectory,
+  parallelCalculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr>& trajectory,
                                   const descartes_core::RobotModel& model,
                                   const unsigned max_threads)
   {
