@@ -82,7 +82,7 @@ class PlanningGraph
 {
 public:
   // TODO: add constructor that takes RobotState as param
-  PlanningGraph(RobotModelConstPtr &model);
+  PlanningGraph(RobotModelConstPtr model, unsigned max_threads = 4);
 
   virtual ~PlanningGraph();
 
@@ -128,6 +128,8 @@ protected:
   RobotModelConstPtr robot_model_;
 
   JointGraph dg_;
+
+  unsigned max_threads_;
 
   int recalculateJointSolutionsVertexMap(std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
 

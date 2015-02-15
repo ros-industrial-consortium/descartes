@@ -66,20 +66,20 @@ namespace
 
   VecJointSolutions
   parallelCalculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr> trajectory,
-                                  const descartes_core::RobotModel& model)
+                                  const descartes_core::RobotModel& model,
+                                  const unsigned max_threads)
   {
-    // Should make this a param
-    const static unsigned NUM_THREADS = 4;
-
+    // Might want to insert check to see if work to be done is small and if so,
+    // just run the IKs synchronously
     VecJointSolutions solutions;
     solutions.reserve(trajectory.size());
 
     // Divide work into chunks
-    const unsigned chunk_size = trajectory.size() / NUM_THREADS;
-    const unsigned chunk_extra = trajectory.size() % NUM_THREADS;
+    const unsigned chunk_size = trajectory.size() / max_threads;
+    const unsigned chunk_extra = trajectory.size() % max_threads;
 
     // Create tasks
-    std::vector<std::future<VecJointSolutions>> futures (NUM_THREADS);
+    std::vector<std::future<VecJointSolutions>> futures (max_threads);
     for (size_t i = 0; i < futures.size(); ++i)
     {
       auto start = trajectory.cbegin() + i * chunk_size;
@@ -115,11 +115,11 @@ namespace descartes_core
 const double MAX_JOINT_DIFF = M_PI;
 const double MAX_EXCEEDED_PENALTY = 10000.0f;
 
-PlanningGraph::PlanningGraph(RobotModelConstPtr &model):
+PlanningGraph::PlanningGraph(RobotModelConstPtr model, unsigned max_threads):
+    robot_model_(model),
+    max_threads_(max_threads),
     cartesian_point_link_(NULL)
-{
-  robot_model_ = model;
-}
+{}
 
 PlanningGraph::~PlanningGraph()
 {
@@ -888,7 +888,7 @@ bool PlanningGraph::calculateJointSolutions()
   }
   
   // Compute joint solutions for trajectory pts
-  VecJointSolutions all_joint_solutions = parallelCalculateJointSolutions(trajectory, *robot_model_);
+  VecJointSolutions all_joint_solutions = parallelCalculateJointSolutions(trajectory, *robot_model_, max_threads_);
 
   // Create corresponding JointTrajPts for each solution and add them to the joint solutions map
   size_t idx = 0; // for looking into the solutions array
