@@ -42,22 +42,32 @@ namespace
 {
   using JointSolutions = std::vector<std::vector<double>>;
   using VecJointSolutions = std::vector<JointSolutions>;
-  using ConstTrajectorIterator = std::vector<descartes_core::TrajectoryPtPtr>::const_iterator;
+  using ConstTrajectoryIterator = std::vector<descartes_core::TrajectoryPtPtr>::const_iterator;
 
-  VecJointSolutions
+  using JointSolutionResult = std::pair<VecJointSolutions, bool>; // result and flag if everything went well
+
+  JointSolutionResult
   rangeCalculateJointSolutions(descartes_core::RobotModelPtr model, 
-                               ConstTrajectorIterator begin,
-                               ConstTrajectorIterator end)
+                               ConstTrajectoryIterator begin,
+                               ConstTrajectoryIterator end)
   {
-    VecJointSolutions solutions;
-    solutions.reserve(std::distance(begin, end));
+    JointSolutionResult solutions;
+    solutions.first.reserve(std::distance(begin, end));
+    solutions.second = true;
 
     while (begin != end)
     {
       JointSolutions joint_poses;
       begin->get()->getJointPoses(*model, joint_poses);
 
-      solutions.push_back(std::move(joint_poses));
+      if (joint_poses.empty())
+      {
+        solutions.second = false;
+        ROS_ERROR("No joint solutions available for point %s", 
+          boost::uuids::to_string(begin->get()->getID()).c_str());
+      }
+
+      solutions.first.push_back(std::move(joint_poses));
       ++begin;
     }
 
@@ -79,7 +89,7 @@ namespace
     const unsigned chunk_extra = trajectory.size() % max_threads;
 
     // Create tasks
-    std::vector<std::future<VecJointSolutions>> futures (max_threads);
+    std::vector<std::future<JointSolutionResult>> futures (max_threads);
     for (size_t i = 0; i < futures.size(); ++i)
     {
       auto start = trajectory.cbegin() + i * chunk_size;
@@ -97,8 +107,14 @@ namespace
     // Wait for solutions
     for (auto& future : futures)
     {
-      auto solution_segment = std::move(future.get());
-      for (auto& sol : solution_segment)
+      JointSolutionResult solution_segment = std::move(future.get());
+
+      if (!solution_segment.second)
+      {
+        ROS_ERROR("One segment of the calculation failed to find a solution for all points");
+      }
+
+      for (auto& sol : solution_segment.first)
       {
         solutions.push_back(std::move(sol));
       }
