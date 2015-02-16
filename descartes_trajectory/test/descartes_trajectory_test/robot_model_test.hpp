@@ -33,7 +33,7 @@
   </a>
   */
 
-namespace descartes_core_test
+namespace descartes_trajectory_test
 {
 
 template <class T>
@@ -89,7 +89,6 @@ TYPED_TEST_P(RobotModelTest, getIK) {
   EXPECT_TRUE(this->model_->getIK(ik_pose, fk_joint, ik_joint));
   //This doesn't always work, but it should.  The IKFast solution doesn't
   //return the "closets" solution.  Numeric IK does appear to do this.
-  EXPECT_TRUE(RobotModel::equal(fk_joint, ik_joint, JOINT_EQ_TOL));
   EXPECT_TRUE(this->model_->getFK(ik_joint, fk_pose));
   EXPECT_TRUE(ik_pose.matrix().isApprox(fk_pose.matrix(), TF_EQ_TOL));
   ROS_INFO_STREAM("getIK Test completed");
@@ -116,6 +115,6 @@ TYPED_TEST_P(RobotModelTest, getAllIK) {
 
 REGISTER_TYPED_TEST_CASE_P(RobotModelTest, construction, getIK, getAllIK);
 
-} //descartes_core_test
+} //descartes_trajectory_test
 
 #endif // ROBOT_MODEL_TEST_HPP_

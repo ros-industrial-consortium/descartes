@@ -15,25 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * trajectory_pt_transition.cpp
- *
- *  Created on: Jun 5, 2014
- *      Author: Dan Solomon
- */
 
-#include "descartes_core/trajectory_pt_transition.h"
+#include "descartes_trajectory_test/cartesian_robot.h"
+#include "descartes_trajectory_test/robot_model_test.hpp"
 
-namespace descartes_core
+
+using namespace descartes_core;
+
+using testing::Types;
+
+namespace descartes_trajectory_test
 {
-  TrajectoryPtTransition::TrajectoryPtTransition(): method_(Interpolations::DEFAULT)
-  {
 
-  }
+template <>
+RobotModelPtr CreateRobotModel<CartesianRobot>()
+{
+  return RobotModelPtr(new CartesianRobot());
+}
 
-  TrajectoryPtTransition::~TrajectoryPtTransition()
-  {
+template<class T>
+class CartesianRobotModelTest : public descartes_trajectory_test::RobotModelTest<T>{};
 
-  }
+INSTANTIATE_TYPED_TEST_CASE_P(CartesianRobotModelTest, RobotModelTest, CartesianRobot);
 
-} /* namespace descartes_core */
+} //descartes_trajectory_test

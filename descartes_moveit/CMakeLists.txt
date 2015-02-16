@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_moveit)
 
+add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   tf
   cmake_modules
   descartes_core
+  descartes_trajectory
   moveit_ros_planning
+  pluginlib
 )
+
 find_package(rosconsole_bridge REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
@@ -41,6 +45,7 @@ include_directories(include
 ## Descartes MoveIt lib
 add_library(descartes_moveit
             src/moveit_state_adapter.cpp
+            src/plugin_init.cpp
 )
 target_link_libraries(descartes_moveit
                       ${catkin_LIBRARIES}

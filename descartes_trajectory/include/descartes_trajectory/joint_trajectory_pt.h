@@ -28,7 +28,7 @@
 #include <vector>
 #include "descartes_core/trajectory_pt.h"
 
-namespace descartes_core
+namespace descartes_trajectory
 {
 
 //TODO add warning if non-zero tolerances are specified because initial implementation will only allow fixed joints
@@ -82,7 +82,7 @@ struct TolerancedJointValue
  *
  * The get*Pose() methods of JointTrajectoryPt try to set joint positions of a robot such that @e tool_ is coincident with @e wobj_.
  */
-class JointTrajectoryPt: public TrajectoryPt
+class JointTrajectoryPt: public descartes_core::TrajectoryPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;      //TODO is this needed when Frame already has it?
@@ -99,7 +99,7 @@ public:
     @param tool Transform from robot wrist to active tool pt.
     @param wobj Transform from world to active workobject pt.
     */
-  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, const Frame &tool, const Frame &wobj);
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, const descartes_core::Frame &tool, const descartes_core::Frame &wobj);
 
 
   /**
@@ -123,14 +123,14 @@ public:
 
   //TODO complete
   virtual bool getClosestCartPose(const std::vector<double> &seed_state,
-                                    const RobotModel &model, Eigen::Affine3d &pose) const;
+                                    const descartes_core::RobotModel &model, Eigen::Affine3d &pose) const;
 
   //TODO complete
   virtual bool getNominalCartPose(const std::vector<double> &seed_state,
-                                    const RobotModel &model, Eigen::Affine3d &pose) const;
+                                    const descartes_core::RobotModel &model, Eigen::Affine3d &pose) const;
 
   //TODO complete
-  virtual void getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
+  virtual void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
@@ -139,20 +139,20 @@ public:
 
   //TODO complete
   virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                     const RobotModel &model,
+                                     const descartes_core::RobotModel &model,
                                      std::vector<double> &joint_pose) const;
   //TODO complete
   virtual bool getNominalJointPose(const std::vector<double> &seed_state,
-                                     const RobotModel &model,
+                                     const descartes_core::RobotModel &model,
                                      std::vector<double> &joint_pose) const;
 
   //TODO complete
-  virtual void getJointPoses(const RobotModel &model,
+  virtual void getJointPoses(const descartes_core::RobotModel &model,
                                std::vector<std::vector<double> > &joint_poses) const;
   /** @} (end section) */
 
   //TODO complete
-  virtual bool isValid(const RobotModel &model) const;
+  virtual bool isValid(const descartes_core::RobotModel &model) const;
 
   //TODO complete
   /**@brief Set discretization. Each joint can have a different discretization.
@@ -168,13 +168,13 @@ inline
   }
 
   inline
-  void setTool(const Frame &tool)
+  void setTool(const descartes_core::Frame &tool)
   {
     tool_ = tool;
   }
 
   inline
-  void setWobj(const Frame &wobj)
+  void setWobj(const descartes_core::Frame &wobj)
   {
     wobj_ = wobj;
   }
@@ -186,13 +186,13 @@ protected:
   /** @name JointTrajectoryPt transforms. Used in get*CartPose() methods and for interpolation.
    *  @{
    */
-  Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
-  Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
+  descartes_core::Frame                         tool_;                  /**<@brief Transform from robot wrist to active tool pt. */
+  descartes_core::Frame                         wobj_;                  /**<@brief Transform from world to active workobject pt. */
   /** @} (end section) */
 
 };
 
-} /* namespace descartes_core */
+} /* namespace descartes_trajectory */
 
 
 

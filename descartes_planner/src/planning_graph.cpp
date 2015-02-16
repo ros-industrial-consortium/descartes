@@ -22,7 +22,7 @@
  *      Author: Dan Solomon
  */
 
-#include "descartes_core/planning_graph.h"
+#include "descartes_planner/planning_graph.h"
 
 #include <stdio.h>
 #include <iomanip>
@@ -36,7 +36,9 @@
 #include <boost/uuid/uuid_io.hpp> // streaming operators
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-namespace descartes_core
+using namespace descartes_core;
+using namespace descartes_trajectory;
+namespace descartes_planner
 {
 
 const double MAX_JOINT_DIFF = M_PI;
@@ -56,7 +58,7 @@ PlanningGraph::~PlanningGraph()
   }
 }
 
-const CartesianMap& PlanningGraph::getCartesianMap()
+CartesianMap PlanningGraph::getCartesianMap()
 {
   TrajectoryPt::ID cart_id = generate_nil();
   for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
@@ -70,20 +72,25 @@ const CartesianMap& PlanningGraph::getCartesianMap()
     }
   }
 
-  CartesianMap *to_return = new CartesianMap();
+  CartesianMap to_return = CartesianMap();
   bool done = false;
   while(!done)
   {
-    (*to_return)[cart_id] = (*cartesian_point_link_)[cart_id];
+    to_return[cart_id] = (*cartesian_point_link_)[cart_id];
     cart_id = (*cartesian_point_link_)[cart_id].links_.id_previous;
     done = (cart_id.is_nil());
     ROS_DEBUG("Next CID: %s", boost::uuids::to_string(cart_id).c_str());
   }
 
-  return *to_return;
+  return to_return;
 }
 
-bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
+descartes_core::RobotModelConstPtr PlanningGraph::getRobotModel()
+{
+  return robot_model_;
+}
+
+bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
 {
   // validate input
   if (!points)
@@ -107,7 +114,8 @@ bool PlanningGraph::insertGraph(std::vector<TrajectoryPtPtr> *points)
   TrajectoryPt::ID previous_id = boost::uuids::nil_uuid();
 
   // input is valid, copy to local maps that will be maintained by the planning graph
-  for (std::vector<TrajectoryPtPtr>::iterator point_iter = points->begin(); point_iter != points->end(); point_iter++)
+  for (std::vector<TrajectoryPtPtr>::const_iterator point_iter = points->begin();
+      point_iter != points->end(); point_iter++)
   {
     (*cartesian_point_link_)[point_iter->get()->getID()].source_trajectory_ = (*point_iter);
     CartesianPointRelationship *point_link = new CartesianPointRelationship();
@@ -1025,4 +1033,4 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
     return std::numeric_limits<double>::max();
   }
 }
-} /* namespace descartes_core */
+} /* namespace descartes_planner */

@@ -16,22 +16,28 @@
  * limitations under the License.
  */
 
-#include "descartes_core_test/cartesian_robot.h"
+#include "descartes_trajectory_test/cartesian_robot.h"
 #include "descartes_core/pretty_print.hpp"
 #include "eigen_conversions/eigen_kdl.h"
 #include "ros/console.h"
 
-namespace descartes_core_test
+namespace descartes_trajectory_test
 {
 
-  CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2)
+  CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2), dof_(6)
   {
     ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
                      << ", orientation: " << orient_range_);
   }
 
-  CartesianRobot::CartesianRobot(double pos_range, double orient_range) :
-    pos_range_(pos_range), orient_range_(orient_range)
+  bool CartesianRobot::initialize(const std::string robot_description, const std::string& group_name,
+                          const std::string& world_frame,const std::string& tcp_frame)
+  {
+    return true;
+  }
+
+  CartesianRobot::CartesianRobot(double pos_range, double orient_range, int dof) :
+    pos_range_(pos_range), orient_range_(orient_range), dof_(dof)
   {
     ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
                      << ", orientation: " << orient_range_);
@@ -98,7 +104,7 @@ namespace descartes_core_test
 
   int CartesianRobot::getDOF() const
   {
-    return 6;
+    return dof_;
   }
 
   bool CartesianRobot::isValid(const std::vector<double> &joint_pose) const
@@ -108,7 +114,7 @@ namespace descartes_core_test
     double pos_limit = pos_range_/2.0;
     double orient_limit = orient_range_/2.0;
 
-    if(6 == joint_pose.size())
+    if(dof_ == joint_pose.size())
     {
 
       rtn = ( fabs(joint_pose[0]) <= pos_limit &&
@@ -120,7 +126,7 @@ namespace descartes_core_test
     }
     else
     {
-      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() << "exceeds 6");
+      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() << "exceeds "<<dof_);
     }
 
     return rtn;
@@ -147,5 +153,5 @@ namespace descartes_core_test
     return rtn;
   }
 
-} //descartes_core_test
+} //descartes_trajectory_test
 

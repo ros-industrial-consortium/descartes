@@ -26,8 +26,15 @@
 
 #define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
 
+const static int SAMPLE_ITERATIONS = 10;
+
 namespace descartes_moveit
 {
+
+MoveitStateAdapter::MoveitStateAdapter()
+{
+
+}
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & world_frame,
@@ -68,6 +75,50 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
     logError(msg.str().c_str());
   }
   return;
+}
+
+bool MoveitStateAdapter::initialize(const std::string robot_description, const std::string& group_name,
+                                    const std::string& world_frame,const std::string& tcp_frame)
+{
+
+  robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
+  robot_model_ptr_ = robot_model_loader_->getModel();
+  robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
+  group_name_ = group_name;
+  tool_frame_ = tcp_frame;
+  world_frame_ = world_frame;
+  sample_iterations_ = SAMPLE_ITERATIONS;
+
+  const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
+  if (joint_model_group_ptr)
+  {
+    joint_model_group_ptr->printGroupInfo();
+
+    const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
+    if (tool_frame_ != link_names.back())
+    {
+      logWarn("Tool frame '%s' does not match group tool frame '%s', functionality will be implemented in the future",
+               tool_frame_.c_str(), link_names.back().c_str());
+    }
+
+    if (world_frame_ != robot_state_->getRobotModel()->getModelFrame())
+    {
+      logWarn("World frame '%s' does not match model root frame '%s', all poses will be transformed to world frame '%s'",
+               world_frame_.c_str(), link_names.front().c_str(),world_frame_.c_str());
+
+      Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(world_frame_);
+      world_to_root_ = descartes_core::Frame(root_to_world.inverse());
+    }
+
+  }
+  else
+  {
+    logError("Joint group: %s does not exist in robot model", group_name_.c_str());
+    std::stringstream msg;
+    msg << "Possible group names: " << robot_state_->getRobotModel()->getJointModelGroupNames();
+    logError(msg.str().c_str());
+  }
+  return true;
 }
 
 bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
@@ -131,7 +182,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
         bool match_found = false;
         for(joint_pose_it = joint_poses.begin(); joint_pose_it != joint_poses.end(); ++joint_pose_it)
         {
-          if( equal(joint_pose, (*joint_pose_it), epsilon) )
+          if( descartes_core::utils::equal(joint_pose, (*joint_pose_it), epsilon) )
           {
             logDebug("Found matching, potential solution is not new");
             match_found = true;

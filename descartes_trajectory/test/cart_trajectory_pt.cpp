@@ -16,14 +16,15 @@
  * limitations under the License.
  */
 
-#include "descartes_core/cart_trajectory_pt.h"
+#include "descartes_trajectory/cart_trajectory_pt.h"
 #include "descartes_core/utils.h"
-#include "descartes_core_test/cartesian_robot.h"
+#include "descartes_trajectory_test/cartesian_robot.h"
 #include <gtest/gtest.h>
 
 
+using namespace descartes_trajectory;
 using namespace descartes_core;
-using namespace descartes_core_test;
+using namespace descartes_trajectory_test;
 
 
 
