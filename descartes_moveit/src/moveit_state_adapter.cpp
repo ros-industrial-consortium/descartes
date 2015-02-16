@@ -28,6 +28,7 @@
 
 namespace descartes_moveit
 {
+  const static double IK_TIMEOUT = 0.05; // seconds
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & world_frame,
@@ -86,7 +87,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
 
 
   if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose,
-                              tool_frame_, 1, 0.05))
+                              tool_frame_, 1, IK_TIMEOUT))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     rtn = true;
@@ -148,15 +149,15 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
       }
     }
   }
-  logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
+  // logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
   if (joint_poses.empty())
   {
-    logError("Found 0 joint solutions out of %d iterations", sample_iterations_);
+    // logError("Found 0 joint solutions out of %d iterations", sample_iterations_);
     return false;
   }
   else
   {
-    logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
+    // logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
     return true;
   }
 }
