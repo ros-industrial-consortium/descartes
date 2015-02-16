@@ -63,6 +63,8 @@ public:
 
   virtual int getDOF() const;
 
+  virtual descartes_core::RobotModelPtr clone() const;
+
 protected:
 
   /**

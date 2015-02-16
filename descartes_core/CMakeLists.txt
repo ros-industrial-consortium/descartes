@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Boost REQUIRED)
-find_package(Eigen REQUIRED)
+#find_package(Eigen REQUIRED)
 
 
 catkin_package(

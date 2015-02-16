@@ -108,6 +108,8 @@ public:
    */
   virtual bool isValid(const Eigen::Affine3d &pose) const = 0;
 
+  virtual RobotModelPtr clone() const = 0;
+
 };
 
 }//descartes_core
