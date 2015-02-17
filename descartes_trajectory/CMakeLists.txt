@@ -43,6 +43,7 @@ add_library(descartes_trajectory
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
+            src/cartesian_interpolator.cpp
             test/cartesian_robot.cpp
 )
 
