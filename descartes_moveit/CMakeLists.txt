@@ -27,6 +27,7 @@ catkin_package(
     tf
     cmake_modules
     descartes_core
+    descartes_trajectory
   DEPENDS
     rosconsole_bridge
     Boost
