@@ -88,7 +88,7 @@ protected:
   };
 
   double sampling_;
-  int error_code_;
+  mutable int error_code_;
   std::map<int,std::string> error_map_;
   descartes_core::PlannerConfig config_;
   boost::shared_ptr<PlanningGraph> planning_graph_;

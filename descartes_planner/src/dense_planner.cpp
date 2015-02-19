@@ -371,9 +371,11 @@ int DensePlanner::getErrorCode() const
 
 bool DensePlanner::getErrorMessage(int error_code, std::string& msg) const
 {
-  if(error_map_.count(error_code)>0)
+  std::map<int,std::string>::const_iterator it = error_map_.find(error_code);
+
+  if(it != error_map_.cend())
   {
-    msg = error_map_[error_code];
+    msg = it->second;
   }
   else
   {

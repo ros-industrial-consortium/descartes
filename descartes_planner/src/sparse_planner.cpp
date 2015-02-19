@@ -526,7 +526,7 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
   for(int i = 0; i < cart_points_.size();i++)
   {
     TrajectoryPtPtr p = cart_points_[i];
-    JointTrajectoryPt& j = joint_points_map_[p->getID()];
+    const JointTrajectoryPt& j = joint_points_map_.at(p->getID());
     path[i] = TrajectoryPtPtr(new JointTrajectoryPt(j));
   }
 
@@ -540,9 +540,11 @@ int SparsePlanner::getErrorCode() const
 
 bool SparsePlanner::getErrorMessage(int error_code, std::string& msg) const
 {
-  if(error_map_.count(error_code)>0)
+  std::map<int,std::string>::const_iterator it = error_map_.find(error_code);
+
+  if(it != error_map_.cend())
   {
-    msg = error_map_[error_code];
+    msg = it->second;
   }
   else
   {
