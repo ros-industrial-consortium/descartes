@@ -107,7 +107,7 @@ bool SparsePlanner::setConfig(const descartes_core::PlannerConfig& config)
   return true;
 }
 
-void SparsePlanner::getConfig(descartes_core::PlannerConfig& config)
+void SparsePlanner::getConfig(descartes_core::PlannerConfig& config) const
 {
   config = config_;
 }
@@ -514,7 +514,7 @@ bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, J
   return true;
 }
 
-bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path)
+bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
 {
   if(cart_points_.empty() || joint_points_map_.empty())
   {
@@ -533,12 +533,12 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path)
   return true;
 }
 
-int SparsePlanner::getErrorCode()
+int SparsePlanner::getErrorCode() const
 {
   return error_code_;
 }
 
-bool SparsePlanner::getErrorMessage(int error_code, std::string& msg)
+bool SparsePlanner::getErrorMessage(int error_code, std::string& msg) const
 {
   if(error_map_.count(error_code)>0)
   {

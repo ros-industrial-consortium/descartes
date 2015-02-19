@@ -44,15 +44,15 @@ public:
 
   virtual bool initialize(descartes_core::RobotModelConstPtr &model);
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
-  virtual void getConfig(descartes_core::PlannerConfig& config);
+  virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
   virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
   virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
   virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
   virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id);
-  virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path);
-  virtual int getErrorCode();
-  virtual bool getErrorMessage(int error_code, std::string& msg);
+  virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const;
+  virtual int getErrorCode() const;
+  virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
 
   void setSampling(double sampling);

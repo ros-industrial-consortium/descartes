@@ -46,7 +46,7 @@ bool DensePlanner::setConfig(const descartes_core::PlannerConfig& config)
   return true;
 }
 
-void DensePlanner::getConfig(descartes_core::PlannerConfig& config)
+void DensePlanner::getConfig(descartes_core::PlannerConfig& config) const
 {
   config = config_;
 }
@@ -213,7 +213,7 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
   return descartes_core::PlannerError::OK == error_code_;
 }
 
-bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path)
+bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
 {
   path.assign(path_.begin(),path_.end());
   return error_code_ == descartes_core::PlannerError::OK;
@@ -364,12 +364,12 @@ bool DensePlanner::modify(const descartes_core::TrajectoryPt::ID& ref_id, descar
   return true;
 }
 
-int DensePlanner::getErrorCode()
+int DensePlanner::getErrorCode() const
 {
   return error_code_;
 }
 
-bool DensePlanner::getErrorMessage(int error_code, std::string& msg)
+bool DensePlanner::getErrorMessage(int error_code, std::string& msg) const
 {
   if(error_map_.count(error_code)>0)
   {
