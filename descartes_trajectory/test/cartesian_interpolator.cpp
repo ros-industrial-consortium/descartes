@@ -18,7 +18,7 @@
 
 #include <descartes_trajectory/cartesian_interpolator.h>
 #include <tf_conversions/tf_eigen.h>
-#include <descartes_trajectory_test/cartesian_robot.h>
+#include "descartes_trajectory_test/cartesian_robot.h"
 #include <gtest/gtest.h>
 
 using namespace descartes_core;
@@ -61,7 +61,7 @@ TEST(CartesianInterpolator,interpolate)
 {
   descartes_trajectory::CartesianInterpolator c;
   std::vector<CartTrajectoryPt> coarse_traj;
-  std::vector<descartes_core::TrajectorPtPtr> interpolated_traj;
+  std::vector<descartes_core::TrajectoryPtPtr> interpolated_traj;
   RobotModelConstPtr robot(new CartesianRobot(POS_RANGE, ORIENT_RANGE,6));
 
   // initializing interpolator
@@ -69,7 +69,7 @@ TEST(CartesianInterpolator,interpolate)
 
   // interpolating
   createCoarseTrajectory(coarse_traj);
-  EXPECT_TRUE(c.interpolate(coarse_tra,dense_traj));
+  EXPECT_TRUE(c.interpolate(coarse_traj,interpolated_traj));
 }
 
 

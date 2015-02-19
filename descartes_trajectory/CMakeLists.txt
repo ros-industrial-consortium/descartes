@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_core
   moveit_core
   roscpp
+  tf_conversions
 )
 
 find_package(Boost REQUIRED)
