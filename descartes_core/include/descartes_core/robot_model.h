@@ -102,6 +102,8 @@ public:
   virtual bool initialize(const std::string robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame) = 0;
 
+  virtual RobotModelPtr clone() const = 0;
+
 protected:
 
   RobotModel(){}

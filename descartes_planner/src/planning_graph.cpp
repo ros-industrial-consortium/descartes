@@ -36,16 +36,108 @@
 #include <boost/uuid/uuid_io.hpp> // streaming operators
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
+#include <future>
+
 using namespace descartes_core;
 using namespace descartes_trajectory;
+
+namespace
+{
+  using JointSolutions = std::vector<std::vector<double>>;
+  using VecJointSolutions = std::vector<JointSolutions>;
+  using ConstTrajectoryIterator = std::vector<descartes_core::TrajectoryPtPtr>::const_iterator;
+
+  using JointSolutionResult = std::pair<VecJointSolutions, bool>; // result and flag if everything went well
+
+  JointSolutionResult
+  rangeCalculateJointSolutions(descartes_core::RobotModelPtr model, 
+                               ConstTrajectoryIterator begin,
+                               ConstTrajectoryIterator end)
+  {
+    JointSolutionResult solutions;
+    solutions.first.reserve(std::distance(begin, end));
+    solutions.second = true;
+
+    while (begin != end)
+    {
+      JointSolutions joint_poses;
+      begin->get()->getJointPoses(*model, joint_poses);
+
+      if (joint_poses.empty())
+      {
+        solutions.second = false;
+        ROS_ERROR("No joint solutions available for point %s", 
+          boost::uuids::to_string(begin->get()->getID()).c_str());
+      }
+
+      solutions.first.push_back(std::move(joint_poses));
+      ++begin;
+    }
+
+    return solutions;
+  }
+
+  JointSolutionResult
+  parallelCalculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr>& trajectory,
+                                  const descartes_core::RobotModel& model,
+                                  const unsigned max_threads)
+  {
+    // Might want to insert check to see if work to be done is small and if so,
+    // just run the IKs synchronously
+    JointSolutionResult solutions;
+    solutions.first.reserve(trajectory.size());
+    solutions.second = true; // success by default
+
+    // Divide work into chunks
+    const unsigned chunk_size = trajectory.size() / max_threads;
+    const unsigned chunk_extra = trajectory.size() % max_threads;
+
+    // Create tasks
+    std::vector<std::future<JointSolutionResult>> futures (max_threads);
+    for (size_t i = 0; i < futures.size(); ++i)
+    {
+      auto start = trajectory.cbegin() + i * chunk_size;
+      auto end = start + chunk_size;
+
+      // Give extra work to last element
+      if (i == futures.size() - 1) end += chunk_extra;
+
+      // Create a seperate copy of the robot state for this worker
+      descartes_core::RobotModelPtr state_copy = model.clone();
+      // Launch task
+      futures[i] = std::async(std::launch::async, rangeCalculateJointSolutions, state_copy, start, end);
+    }
+
+    // Wait for solutions
+    for (auto& future : futures)
+    {
+      JointSolutionResult solution_segment = std::move(future.get());
+
+      solutions.second = solutions.second && solution_segment.second; // carry the false flag forward if is returned
+      if (!solution_segment.second)
+      {
+        ROS_ERROR("One segment of the calculation failed to find a solution for all points");
+      }
+
+      for (auto& sol : solution_segment.first)
+      {
+        solutions.first.push_back(std::move(sol));
+      }
+    }
+
+    return solutions;
+  }
+}
+
 namespace descartes_planner
 {
 
 const double MAX_JOINT_DIFF = M_PI;
 const double MAX_EXCEEDED_PENALTY = 10000.0f;
 
-PlanningGraph::PlanningGraph(RobotModelConstPtr &model):
-    cartesian_point_link_(NULL)
+PlanningGraph::PlanningGraph(RobotModelConstPtr &model, unsigned nthreads):
+    cartesian_point_link_(NULL),
+    nthreads_(nthreads)
 {
   robot_model_ = model;
 }
@@ -809,43 +901,39 @@ bool PlanningGraph::calculateJointSolutions()
   if (joint_solutions_map_.size() > 0)
   {
     // existing joint solutions... clear the list?
-    ROS_WARN("existing joint solutions found, clearing map");
+    ROS_WARN("Existing joint solutions found, clearing map");
     joint_solutions_map_.clear();
   }
 
-  // for each TrajectoryPt, get the available joint solutions
-  for (std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator trajectory_iter = cartesian_point_link_->begin();
-      trajectory_iter != cartesian_point_link_->end(); trajectory_iter++)
+  // Copy trajectory pt ptrs to a vector to be solved in parallel
+  std::vector<TrajectoryPtPtr> trajectory;
+  trajectory.reserve(cartesian_point_link_->size());
+
+  for (const auto& kv : *cartesian_point_link_) // could also use lambda and std::for_each
   {
-    // TODO: copy this block to a function that can be used by add and modify
-    /*************************/
-    std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
-    std::vector<std::vector<double> > joint_poses;
-    trajectory_iter->second.source_trajectory_.get()->getJointPoses(*robot_model_, joint_poses);
+    trajectory.push_back(kv.second.source_trajectory_);
+  }
+  
+  // Compute joint solutions for trajectory pts
+  JointSolutionResult all_joint_solutions = parallelCalculateJointSolutions(trajectory, *robot_model_, nthreads_);
 
-    TrajectoryPt::ID tempID = trajectory_iter->first;
-    ROS_INFO("CartID: %s: JointPoses count:%i", boost::uuids::to_string(tempID).c_str(), (int)(joint_poses.size()));
-
-    if (joint_poses.size() == 0)
+  // Create corresponding JointTrajPts for each solution and add them to the joint solutions map
+  size_t idx = 0; // for looking into the solutions array
+  for (auto& kv : *cartesian_point_link_)
+  {
+    std::list<TrajectoryPt::ID> solution_ids;
+    for (const auto& sol : all_joint_solutions.first[idx])
     {
-      ROS_WARN("no joint solution for this point... potential discontinuity in the graph");
+      JointTrajectoryPt point (sol);
+      solution_ids.push_back(point.getID());
+      joint_solutions_map_[point.getID()] = point;
     }
-    else
-    {
-      for (std::vector<std::vector<double> >::iterator joint_pose_iter = joint_poses.begin();
-          joint_pose_iter != joint_poses.end(); joint_pose_iter++)
-      {
-        //get UUID from JointTrajPt (convert from std::vector<double>)
-        JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
-        traj_solutions->push_back(new_pt->getID());
-        joint_solutions_map_[new_pt->getID()] = *new_pt;
-      }
-    }
-    trajectory_iter->second.joints_ = *traj_solutions;
-    /*************************/
+    // Update the original trajectory with new info
+    kv.second.joints_ = std::move(solution_ids);
+    ++idx;
   }
 
-  return true;
+  return all_joint_solutions.second;
 }
 
 bool PlanningGraph::calculateAllEdgeWeights(std::list<JointEdge> &edges)
