@@ -86,8 +86,20 @@ public:
   CartesianInterpolator();
   virtual ~CartesianInterpolator();
 
+  /* @brief Initializes the interpolator
+   * @param robot_model A robot model implementation
+   * @param tool_speed magnitude of the speed vector followed by the robot tool
+   * @param interpolation_interval time elapsed between each point in the interpolated trajectory
+   * @param zone_radius radius around each point in the coarse trajectory where parabolic
+   *        blending starts (not used at the moment)
+   */
   bool initialize(descartes_core::RobotModelConstPtr robot_model, double tool_speed,double interpolation_interval,
                   double zone_radius);
+
+  /* @brief Interpolates a coarse trajectory in cartesian space
+   * @param coarse_traj the coarse trajectory that is to be interpolated
+   * @param interpolated_traj the interpolated trajectory
+   */
   bool interpolate(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
                    std::vector<descartes_core::TrajectoryPtPtr>& interpolated_traj);
 protected:

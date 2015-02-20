@@ -28,32 +28,28 @@ using namespace descartes_trajectory_test;
 const static double TOOL_SPEED = 0.01f; // m/s
 const static double ZONE_RADIUS = 0.01f; // meters
 const static double INTERPOLATION_INTERVAL = 0.1f; // secs
+const static double POINT_DISTANCE = 0.1f;
+const static int NUM_POINTS = 4;
 const double POS_RANGE = 2.0;
 const double ORIENT_RANGE = 1.0;
 
 
-void createCoarseTrajectory(std::vector<CartTrajectoryPt>& traj)
+void createSimpleTrajectory(std::vector<CartTrajectoryPt>& traj)
 {
-  double a = 0.2f; // amplitude
-  double r = 0.4f;
-  double thetaf = 2*M_PI;
-  double theta0 = 0;
-  std::size_t angular_steps = 10;
-  double delta_theta = (thetaf - theta0)/(angular_steps - 1);
-  std::vector<double> theta_vals(angular_steps,0.0f);
-  traj.resize(angular_steps);
 
-  tf::Transform pose;
+  double points = NUM_POINTS;
+  double angular_z_step = M_PI/2;
+  tf::Vector3 linear_step = tf::Vector3(0,POINT_DISTANCE,0);
+  tf::Transform pose = tf::Transform::getIdentity();
   Eigen::Affine3d eigen_pose;
-  tf::Transform tz = tf::Transform(tf::Quaternion::getIdentity(),tf::Vector3(r,0,0));
-  for(int t = 0; t < angular_steps; t++)
+
+  traj.resize(NUM_POINTS);
+  for(int i = 0; i < points; i++)
   {
-    double theta = theta0 + t*delta_theta;
-    tf::Transform rz = tf::Transform(tf::Quaternion(tf::Vector3(0,0,1),theta),tf::Vector3(0,0,0));
-    tf::Vector3 plocal = tf::Vector3(0,0,a*std::sin((1/r)*theta));
-    pose = rz*tz*tf::Transform(tf::Quaternion::getIdentity(),plocal);
+    pose = pose * tf::Transform(tf::Quaternion(tf::Vector3(0,0,1),i * angular_z_step))*
+        tf::Transform(tf::Quaternion::getIdentity(),linear_step);
     tf::poseTFToEigen(pose,eigen_pose);
-    traj[t] = CartTrajectoryPt(eigen_pose);
+    traj[i] = CartTrajectoryPt(eigen_pose);
   }
 }
 
@@ -68,8 +64,12 @@ TEST(CartesianInterpolator,interpolate)
   EXPECT_TRUE(c.initialize(robot,TOOL_SPEED,INTERPOLATION_INTERVAL,ZONE_RADIUS));
 
   // interpolating
-  createCoarseTrajectory(coarse_traj);
+  int expected_points = ((POINT_DISTANCE/TOOL_SPEED)/INTERPOLATION_INTERVAL)*(NUM_POINTS - 1) + 1 ;
+  createSimpleTrajectory(coarse_traj);
   EXPECT_TRUE(c.interpolate(coarse_traj,interpolated_traj));
+
+  // expected point count
+  EXPECT_TRUE(interpolated_traj.size() == expected_points);
 }
 
 

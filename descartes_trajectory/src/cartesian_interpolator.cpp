@@ -52,15 +52,16 @@ bool LinearSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& se
 
   tf::Vector3 vel = (end_pose_.getOrigin() - start_pose_.getOrigin())/total_time_;
   double time_step = interpolation_step_/total_time_;
-  std::size_t num_steps = std::ceil(total_time_/interpolation_step_);
+  std::size_t num_steps = std::ceil(total_time_/interpolation_step_)-1;
 
   if(num_steps <= MIN_NUM_STEPS)
   {
     ROS_ERROR_STREAM("Interpolation steps value of "<<num_steps<<" is invalid");
     return false;
   }
+  segment_points.clear();
 
-  segment_points.reserve(num_steps-1);
+  segment_points.reserve(num_steps);
   tf::Transform p;
   Eigen::Affine3d eigen_pose;
   tf::Quaternion q;
@@ -71,6 +72,8 @@ bool LinearSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& se
     tf::poseTFToEigen(p,eigen_pose);
     segment_points.push_back(TrajectoryPtPtr(new CartTrajectoryPt(eigen_pose)));
   }
+
+  ROS_DEBUG_STREAM("Segment contains "<<segment_points.size()<<" interpolated points for "<<num_steps<<" time steps");
 
   return true;
 }
@@ -104,9 +107,13 @@ bool CartesianInterpolator::computeFullSegmentTimes(const std::vector<descartes_
     if(c1.getNominalCartPose(seed,*robot_model_,p_start) &&
         c2.getNominalCartPose(seed,*robot_model_,p_end))
     {
+
       Eigen::Vector3d p1 = p_start.translation();
       Eigen::Vector3d p2 = p_end.translation();
-      double dt = (p2-p1).norm()/tool_speed_;
+      double norm = (p2-p1).norm();
+
+      ROS_DEBUG_STREAM("Distance for segment "<<i-1<<": "<<(p2-p1).norm());
+      double dt = norm/tool_speed_;
       ft[i-1] = dt;
     }
     else
@@ -153,7 +160,7 @@ bool CartesianInterpolator::interpolate(const std::vector<descartes_trajectory::
 
   // interpolating segments
 
-  tf::Transform p_start, p_end;
+   tf::Transform p_start, p_end;
   Eigen::Affine3d eigen_start, eigen_end;
   std::vector<double> seed(robot_model_->getDOF(),0.0f);
   std::vector<TrajectoryPtPtr> segment_points;
@@ -171,7 +178,13 @@ bool CartesianInterpolator::interpolate(const std::vector<descartes_trajectory::
     {
       interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(ps)));
       interpolated_traj.insert(interpolated_traj.end(), segment_points.begin(),segment_points.end());
-      interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(ps)));
+
+      if(i == segment_times.size() - 1)
+      {
+        interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(ps)));
+      }
+
+      segment_points.clear();
     }
     else
     {
