@@ -27,15 +27,19 @@
 #define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
 
 const static int SAMPLE_ITERATIONS = 10;
+const static bool CHECK_COLLISIONS = true;
 const static std::string SAMPLE_ITERATIONS_OPTION = "sampled_iterations";
+const static std::string CHECK_COLLISIONS_OPTION = "check_collisions";
 
 namespace descartes_moveit
 {
 
 MoveitStateAdapter::MoveitStateAdapter():
-    sample_iterations_(SAMPLE_ITERATIONS)
+    sample_iterations_(SAMPLE_ITERATIONS),
+    check_collisions_(CHECK_COLLISIONS)
 {
-  options_ = {{SAMPLE_ITERATIONS_OPTION,std::to_string(sample_iterations_)}};
+  options_ = {{SAMPLE_ITERATIONS_OPTION,std::to_string(sample_iterations_)},
+              {CHECK_COLLISIONS_OPTION,std::to_string(check_collisions_)}};
 }
 
 bool MoveitStateAdapter::initialize(const std::string robot_description, const std::string& group_name,
@@ -95,8 +99,12 @@ bool MoveitStateAdapter::setOptions(const descartes_core::RobotModelOptions& opt
 
   try
   {
-    options_[SAMPLE_ITERATIONS_OPTION] = options.at(SAMPLE_ITERATIONS_OPTION);
     sample_iterations_ = std::stoi(options.at(SAMPLE_ITERATIONS_OPTION));
+    options_[SAMPLE_ITERATIONS_OPTION] = options.at(SAMPLE_ITERATIONS_OPTION);
+
+    check_collisions_ = (std::stoi(options.at(CHECK_COLLISIONS_OPTION)) == 1) ? true : false;
+    options_[CHECK_COLLISIONS_OPTION] = options.at(CHECK_COLLISIONS_OPTION);
+
   }
   catch(std::invalid_argument& exp)
   {
@@ -130,7 +138,12 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
   if (robot_state_->setFromIK(robot_state_->getJointModelGroup(group_name_), tool_pose,
                               tool_frame_))
   {
-    if(!planning_scene_->isStateColliding(*robot_state_,group_name_))
+    if((check_collisions_ ? planning_scene_->isStateColliding(*robot_state_,group_name_): true) )
+    {
+      robot_state_->copyJointGroupPositions(group_name_, joint_pose);
+      rtn = true;
+    }
+    else
     {
       robot_state_->copyJointGroupPositions(group_name_, joint_pose);
       rtn = true;
@@ -212,8 +225,11 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if ( isValid(joint_pose) )
   {
-    if (robot_state_->knowsFrameTransform(tool_frame_))
+    if (robot_state_->knowsFrameTransform(tool_frame_) &&
+        (check_collisions_ ? planning_scene_->isStateColliding(*robot_state_,group_name_): true))
     {
+
+
       pose = world_to_root_.frame*robot_state_->getFrameTransform(tool_frame_);
       rtn = true;
     }

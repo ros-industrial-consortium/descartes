@@ -42,24 +42,35 @@ robot_model_loader::RobotModelLoaderPtr robot_;
 template <>
 RobotModelPtr CreateRobotModel<descartes_moveit::MoveitStateAdapter>()
 {
-  //robot_model::RobotModelPtr moveit_model_;
-  //robot_state::RobotStatePtr state_;
-
-/*  ROS_INFO_STREAM("Loading robot model from parameter");
-  robot_ = robot_model_loader::RobotModelLoaderPtr(
-        new robot_model_loader::RobotModelLoader("robot_description"));
-  EXPECT_TRUE(robot_);
-
-  ROS_INFO_STREAM("Robot model loaded");
-  moveit_model_ = robot_->getModel();
-  state_ = robot_state::RobotStatePtr(new robot_state::RobotState(moveit_model_));*/
-
 
   ROS_INFO_STREAM("Construction descartes robot model");
   descartes_core::RobotModelPtr descartes_model_;
   descartes_model_ = descartes_core::RobotModelPtr(new descartes_moveit::MoveitStateAdapter());
   EXPECT_TRUE(descartes_model_->initialize("robot_description","manipulator","base_link","tool0"));
   ROS_INFO_STREAM("Descartes robot model constructed");
+
+  // getting default options
+  descartes_core::RobotModelOptions options = descartes_model_->getOptions();
+
+  ROS_INFO_STREAM("Default options");
+  for(auto opt : options)
+  {
+    ROS_INFO_STREAM("option name: "<<opt.first<<", value: "<<opt.second);
+  }
+
+  // setting options
+  options["sampled_iterations"] = std::to_string(20);
+  options["check_collisions"] = std::to_string(false);
+  EXPECT_TRUE(descartes_model_->setOptions(options));
+
+  ROS_INFO_STREAM("Modified options");
+  descartes_core::RobotModelOptions mod_options = descartes_model_->getOptions();
+  for(auto opt : options)
+  {
+    EXPECT_TRUE(mod_options[opt.first] == opt.second);
+    ROS_INFO_STREAM("option name: "<<opt.first<<", value: "<<opt.second);
+  }
+
   return descartes_model_;
 }
 

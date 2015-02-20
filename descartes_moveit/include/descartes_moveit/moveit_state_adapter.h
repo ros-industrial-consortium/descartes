@@ -61,6 +61,11 @@ public:
 
   virtual int getDOF() const;
 
+  /* @brief parses the RobotModelOptions map in order to set the options for the robot model
+   * @param options: a map containing the following entries:
+   *    - key: check_collision, type: bool
+   *    - key: sampled_discretization, type: double
+   */
   virtual bool setOptions(const descartes_core::RobotModelOptions& options);
 
   virtual descartes_core::RobotModelOptions getOptions();
@@ -109,6 +114,7 @@ protected:
    * @brief Joint solution sample iterations for returning "all" joints
    */
   size_t sample_iterations_;
+  bool check_collisions_;
 
   descartes_core::RobotModelOptions options_;
 
