@@ -102,11 +102,11 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     return false;
   }
 
+  delete cartesian_point_link_; // remove the previous map before we start on a new one
   cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointInformation>();
 
   // DEBUG
   //printMaps();
-
   TrajectoryPt::ID previous_id = boost::uuids::nil_uuid();
 
   // input is valid, copy to local maps that will be maintained by the planning graph
@@ -114,19 +114,18 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
       point_iter != points->end(); point_iter++)
   {
     (*cartesian_point_link_)[point_iter->get()->getID()].source_trajectory_ = (*point_iter);
-    CartesianPointRelationship *point_link = new CartesianPointRelationship();
-    point_link->id = point_iter->get()->getID();
-    point_link->id_next = generate_nil(); // default to nil UUID
-    point_link->id_previous = generate_nil(); // default to nil UUID
+    CartesianPointRelationship point_link = CartesianPointRelationship();
+    point_link.id = point_iter->get()->getID();
+    point_link.id_next = generate_nil(); // default to nil UUID
+    point_link.id_previous = generate_nil(); // default to nil UUID
 
     // if the previous_id exists, set it's next_id to the new id
     if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
     {
-      (*cartesian_point_link_)[previous_id].links_.id_next = point_link->id;
-      //point_link->id_previous = previous_id;
+      (*cartesian_point_link_)[previous_id].links_.id_next = point_link.id;
       ROS_DEBUG("PreviousID[%s].links_.id_next = %s",
                 boost::uuids::to_string(previous_id).c_str(),
-                boost::uuids::to_string(point_link->id).c_str());
+                boost::uuids::to_string(point_link.id).c_str());
     }
     else
     {
@@ -134,13 +133,13 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     }
 
     // set the new current point link
-    point_link->id_previous = previous_id;
+    point_link.id_previous = previous_id;
 
     // the new one becomes the previous_id
-    previous_id = point_link->id;
+    previous_id = point_link.id;
 
     // save the point_link structure to the map
-    (*cartesian_point_link_)[point_link->id].links_ = *point_link;
+    (*cartesian_point_link_)[point_link.id].links_ = point_link;
   }
 
   // after populating maps above (presumably from cartesian trajectory points), calculate (or query) for all joint trajectories
@@ -175,19 +174,6 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     return false;
   }
 
-  // DEBUG
-  //printGraph();
-  //printMaps();
-
-  // Test to print TrajectoryMap
-//  CartesianMap test_map = getCartesianMap();
-//  for(CartesianMap::iterator map_iter = test_map.begin(); map_iter != test_map.end(); map_iter++)
-//  {
-//    ROS_INFO("CART MAP: %s", boost::uuids::to_string(map_iter->first).c_str());
-//  }
-
-  // SUCCESS! now go do something interesting with the graph
-  //ROS_INFO("Successfully constructed graph with %d vertices and %s edges from %d trajectories.", boost::num_vertices(dg_), boost::num_edges(dg_), (int)cartesian_point_link_->size());
   return true;
 }
 
@@ -212,30 +198,30 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
     ROS_ERROR("unable to find next point");
   }
 
-  CartesianPointRelationship *point_link = new CartesianPointRelationship();
-  point_link->id = point->getID();
-  point_link->id_next = next_id;
-  point_link->id_previous = previous_id;
+  CartesianPointRelationship point_link;
+  point_link.id = point->getID();
+  point_link.id_next = next_id;
+  point_link.id_previous = previous_id;
 
   // save the new point_link structure to the map
-  (*cartesian_point_link_)[point_link->id].links_ = *point_link;
+  (*cartesian_point_link_)[point_link.id].links_ = point_link;
 
   // if not adding at the beginning, update the previous to point to the new point
   //if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
   if(!previous_id.is_nil())
   {
-    (*cartesian_point_link_)[previous_id].links_.id_next = point_link->id;
+    (*cartesian_point_link_)[previous_id].links_.id_next = point_link.id;
   }
   // if not updating the end, update the next to point to the new point
   //if (cartesian_point_link_->find(next_id) != cartesian_point_link_->end())
   if(!next_id.is_nil())
   {
-    (*cartesian_point_link_)[next_id].links_.id_previous = point_link->id;
+    (*cartesian_point_link_)[next_id].links_.id_previous = point_link.id;
   }
 
-  ROS_DEBUG("New ID: %s", boost::uuids::to_string(point_link->id).c_str());
-  ROS_DEBUG("New Next ID: %s", boost::uuids::to_string(point_link->id_next).c_str());
-  ROS_DEBUG("New Previous ID: %s", boost::uuids::to_string(point_link->id_previous).c_str());
+  ROS_DEBUG("New ID: %s", boost::uuids::to_string(point_link.id).c_str());
+  ROS_DEBUG("New Next ID: %s", boost::uuids::to_string(point_link.id_next).c_str());
+  ROS_DEBUG("New Previous ID: %s", boost::uuids::to_string(point_link.id_previous).c_str());
 
   std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
   int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
@@ -274,15 +260,14 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
         joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
-      //traj_solutions->push_back(new_pt->getID());
-      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt->getID());
+      JointTrajectoryPt new_pt (*joint_pose_iter);
+      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt.getID());
 
       // insert new vertices into graph
       JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
-      dg_[v].id = new_pt->getID();
+      dg_[v].id = new_pt.getID();
 
-      joint_solutions_map_[new_pt->getID()] = *new_pt;
+      joint_solutions_map_[new_pt.getID()] = new_pt;
     }
   }
 
@@ -428,18 +413,18 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
         joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
-      (*cartesian_point_link_)[modify_id].joints_.push_back(new_pt->getID());
+      JointTrajectoryPt new_pt (*joint_pose_iter);
+      (*cartesian_point_link_)[modify_id].joints_.push_back(new_pt.getID());
 
       // insert new vertices into graph
       JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
-      dg_[v].id = new_pt->getID();
+      dg_[v].id = new_pt.getID();
 
-      joint_solutions_map_[new_pt->getID()] = *new_pt;
+      joint_solutions_map_[new_pt.getID()] = new_pt;
       ROS_INFO("Added New Joint: %d", (int)v);
-//      printMaps();
     }
   }
+
   std::list<TrajectoryPt::ID> traj_solutions = (*cartesian_point_link_)[modify_id].joints_;
   (*cartesian_point_link_)[modify_id].source_trajectory_ = point;
   // don't need to modify links
@@ -925,12 +910,12 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
                boost::uuids::to_string(*previous_joint_iter).c_str(),
                boost::uuids::to_string(*next_joint_iter).c_str(),
                transition_cost);
-      JointEdge *edge = new JointEdge();
-      edge->joint_start = *previous_joint_iter;
-      edge->joint_end = *next_joint_iter;
-      edge->transition_cost = transition_cost;
+      JointEdge edge;
+      edge.joint_start = *previous_joint_iter;
+      edge.joint_end = *next_joint_iter;
+      edge.transition_cost = transition_cost;
 
-      edge_results.push_back(*edge);
+      edge_results.push_back(edge);
     }
   }
 
