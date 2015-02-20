@@ -44,18 +44,14 @@ namespace descartes_planner
 const double MAX_JOINT_DIFF = M_PI;
 const double MAX_EXCEEDED_PENALTY = 10000.0f;
 
-PlanningGraph::PlanningGraph(RobotModelConstPtr &model):
-    cartesian_point_link_(NULL)
-{
-  robot_model_ = model;
-}
+PlanningGraph::PlanningGraph(RobotModelConstPtr &model)
+  : robot_model_(model)
+  , cartesian_point_link_(NULL)
+{}
 
 PlanningGraph::~PlanningGraph()
 {
-  if(cartesian_point_link_)
-  {
-    delete cartesian_point_link_;
-  }
+  delete cartesian_point_link_;
 }
 
 CartesianMap PlanningGraph::getCartesianMap()
@@ -920,8 +916,8 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
         next_joint_iter != end_joints.end(); next_joint_iter++)
     {
       double transition_cost;
-      JointTrajectoryPt start_joint = joint_solutions_map_[*previous_joint_iter];
-      JointTrajectoryPt end_joint = joint_solutions_map_[*next_joint_iter];
+      const JointTrajectoryPt& start_joint = joint_solutions_map_[*previous_joint_iter];
+      const JointTrajectoryPt& end_joint = joint_solutions_map_[*next_joint_iter];
 
       transition_cost = linearWeight(start_joint, end_joint);
 
@@ -989,7 +985,7 @@ bool PlanningGraph::populateGraphEdges(const std::list<JointEdge> &edges)
   return true;
 }
 
-double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt end)
+double PlanningGraph::linearWeight(const JointTrajectoryPt& start, const JointTrajectoryPt& end) const
 {
   std::vector<std::vector<double> > joint_poses_start;
   start.getJointPoses(*robot_model_, joint_poses_start);
@@ -1000,8 +996,9 @@ double PlanningGraph::linearWeight(JointTrajectoryPt start, JointTrajectoryPt en
   // each should only return one
   if (joint_poses_start.size() == 1 && joint_poses_end.size() == 1)
   {
-    std::vector<double> start_vector = joint_poses_start[0];
-    std::vector<double> end_vector = joint_poses_end[0];
+    const std::vector<double>& start_vector = joint_poses_start[0];
+    const std::vector<double>& end_vector = joint_poses_end[0];
+    
     if (start_vector.size() == end_vector.size())
     {
       double vector_diff = 0;
