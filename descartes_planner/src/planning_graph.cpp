@@ -225,7 +225,6 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
   int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
 
-  std::stringstream ss;
   if(!previous_id.is_nil() && !next_id.is_nil())
   {
     // remove graph edges from each joint at [id_previous] to joint at [id_next]
@@ -237,9 +236,7 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
       for (std::list<TrajectoryPt::ID>::iterator end_joint_iter = end_joint_ids.begin();
           end_joint_iter != end_joint_ids.end(); end_joint_iter++)
       {
-        ss.str("");
-        ss << "Removing edge: " << *start_joint_iter << " -> " << *end_joint_iter << std::endl;
-        ROS_DEBUG_STREAM(ss.str());
+        ROS_DEBUG_STREAM("Removing edge: " << *start_joint_iter << " -> " << *end_joint_iter);
         boost::remove_edge(joint_vertex_map[*start_joint_iter], joint_vertex_map[*end_joint_iter], dg_);
       }
     }
@@ -659,7 +656,7 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
           ss << " -> " << current;
           path.push_front(joint_solutions_map_[vertex_index_map[current]]);
         }
-        ROS_DEBUG("%s", ss.str().c_str());
+        ROS_DEBUG_STREAM(ss.str());
       }
     }
   }
@@ -718,9 +715,7 @@ void PlanningGraph::printGraph()
     for (OutEdgeIterator out_edge = out_ei.first; out_edge != out_ei.second; ++out_edge)
     {
       JointGraph::edge_descriptor e = *out_edge;
-      //ss << dg_[e].joint_end << ", ";
       ss << "[" << dg_[e].joint_end << "] , ";
-      //joint_solutions_map_[dg_[e].joint_end] <<
     }
     ss << "}";
     ROS_DEBUG_STREAM(ss.str());
@@ -744,9 +739,7 @@ void PlanningGraph::printGraph()
     ROS_DEBUG_STREAM(ss.str());
   }
 
-  ss.str("");
-  ss << "GRAPH EDGES (" << num_edges(dg_) << "): \n";
-  ROS_DEBUG_STREAM(ss.str());
+  ROS_DEBUG_STREAM("GRAPH EDGES (" << num_edges(dg_) << "): ");
   //Tried to make this section more clear, instead of using tie, keeping all
   //the original types so it's more clear what is going on
   std::pair<EdgeIterator, EdgeIterator> ei = edges(dg_);
@@ -756,13 +749,9 @@ void PlanningGraph::printGraph()
     JointGraph::edge_descriptor e = *out_edges(jv, dg_).first;
 
     JointGraph::edge_descriptor e2 = *edge_iter;
-    ss.str("");
-    ss << "(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost;
-    ROS_DEBUG_STREAM(ss.str());
+    ROS_DEBUG_STREAM("(" << source(*edge_iter, dg_) << ", " << target(*edge_iter, dg_) << "): cost: " << dg_[e2].transition_cost);
   }
   ROS_DEBUG_STREAM("\n\nEND PRINTING GRAPH\n\n");
-  ss.str("");
-
 }
 
 bool PlanningGraph::calculateJointSolutions()
