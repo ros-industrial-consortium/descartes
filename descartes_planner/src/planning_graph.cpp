@@ -49,16 +49,23 @@ namespace
 
   using JointSolutionResult = std::pair<VecJointSolutions, bool>; // result and flag if everything went well
 
+  /**
+   * This function is the primary worker for calculating all IK solutions for a given
+   * range of cartesian positions. Two things to note: model copies the shared pointer
+   * because it DOES want to participate in the lifetime. Also, while I believe it to
+   * be okay on x86, stop_flag might need to be an atomic (b/c of memory reorders). 
+   */
   JointSolutionResult
   rangeCalculateJointSolutions(descartes_core::RobotModelPtr model, 
                                ConstTrajectoryIterator begin,
-                               ConstTrajectoryIterator end)
+                               ConstTrajectoryIterator end,
+                               bool& stop_flag)
   {
     JointSolutionResult solutions;
     solutions.first.reserve(std::distance(begin, end));
     solutions.second = true;
 
-    while (begin != end)
+    while (begin != end && !stop_flag)
     {
       JointSolutions joint_poses;
       begin->get()->getJointPoses(*model, joint_poses);
@@ -66,8 +73,9 @@ namespace
       if (joint_poses.empty())
       {
         solutions.second = false;
-        ROS_ERROR("No joint solutions available for point %s", 
-          boost::uuids::to_string(begin->get()->getID()).c_str());
+        ROS_ERROR_STREAM("No joint solutions available for point " << begin->get()->getID());
+        stop_flag = true; // signal to this thread and all others that a point is bad
+        continue;
       }
 
       solutions.first.push_back(std::move(joint_poses));
@@ -94,6 +102,12 @@ namespace
 
     // Create tasks
     std::vector<std::future<JointSolutionResult>> futures (max_threads);
+    
+    // This flag is shared among the threads and allows one
+    // to kill all of the others if an error is detected
+    // See above comment regarding atomics
+    bool stop_flag = false;
+
     for (size_t i = 0; i < futures.size(); ++i)
     {
       auto start = trajectory.cbegin() + i * chunk_size;
@@ -102,10 +116,10 @@ namespace
       // Give extra work to last element
       if (i == futures.size() - 1) end += chunk_extra;
 
-      // Create a seperate copy of the robot state for this worker
+      // Create a separate copy of the robot state for this worker
       descartes_core::RobotModelPtr state_copy = model.clone();
       // Launch task
-      futures[i] = std::async(std::launch::async, rangeCalculateJointSolutions, state_copy, start, end);
+      futures[i] = std::async(std::launch::async, rangeCalculateJointSolutions, state_copy, start, end, std::ref(stop_flag));
     }
 
     // Wait for solutions
@@ -116,7 +130,7 @@ namespace
       solutions.second = solutions.second && solution_segment.second; // carry the false flag forward if is returned
       if (!solution_segment.second)
       {
-        ROS_ERROR("One segment of the calculation failed to find a solution for all points");
+        ROS_ERROR_STREAM("One segment of the calculation failed to find a solution for all points");
       }
 
       for (auto& sol : solution_segment.first)
@@ -917,20 +931,24 @@ bool PlanningGraph::calculateJointSolutions()
   // Compute joint solutions for trajectory pts
   JointSolutionResult all_joint_solutions = parallelCalculateJointSolutions(trajectory, *robot_model_, nthreads_);
 
-  // Create corresponding JointTrajPts for each solution and add them to the joint solutions map
-  size_t idx = 0; // for looking into the solutions array
-  for (auto& kv : *cartesian_point_link_)
+  // Only populate new points if the plan succeeded
+  if (all_joint_solutions.second)
   {
-    std::list<TrajectoryPt::ID> solution_ids;
-    for (const auto& sol : all_joint_solutions.first[idx])
+    // Create corresponding JointTrajPts for each solution and add them to the joint solutions map
+    size_t idx = 0; // for looking into the solutions array
+    for (auto& kv : *cartesian_point_link_)
     {
-      JointTrajectoryPt point (sol);
-      solution_ids.push_back(point.getID());
-      joint_solutions_map_[point.getID()] = point;
+      std::list<TrajectoryPt::ID> solution_ids;
+      for (const auto& sol : all_joint_solutions.first[idx])
+      {
+        JointTrajectoryPt point (sol);
+        solution_ids.push_back(point.getID());
+        joint_solutions_map_[point.getID()] = point;
+      }
+      // Update the original trajectory with new info
+      kv.second.joints_ = std::move(solution_ids);
+      ++idx;
     }
-    // Update the original trajectory with new info
-    kv.second.joints_ = std::move(solution_ids);
-    ++idx;
   }
 
   return all_joint_solutions.second;
