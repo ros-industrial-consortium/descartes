@@ -215,6 +215,8 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
 
 bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
 {
+  if (path_.empty()) return false;
+  
   path.assign(path_.begin(),path_.end());
   return error_code_ == descartes_core::PlannerError::OK;
 }

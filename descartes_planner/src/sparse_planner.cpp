@@ -143,9 +143,11 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
     ROS_INFO("Sparse planner succeeded with %i planned point and %i interpolated points in %f seconds",planned_count,interp_count,
              (ros::Time::now() - start_time).toSec());
+    error_code_ == descartes_core::PlannerError::OK;
   }
   else
   {
+    error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
     return false;
   }
 
@@ -518,7 +520,6 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
 {
   if(cart_points_.empty() || joint_points_map_.empty())
   {
-    error_code_ = descartes_core::PlannerError::EMPTY_PATH;
     return false;
   }
 
