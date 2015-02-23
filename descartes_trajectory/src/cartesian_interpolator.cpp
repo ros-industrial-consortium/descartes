@@ -181,7 +181,7 @@ bool CartesianInterpolator::interpolate(const std::vector<descartes_trajectory::
 
       if(i == segment_times.size() - 1)
       {
-        interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(ps)));
+        interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(pe)));
       }
 
       segment_points.clear();
