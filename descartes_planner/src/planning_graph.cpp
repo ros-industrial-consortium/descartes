@@ -37,6 +37,7 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include <future>
+#include <boost/atomic.hpp>
 
 using namespace descartes_core;
 using namespace descartes_trajectory;
@@ -52,14 +53,13 @@ namespace
   /**
    * This function is the primary worker for calculating all IK solutions for a given
    * range of cartesian positions. Two things to note: model copies the shared pointer
-   * because it DOES want to participate in the lifetime. Also, while I believe it to
-   * be okay on x86, stop_flag might need to be an atomic (b/c of memory reorders). 
+   * because it DOES want to participate in the lifetime.
    */
   JointSolutionResult
   rangeCalculateJointSolutions(descartes_core::RobotModelPtr model, 
                                ConstTrajectoryIterator begin,
                                ConstTrajectoryIterator end,
-                               bool& stop_flag)
+                               boost::atomic<bool>& stop_flag)
   {
     JointSolutionResult solutions;
     solutions.first.reserve(std::distance(begin, end));
@@ -105,8 +105,7 @@ namespace
     
     // This flag is shared among the threads and allows one
     // to kill all of the others if an error is detected
-    // See above comment regarding atomics
-    bool stop_flag = false;
+    boost::atomic<bool> stop_flag (false);
 
     for (size_t i = 0; i < futures.size(); ++i)
     {
