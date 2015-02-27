@@ -63,8 +63,8 @@ class LinearSegment: public TrajectorySegment
 {
 public:
 
-  LinearSegment(const tf::Transform& start_pose,
-                const tf::Transform& end_pose,
+  LinearSegment(const Eigen::Affine3d& start_pose,
+                const Eigen::Affine3d& end_pose,
                 double total_time,
                 double interpolation_step);
 
@@ -73,8 +73,8 @@ public:
 
 protected:
 
-  tf::Transform start_pose_;
-  tf::Transform end_pose_;
+  Eigen::Affine3d start_pose_;
+  Eigen::Affine3d end_pose_;
   double total_time_;
   double interpolation_step_;
 
@@ -86,7 +86,8 @@ public:
   CartesianInterpolator();
   virtual ~CartesianInterpolator();
 
-  /* @brief Initializes the interpolator
+  /*
+   * @brief Initializes the interpolator
    * @param robot_model A robot model implementation
    * @param tool_speed magnitude of the speed vector followed by the robot tool
    * @param interpolation_interval time elapsed between each point in the interpolated trajectory
@@ -96,17 +97,18 @@ public:
   bool initialize(descartes_core::RobotModelConstPtr robot_model, double tool_speed,double interpolation_interval,
                   double zone_radius);
 
-  /* @brief Interpolates a coarse trajectory in cartesian space
+  /*
+   * @brief Interpolates a coarse trajectory in cartesian space
    * @param coarse_traj the coarse trajectory that is to be interpolated
    * @param interpolated_traj the interpolated trajectory
    */
-  bool interpolate(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
+  bool interpolate(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                    std::vector<descartes_core::TrajectoryPtPtr>& interpolated_traj);
 protected:
 
-  bool computeFullSegmentTimes(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
+  bool computeFullSegmentTimes(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                                std::vector<double>& ft);
-  bool computeBlendSegmentTimes(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
+  bool computeBlendSegmentTimes(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                                 std::vector<double>& bt);
 
 protected:

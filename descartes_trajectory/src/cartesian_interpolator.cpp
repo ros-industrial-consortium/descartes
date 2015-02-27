@@ -16,22 +16,22 @@
  * limitations under the License.
  */
 
-#include <console_bridge/console.h>
 #include <descartes_trajectory/cartesian_interpolator.h>
 #include <tf_conversions/tf_eigen.h>
 #include <boost/uuid/uuid_io.hpp>
 #include <math.h>
 
 
-#define NOT_IMPLEMENTED_ERR(ret) logError("%s not implemented", __PRETTY_FUNCTION__); return ret;
+#define NOT_IMPLEMENTED_ERR(ret) ROS_ERROR("%s not implemented", __PRETTY_FUNCTION__); return ret;
 const static unsigned int MIN_NUM_STEPS = 1;
+const double ZERO = 0.0f;
 
 using namespace descartes_core;
 
 namespace descartes_trajectory
 {
-LinearSegment::LinearSegment(const tf::Transform& start_pose,
-                             const tf::Transform& end_pose,
+LinearSegment::LinearSegment(const Eigen::Affine3d& start_pose,
+                             const Eigen::Affine3d& end_pose,
                              double total_time,
                              double interpolation_step):
                              start_pose_(start_pose),
@@ -50,13 +50,36 @@ LinearSegment::~LinearSegment()
 bool LinearSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points)
 {
 
-  tf::Vector3 vel = (end_pose_.getOrigin() - start_pose_.getOrigin())/total_time_;
+  if( total_time_<= ZERO )
+  {
+    ROS_ERROR_STREAM("The values for 'total_time'  must be >= 0, a negative number was passed");
+    return false;
+  }
+
+  if(interpolation_step_ <= ZERO )
+  {
+    ROS_ERROR_STREAM("The values for 'interpolation_step' must be >= 0, a negative number was passed");
+    return false;
+  }
+
+  if(total_time_ <= interpolation_step_)
+  {
+    ROS_ERROR_STREAM("The segment 'total_time' can not be less than the interpolation time step");
+    return false;
+  }
+
+  // conversions to tf
+  tf::Transform end_pose_tf, start_pose_tf;
+  tf::poseEigenToTF(start_pose_,start_pose_tf);
+  tf::poseEigenToTF(end_pose_,end_pose_tf);
+
+  tf::Vector3 vel = (end_pose_tf.getOrigin() - start_pose_tf.getOrigin())/total_time_;
   double time_step = interpolation_step_/total_time_;
   std::size_t num_steps = std::ceil(total_time_/interpolation_step_)-1;
 
   if(num_steps <= MIN_NUM_STEPS)
   {
-    ROS_ERROR_STREAM("Interpolation steps value of "<<num_steps<<" is invalid");
+    ROS_ERROR_STREAM("Interpolation steps value of "<<num_steps<<" is less that the minimum allowed "<<MIN_NUM_STEPS);
     return false;
   }
   segment_points.clear();
@@ -67,8 +90,8 @@ bool LinearSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& se
   tf::Quaternion q;
   for(std::size_t i = 1; i < num_steps; i++)
   {
-    p.setOrigin(start_pose_.getOrigin() +  vel*i*interpolation_step_);
-    start_pose_.getRotation().slerp(q,i*time_step);
+    p.setOrigin(start_pose_tf.getOrigin() +  vel*i*interpolation_step_);
+    start_pose_tf.getRotation().slerp(q,i*time_step);
     tf::poseTFToEigen(p,eigen_pose);
     segment_points.push_back(TrajectoryPtPtr(new CartTrajectoryPt(eigen_pose)));
   }
@@ -78,7 +101,11 @@ bool LinearSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& se
   return true;
 }
 
-CartesianInterpolator::CartesianInterpolator()
+CartesianInterpolator::CartesianInterpolator():
+    tool_speed_(0),
+    interpolation_interval_(0),
+    zone_radius_(0),
+    robot_model_()
 {
 
 }
@@ -88,13 +115,13 @@ CartesianInterpolator::~CartesianInterpolator()
 
 }
 
-bool CartesianInterpolator::computeBlendSegmentTimes(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
+bool CartesianInterpolator::computeBlendSegmentTimes(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                                                      std::vector<double>& bt)
 {
   NOT_IMPLEMENTED_ERR(false);
 }
 
-bool CartesianInterpolator::computeFullSegmentTimes(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
+bool CartesianInterpolator::computeFullSegmentTimes(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                                                     std::vector<double>& ft)
 {
   ft.resize(coarse_traj.size() - 1);
@@ -102,10 +129,10 @@ bool CartesianInterpolator::computeFullSegmentTimes(const std::vector<descartes_
   std::vector<double> seed(robot_model_->getDOF(),0.0f);
   for(unsigned int i = 1; i < coarse_traj.size();i++)
   {
-    const CartTrajectoryPt& c1 = coarse_traj[i-1];
-    const CartTrajectoryPt& c2 = coarse_traj[i];
-    if(c1.getNominalCartPose(seed,*robot_model_,p_start) &&
-        c2.getNominalCartPose(seed,*robot_model_,p_end))
+    descartes_core::TrajectoryPtPtr c1 = coarse_traj[i-1];
+    descartes_core::TrajectoryPtPtr c2 = coarse_traj[i];
+    if(c1->getNominalCartPose(seed,*robot_model_,p_start) &&
+        c2->getNominalCartPose(seed,*robot_model_,p_end))
     {
 
       Eigen::Vector3d p1 = p_start.translation();
@@ -119,7 +146,7 @@ bool CartesianInterpolator::computeFullSegmentTimes(const std::vector<descartes_
     else
     {
       ROS_ERROR_STREAM("Failed to get nominal cartesian poses while calculating time for segment "
-          <<c1.getID()<<" and "<<c2.getID());
+          <<c1->getID()<<" and "<<c2->getID());
       return false;
     }
   }
@@ -131,14 +158,14 @@ bool CartesianInterpolator::initialize(descartes_core::RobotModelConstPtr robot_
                                        double tool_speed,double interpolation_interval, double zone_radius)
 {
   robot_model_ = robot_model;
-  tool_speed_ = tool_speed;
-  interpolation_interval_= interpolation_interval;
-  zone_radius_ = zone_radius;
+  tool_speed_ = std::abs(tool_speed);
+  interpolation_interval_= std::abs(interpolation_interval);
+  zone_radius_ = std::abs(zone_radius);
 
   return true;
 }
 
-bool CartesianInterpolator::interpolate(const std::vector<descartes_trajectory::CartTrajectoryPt>& coarse_traj,
+bool CartesianInterpolator::interpolate(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                  std::vector<descartes_core::TrajectoryPtPtr>& interpolated_traj)
 {
 
@@ -159,31 +186,26 @@ bool CartesianInterpolator::interpolate(const std::vector<descartes_trajectory::
   interpolated_traj.reserve(total_points);
 
   // interpolating segments
-
-   tf::Transform p_start, p_end;
-  Eigen::Affine3d eigen_start, eigen_end;
+  Eigen::Affine3d pose_start, pose_end;
   std::vector<double> seed(robot_model_->getDOF(),0.0f);
   std::vector<TrajectoryPtPtr> segment_points;
   for(std::size_t i = 0; i < segment_times.size();i++)
   {
-    const CartTrajectoryPt& ps = coarse_traj[i];
-    const CartTrajectoryPt& pe = coarse_traj[i+1];
-    ps.getNominalCartPose(seed,*robot_model_,eigen_start);
-    pe.getNominalCartPose(seed,*robot_model_,eigen_end);
+    descartes_core::TrajectoryPtPtr ps = coarse_traj[i];
+    descartes_core::TrajectoryPtPtr pe = coarse_traj[i+1];
+    ps->getNominalCartPose(seed,*robot_model_,pose_start);
+    pe->getNominalCartPose(seed,*robot_model_,pose_end);
 
-    tf::poseEigenToTF(eigen_start,p_start);
-    tf::poseEigenToTF(eigen_end,p_end);
-    LinearSegment lsegment = LinearSegment(p_start,p_end,segment_times[i],interpolation_interval_);
+    LinearSegment lsegment = LinearSegment(pose_start,pose_end,segment_times[i],interpolation_interval_);
     if(lsegment.interpolate(segment_points))
     {
-      interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(ps)));
+      interpolated_traj.push_back(ps);
       interpolated_traj.insert(interpolated_traj.end(), segment_points.begin(),segment_points.end());
 
       if(i == segment_times.size() - 1)
       {
-        interpolated_traj.push_back(TrajectoryPtPtr(new CartTrajectoryPt(pe)));
+        interpolated_traj.push_back(pe);
       }
-
       segment_points.clear();
     }
     else
