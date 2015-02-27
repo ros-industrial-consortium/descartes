@@ -34,7 +34,7 @@ const double POS_RANGE = 2.0;
 const double ORIENT_RANGE = 1.0;
 
 
-void createSimpleTrajectory(std::vector<CartTrajectoryPt>& traj)
+void createSimpleTrajectory(std::vector<TrajectoryPtPtr>& traj)
 {
 
   double points = NUM_POINTS;
@@ -49,14 +49,14 @@ void createSimpleTrajectory(std::vector<CartTrajectoryPt>& traj)
     pose = pose * tf::Transform(tf::Quaternion(tf::Vector3(0,0,1),i * angular_z_step))*
         tf::Transform(tf::Quaternion::getIdentity(),linear_step);
     tf::poseTFToEigen(pose,eigen_pose);
-    traj[i] = CartTrajectoryPt(eigen_pose);
+    traj[i] = TrajectoryPtPtr(new CartTrajectoryPt(eigen_pose));
   }
 }
 
 TEST(CartesianInterpolator,interpolate)
 {
   descartes_trajectory::CartesianInterpolator c;
-  std::vector<CartTrajectoryPt> coarse_traj;
+  std::vector<TrajectoryPtPtr> coarse_traj;
   std::vector<descartes_core::TrajectoryPtPtr> interpolated_traj;
   RobotModelConstPtr robot(new CartesianRobot(POS_RANGE, ORIENT_RANGE,6));
 
