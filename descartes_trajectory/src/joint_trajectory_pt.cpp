@@ -31,25 +31,32 @@ using namespace descartes_core;
 namespace descartes_trajectory
 {
 
-JointTrajectoryPt::JointTrajectoryPt():
-    tool_(Eigen::Affine3d::Identity()),
-    wobj_(Eigen::Affine3d::Identity())
+JointTrajectoryPt::JointTrajectoryPt(const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing) 
+  , tool_(Eigen::Affine3d::Identity())
+  , wobj_(Eigen::Affine3d::Identity())
 {}
 
 JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints,
-                                     const Frame &tool, const Frame &wobj):
+                                     const Frame &tool, const Frame &wobj,
+                                     const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing),
   joint_position_(joints),
   tool_(tool),
   wobj_(wobj)
 {}
 
-JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints):
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, 
+                                     const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing),
   joint_position_(joints),
   tool_(Eigen::Affine3d::Identity()),
   wobj_(Eigen::Affine3d::Identity())
 {}
 
-JointTrajectoryPt::JointTrajectoryPt(const std::vector<double> &joints):
+JointTrajectoryPt::JointTrajectoryPt(const std::vector<double> &joints,
+                                     const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing),
   tool_(Eigen::Affine3d::Identity()),
   wobj_(Eigen::Affine3d::Identity())
 {

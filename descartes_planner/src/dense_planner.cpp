@@ -97,6 +97,7 @@ bool DensePlanner::updatePath()
       || (std::find_if(cart_map.begin(),cart_map.end(),predicate) == cart_map.end())
       || first_id == descartes_core::TrajectoryID::make_nil())
   {
+    ROS_ERROR_STREAM("Failure case 1");
     error_code_ = descartes_core::PlannerError::INVALID_ID;
     return false;
   }
@@ -121,6 +122,7 @@ bool DensePlanner::updatePath()
   double cost;
   if(planning_graph_->getShortestPath(cost,list) )
   {
+    ROS_INFO_STREAM("Traj size: " << traj.size() << " List size: " << list.size());
     if(traj.size() == list.size())
     {
       error_code_ = descartes_core::PlannerError::OK;
@@ -137,11 +139,13 @@ bool DensePlanner::updatePath()
     }
     else
     {
+      ROS_ERROR_STREAM("Failure case 2");
       error_code_ = descartes_core::PlannerError::INCOMPLETE_PATH;
     }
   }
   else
   {
+    ROS_ERROR_STREAM("Failure case 3");
     error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
   }
 

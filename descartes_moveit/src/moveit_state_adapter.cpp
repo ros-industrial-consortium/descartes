@@ -320,5 +320,29 @@ int MoveitStateAdapter::getDOF() const
   return group->getVariableCount();
 }
 
+bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose, 
+                                     const std::vector<double>& to_joint_pose,
+                                     double dt) const
+{
+  std::vector<double> max_joint_deltas;
+  max_joint_deltas.reserve(velocity_limits_.size());
+
+  // Build a vector of the maximum angle delta per joint 
+  for (std::vector<double>::const_iterator it = velocity_limits_.begin(); it != velocity_limits_.end(); ++it)
+  {
+    max_joint_deltas.push_back((*it) * dt);
+  }
+
+  for (std::vector<double>::size_type i = 0; i < from_joint_pose.size(); ++i)
+  {
+    if ( std::abs(from_joint_pose[i] - to_joint_pose[i]) > max_joint_deltas[i] )
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 } //descartes_moveit
 

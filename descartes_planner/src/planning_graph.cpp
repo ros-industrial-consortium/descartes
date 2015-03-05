@@ -253,14 +253,15 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
         joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt new_pt (*joint_pose_iter);
-      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt.getID());
+      JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter, point->getTiming());
+      //traj_solutions->push_back(new_pt->getID());
+      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt->getID());
 
       // insert new vertices into graph
       JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
       dg_[v].id = new_pt.getID();
 
-      joint_solutions_map_[new_pt.getID()] = new_pt;
+      joint_solutions_map_[new_pt.getID()] = *new_pt;
     }
   }
 
@@ -670,7 +671,7 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
 
     for (std::list<JointGraph::vertex_descriptor>::iterator end = end_points.begin(); end != end_points.end(); end++)
     {
-      //ROS_INFO("Checking path: S[%d] -> E[%d]", *start, *end);
+      // ROS_INFO("Checking path: S[%d] -> E[%d]", *start, *end);
       // actual weight(cost) from start_id to end_id
       double weight = weights[*end];
 
@@ -695,13 +696,17 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
           ss << " -> " << current;
           path.push_front(joint_solutions_map_[vertex_index_map[current]]);
         }
+
         ROS_INFO("With %lu - new best score: %f", path.size(), weight);
       }
     }
   }
 
+  ROS_INFO("Lowest cost: %f", cost);
+
   if (cost < std::numeric_limits<double>::max())
   {
+    ROS_INFO("FOUND A PATH");
     return true;
   }
   else
@@ -825,7 +830,7 @@ bool PlanningGraph::calculateJointSolutions()
           joint_pose_iter != joint_poses.end(); joint_pose_iter++)
       {
         //get UUID from JointTrajPt (convert from std::vector<double>)
-        JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
+        JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter, trajectory_iter->second.source_trajectory_.get()->getTiming());
         traj_solutions->push_back(new_pt->getID());
         joint_solutions_map_[new_pt->getID()] = *new_pt;
       }
@@ -993,19 +998,17 @@ double PlanningGraph::linearWeight(const JointTrajectoryPt& start, const JointTr
     
     if (start_vector.size() == end_vector.size())
     {
+      if (end.getTiming().isSpecified() && !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper_))
+      {
+        return MAX_EXCEEDED_PENALTY;
+      }
+
       double vector_diff = 0;
       double joint_diff = 0;
       for (int i = 0; i < start_vector.size(); i++)
       {
         joint_diff = std::abs(end_vector[i] - start_vector[i]);
-        if(joint_diff > MAX_JOINT_DIFF)
-        {
-          return MAX_EXCEEDED_PENALTY;
-        }
-        else
-        {
-          vector_diff += joint_diff ;
-        }
+        vector_diff += joint_diff ;
       }
       return vector_diff;
     }

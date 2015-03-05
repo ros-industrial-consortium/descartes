@@ -38,7 +38,6 @@ class MoveitStateAdapter : public descartes_core::RobotModel
 
 
 public:
-
   MoveitStateAdapter();
 
   /**
@@ -97,6 +96,10 @@ public:
     return robot_state_;
   }
 
+  virtual bool isValidMove(const std::vector<double>& from_joint_pose, 
+                           const std::vector<double>& to_joint_pose,
+                           double dt) const;
+
 protected:
 
   /**
@@ -119,6 +122,7 @@ protected:
    */
   bool isInCollision(const std::vector<double> &joint_pose) const;
 
+  std::vector<double> velocity_limits_;
   mutable moveit::core::RobotStatePtr robot_state_;
   planning_scene::PlanningScenePtr planning_scene_;
   robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
