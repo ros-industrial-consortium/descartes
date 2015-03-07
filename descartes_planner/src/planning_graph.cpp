@@ -41,7 +41,7 @@ using namespace descartes_trajectory;
 namespace descartes_planner
 {
 
-const double MAX_JOINT_DIFF = M_PI;
+const double MAX_JOINT_DIFF = M_PI / 2;
 const double MAX_EXCEEDED_PENALTY = 10000.0f;
 
 PlanningGraph::PlanningGraph(RobotModelConstPtr model)
@@ -563,38 +563,80 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
 bool PlanningGraph::findStartVertices(std::list<JointGraph::vertex_descriptor> &start_points)
 {
-  std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
-  for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
-  {
-    JointGraph::vertex_descriptor jv = *vert_iter;
+  // Create local id->vertex map  
+  std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
+  int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
 
-    std::pair<InEdgeIterator, InEdgeIterator> in_ei = boost::in_edges(jv, dg_);
-    if (in_ei.first == in_ei.second)
+  // Find the TrajectoryPt ID of the first point specified by the user
+  TrajectoryPt::ID cart_id = generate_nil();
+
+  for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
+      c_iter != cartesian_point_link_->end(); c_iter++)
+  {
+    if(c_iter->second.links_.id_previous.is_nil())
     {
-      // debug
-      ROS_DEBUG_STREAM("Graph start node: " << jv);
-      start_points.push_back(jv);
+      cart_id = c_iter->first;
+      break;
     }
   }
+
+  // Test for error case
+  if (cart_id.is_nil())
+  {
+    ROS_ERROR("Could not locate TrajectoryPt with nil previous point. Graph may be cyclic.");
+    return false;
+  }
+
+  // Iterate through the JointSolutions for the last point
+  const std::list<descartes_core::TrajectoryPt::ID>& ids = cartesian_point_link_->at(cart_id).joints_;
+
+  for (const auto& id : ids)
+  {
+    JointGraph::vertex_descriptor v = joint_vertex_map.at(id); 
+    start_points.push_back(v);
+  }
+
   return !start_points.empty();
 }
 
 bool PlanningGraph::findEndVertices(std::list<JointGraph::vertex_descriptor> &end_points)
 {
-  std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
-  for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
-  {
-    JointGraph::vertex_descriptor jv = *vert_iter;
+  // Create local id->vertex map  
+  std::map<TrajectoryPt::ID, JointGraph::vertex_descriptor> joint_vertex_map;
+  int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
 
-    std::pair<OutEdgeIterator, OutEdgeIterator> ei = boost::out_edges(jv, dg_);
-    if (ei.first == ei.second)
+  // Find the TrajectoryPt ID of the last point specified by the user
+  TrajectoryPt::ID cart_id = generate_nil();
+
+  for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
+      c_iter != cartesian_point_link_->end(); c_iter++)
+  {
+    if(c_iter->second.links_.id_next.is_nil())
     {
-      ROS_DEBUG_STREAM("Graph end node: " << jv);
-      end_points.push_back(jv);
+      cart_id = c_iter->first;
+      break;
     }
   }
+
+  // Test for error case
+  if (cart_id.is_nil())
+  {
+    ROS_ERROR("Could not locate TrajectoryPt with nil next point. Graph may be cyclic.");
+    return false;
+  }
+
+  // Iterate through the JointSolutions for the last point
+  const std::list<descartes_core::TrajectoryPt::ID>& ids = cartesian_point_link_->at(cart_id).joints_;
+
+  for (const auto& id : ids)
+  {
+    JointGraph::vertex_descriptor v = joint_vertex_map.at(id); 
+    end_points.push_back(v);
+  }
+
   return !end_points.empty();
 }
+
 
 bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &path)
 {
@@ -618,20 +660,20 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
 
   for (std::list<JointGraph::vertex_descriptor>::iterator start = start_points.begin(); start != start_points.end(); start++)
   {
+    // initialize vectors to be used by dijkstra
+    std::vector<JointGraph::vertex_descriptor> predecessors(num_vert);
+    std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
+
+    dijkstra_shortest_paths(
+        dg_,
+        *start,
+        weight_map(get(&JointEdge::transition_cost, dg_)).distance_map(
+          boost::make_iterator_property_map(weights.begin(), get(boost::vertex_index, dg_))).predecessor_map(
+          &predecessors[0]));
+
     for (std::list<JointGraph::vertex_descriptor>::iterator end = end_points.begin(); end != end_points.end(); end++)
     {
       //ROS_INFO("Checking path: S[%d] -> E[%d]", *start, *end);
-      // initialize vectors to be used by dijkstra
-      std::vector<JointGraph::vertex_descriptor> predecessors(num_vert);
-      std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
-
-      dijkstra_shortest_paths(
-          dg_,
-          *start,
-          weight_map(get(&JointEdge::transition_cost, dg_)).distance_map(
-              boost::make_iterator_property_map(weights.begin(), get(boost::vertex_index, dg_))).predecessor_map(
-              &predecessors[0]));
-
       // actual weight(cost) from start_id to end_id
       double weight = weights[*end];
 
@@ -656,7 +698,7 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
           ss << " -> " << current;
           path.push_front(joint_solutions_map_[vertex_index_map[current]]);
         }
-        ROS_DEBUG_STREAM(ss.str());
+        ROS_INFO("With %lu - new best score: %f", path.size(), weight);
       }
     }
   }
@@ -857,6 +899,8 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
     return false;
   }
 
+  bool has_valid_transition = false;
+
   // calculate edges for previous vertices to this set of vertices
   for (std::list<TrajectoryPt::ID>::const_iterator previous_joint_iter = start_joints.begin();
       previous_joint_iter != start_joints.end(); previous_joint_iter++)
@@ -870,7 +914,17 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
 
       transition_cost = linearWeight(start_joint, end_joint);
 
-      ROS_DEBUG_STREAM("CALC EDGE WEIGHT: " << *previous_joint_iter << " -> " << *next_joint_iter << " = " << transition_cost);
+      if (transition_cost >= MAX_EXCEEDED_PENALTY)
+      {
+        continue;
+      }
+
+      has_valid_transition = true;
+
+      ROS_DEBUG("CALC EDGE WEIGHT: %s -> %s = %f",
+               boost::uuids::to_string(*previous_joint_iter).c_str(),
+               boost::uuids::to_string(*next_joint_iter).c_str(),
+               transition_cost);
       JointEdge edge;
       edge.joint_start = *previous_joint_iter;
       edge.joint_end = *next_joint_iter;
@@ -880,7 +934,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
     }
   }
 
-  return edge_results.size() > 0;
+  return has_valid_transition;
 }
 
 bool PlanningGraph::populateGraphVertices()
