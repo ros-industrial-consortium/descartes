@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_trajectory)
-add_definitions(-std=gnu++0x)
+
 find_package(catkin REQUIRED COMPONENTS
   console_bridge
   descartes_core
