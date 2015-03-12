@@ -18,8 +18,8 @@
 /*
  * trajectory_pt_transition.h
  *
- *  Created on: Jun 5, 2014
- *      Author: Dan Solomon
+ *  Created on: March 7, 2015
+ *      Author: Jonathan Meyer
  */
 
 #ifndef TRAJECTORY_TIMING_CONSTRAINT_H
@@ -28,20 +28,48 @@
 namespace descartes_core
 {
   /**
-   * Timing constraints 
+   * @brief A window of time for this point to be achieved relative to a previous point or 
+   *        the starting position.
+   *
+   * This struct defines a lower_ and upper_ bound for the desired time. If the upper bound
+   * is zero or negative, it is considered unspecified and the behavior of your planner
+   * or filter is considered undefined.
+   *
+   * All time-value units are in seconds.
    */
   struct TimingConstraint
   {
+    /**
+     * @brief The default constructor creates an unspecified point
+     */
     TimingConstraint()
       : lower_(0.0)
       , upper_(0.0)
     {}
 
+    /**
+     * @brief Constructs a timing constraint with a nominal time value (window width of zero)
+     * @param  nominal The desired time in seconds to achieve this point from the previous
+     */
+    explicit TimingConstraint(double nominal)
+      : lower_(nominal)
+      , upper_(nominal)
+    {}
+
+    /**
+     * @brief Constructs a timing constraint using the provided time window
+     * @param lower The lower bound of the acceptable time window in seconds.
+     * @param upper The upper bound of the acceptable time window in seconds.
+     */
     TimingConstraint(double lower, double upper)
       : lower_(lower)
       , upper_(upper)
     {}
 
+    /**
+     * @brief Checks if the given timing constraint has been specified
+     * @return true if the point is specified
+     */
     bool isSpecified() const { return upper_ > 0.0; }
 
     double lower_, upper_;
