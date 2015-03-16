@@ -253,15 +253,15 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
         joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter, point->getTiming());
+      JointTrajectoryPt new_pt (*joint_pose_iter, point->getTiming());
       //traj_solutions->push_back(new_pt->getID());
-      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt->getID());
+      (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt.getID());
 
       // insert new vertices into graph
       JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
       dg_[v].id = new_pt.getID();
 
-      joint_solutions_map_[new_pt.getID()] = *new_pt;
+      joint_solutions_map_[new_pt.getID()] = new_pt;
     }
   }
 
@@ -813,10 +813,9 @@ bool PlanningGraph::calculateJointSolutions()
   {
     // TODO: copy this block to a function that can be used by add and modify
     /*************************/
-    std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
+    std::list<TrajectoryPt::ID> traj_solutions;
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.source_trajectory_.get()->getJointPoses(*robot_model_, joint_poses);
-
     TrajectoryPt::ID tempID = trajectory_iter->first;
     ROS_INFO_STREAM("CartID: " << tempID << " JointPoses count: " << joint_poses.size());
 
@@ -830,12 +829,12 @@ bool PlanningGraph::calculateJointSolutions()
           joint_pose_iter != joint_poses.end(); joint_pose_iter++)
       {
         //get UUID from JointTrajPt (convert from std::vector<double>)
-        JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter, trajectory_iter->second.source_trajectory_.get()->getTiming());
-        traj_solutions->push_back(new_pt->getID());
-        joint_solutions_map_[new_pt->getID()] = *new_pt;
+        JointTrajectoryPt new_pt (*joint_pose_iter, trajectory_iter->second.source_trajectory_.get()->getTiming());
+        traj_solutions.push_back(new_pt.getID());
+        joint_solutions_map_[new_pt.getID()] = new_pt;
       }
     }
-    trajectory_iter->second.joints_ = *traj_solutions;
+    trajectory_iter->second.joints_ = traj_solutions;
     /*************************/
   }
 

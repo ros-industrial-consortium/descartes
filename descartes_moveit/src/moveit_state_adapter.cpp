@@ -26,6 +26,35 @@
 
 const static int SAMPLE_ITERATIONS = 10;
 
+namespace
+{
+std::vector<double> getJointVelocityLimits(const moveit::core::RobotState& state,
+                                           const std::string& group_name)
+{
+  std::vector<double> result;
+
+  auto models = state.getJointModelGroup(group_name)->getActiveJointModels();
+  for (const moveit::core::JointModel* model : models)
+  {
+    const auto& bounds = model->getVariableBounds();
+    // Check to see if there is a single bounds constraint (more might indicate
+    // not revulate joint)
+    if (bounds.size() != 1)
+    {
+      ROS_ERROR_STREAM(__FUNCTION__ << " Unexpected joint bounds array size (did not equal 1)");
+      result.push_back(0.0);
+    }
+    else
+    {
+      result.push_back(bounds[0].max_velocity_);
+    }
+  }
+
+  return result;
+}
+
+} // end anon namespace
+
 namespace descartes_moveit
 {
 
