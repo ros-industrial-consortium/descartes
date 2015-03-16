@@ -107,7 +107,7 @@ bool SparsePlanner::setConfig(const descartes_core::PlannerConfig& config)
   return true;
 }
 
-void SparsePlanner::getConfig(descartes_core::PlannerConfig& config)
+void SparsePlanner::getConfig(descartes_core::PlannerConfig& config) const
 {
   config = config_;
 }
@@ -143,9 +143,11 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
     ROS_INFO("Sparse planner succeeded with %i planned point and %i interpolated points in %f seconds",planned_count,interp_count,
              (ros::Time::now() - start_time).toSec());
+    error_code_ == descartes_core::PlannerError::OK;
   }
   else
   {
+    error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
     return false;
   }
 
@@ -514,11 +516,10 @@ bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, J
   return true;
 }
 
-bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path)
+bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
 {
   if(cart_points_.empty() || joint_points_map_.empty())
   {
-    error_code_ = descartes_core::PlannerError::EMPTY_PATH;
     return false;
   }
 
@@ -526,23 +527,25 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path)
   for(int i = 0; i < cart_points_.size();i++)
   {
     TrajectoryPtPtr p = cart_points_[i];
-    JointTrajectoryPt& j = joint_points_map_[p->getID()];
+    const JointTrajectoryPt& j = joint_points_map_.at(p->getID());
     path[i] = TrajectoryPtPtr(new JointTrajectoryPt(j));
   }
 
   return true;
 }
 
-int SparsePlanner::getErrorCode()
+int SparsePlanner::getErrorCode() const
 {
   return error_code_;
 }
 
-bool SparsePlanner::getErrorMessage(int error_code, std::string& msg)
+bool SparsePlanner::getErrorMessage(int error_code, std::string& msg) const
 {
-  if(error_map_.count(error_code)>0)
+  std::map<int,std::string>::const_iterator it = error_map_.find(error_code);
+
+  if(it != error_map_.cend())
   {
-    msg = error_map_[error_code];
+    msg = it->second;
   }
   else
   {
