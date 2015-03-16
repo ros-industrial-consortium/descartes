@@ -132,8 +132,15 @@ protected:
 
   int recalculateJointSolutionsVertexMap(std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
 
+  /**
+   * @brief A pair indicating the validity of the edge, and if valid, the cost associated
+   *        with that edge
+   */
+  typedef std::pair<bool, double> LinearWeightResult;
+
   /** @brief simple function for getting edge weights based on linear vector differences */
-  double linearWeight(const descartes_trajectory::JointTrajectoryPt& start, const descartes_trajectory::JointTrajectoryPt& end) const;
+  LinearWeightResult linearWeight(const descartes_trajectory::JointTrajectoryPt& start,
+                                  const descartes_trajectory::JointTrajectoryPt& end) const;
 
   // NOTE: both Cartesian Points and Joint Points/solutions extend a base descartes_core::TrajectoryPt type
   //       and include an accessor to both formats
