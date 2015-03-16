@@ -79,7 +79,7 @@ class PlanningGraph
 {
 public:
   // TODO: add constructor that takes RobotState as param
-  PlanningGraph(descartes_core::RobotModelConstPtr &model);
+  PlanningGraph(descartes_core::RobotModelConstPtr &model, unsigned nthreads = 1);
 
   virtual ~PlanningGraph();
 
@@ -129,6 +129,8 @@ protected:
   descartes_core::RobotModelConstPtr robot_model_;
 
   JointGraph dg_;
+
+  unsigned nthreads_;
 
   int recalculateJointSolutionsVertexMap(std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
 
