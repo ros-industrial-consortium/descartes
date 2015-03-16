@@ -77,7 +77,7 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   return;
 }
 
-bool MoveitStateAdapter::initialize(const std::string robot_description, const std::string& group_name,
+bool MoveitStateAdapter::initialize(const std::string& robot_description, const std::string& group_name,
                                     const std::string& world_frame,const std::string& tcp_frame)
 {
 
