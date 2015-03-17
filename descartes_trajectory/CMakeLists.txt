@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(descartes_trajectory)
 add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
-  console_bridge
+  cmake_modules
   descartes_core
   moveit_core
   roscpp
@@ -23,9 +23,9 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     moveit_core
+    descartes_core
   DEPENDS
     Boost
-    console_bridge
     Eigen
 )
 

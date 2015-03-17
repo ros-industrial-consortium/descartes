@@ -3,14 +3,13 @@ project(descartes_core)
 
 add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
-  console_bridge
   moveit_core
   roscpp
+  cmake_modules
 )
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
-
 
 catkin_package(
   INCLUDE_DIRS
@@ -20,7 +19,6 @@ catkin_package(
     moveit_core
   DEPENDS
     Boost
-    console_bridge
     Eigen
 )
 

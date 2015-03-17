@@ -11,15 +11,14 @@
   <build_depend>descartes_core</build_depend>
   <build_depend>descartes_trajectory</build_depend>
   <build_depend>boost</build_depend>
-  <build_depend>console_bridge</build_depend>
   <build_depend>moveit_core</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>pluginlib</build_depend>
+  <build_depend>cmake_modules</build_depend>
 
   <run_depend>descartes_core</run_depend>
   <run_depend>descartes_trajectory</run_depend>
   <run_depend>boost</run_depend>
-  <run_depend>console_bridge</run_depend>
   <run_depend>moveit_core</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>pluginlib</run_depend>

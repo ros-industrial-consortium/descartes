@@ -4,10 +4,10 @@ add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
   descartes_core
   descartes_trajectory
-  console_bridge
   moveit_core
   roscpp
   pluginlib
+  cmake_modules
 )
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
@@ -24,9 +24,10 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     moveit_core
+    descartes_core
+    descartes_trajectory
   DEPENDS
     Boost
-    console_bridge
     Eigen
 )
 
