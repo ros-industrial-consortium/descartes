@@ -77,7 +77,7 @@ TEST(CartTrajPt, getPoses)
   std::vector<std::vector<double> >joint_solutions;
 
   ROS_INFO_STREAM("Testing fuzzy pos point");
-  CartesianRobot robot(POS_TOL+2*EPSILON, ORIENT_TOL+2*EPSILON);
+  CartesianRobot robot(POS_TOL+2*EPSILON, M_PI*ORIENT_TOL+2*EPSILON);
   fuzzy_pos.getCartesianPoses(robot, solutions);
   EXPECT_EQ(solutions.size(), NUM_SAMPLED_POS);
   fuzzy_pos.getJointPoses(robot,joint_solutions);
