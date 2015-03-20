@@ -43,7 +43,6 @@ namespace descartes_trajectory_test
                      << ", orientation: " << orient_range_);
   }
 
-
   bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const
   {
@@ -68,8 +67,6 @@ namespace descartes_trajectory_test
     return rtn;
   }
 
-
-
   bool CartesianRobot::getAllIK(const Eigen::Affine3d &pose,
                                 std::vector<std::vector<double> > &joint_poses) const
   {
@@ -77,8 +74,6 @@ namespace descartes_trajectory_test
     joint_poses.resize(1);
     return getIK(pose, empty, joint_poses[0]);
   }
-
-
 
   bool CartesianRobot::getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const
   {
@@ -152,15 +147,6 @@ namespace descartes_trajectory_test
     return rtn;
   }
 
-  bool CartesianRobot::setOptions(const descartes_core::RobotModelOptions& options)
-  {
-    return true;
-  }
-
-  descartes_core::RobotModelOptions CartesianRobot::getOptions()
-  {
-    return descartes_core::RobotModelOptions();
-  }
 
 } //descartes_trajectory_test
 

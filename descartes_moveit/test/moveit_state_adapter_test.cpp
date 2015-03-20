@@ -49,27 +49,9 @@ RobotModelPtr CreateRobotModel<descartes_moveit::MoveitStateAdapter>()
   EXPECT_TRUE(descartes_model_->initialize("robot_description","manipulator","base_link","tool0"));
   ROS_INFO_STREAM("Descartes robot model constructed");
 
-  // getting default options
-  descartes_core::RobotModelOptions options = descartes_model_->getOptions();
-
-  ROS_INFO_STREAM("Default options");
-  for(auto opt : options)
-  {
-    ROS_INFO_STREAM("option name: "<<opt.first<<", value: "<<opt.second);
-  }
-
-  // setting options
-  options["sampled_iterations"] = std::to_string(20);
-  options["check_collisions"] = std::to_string(false);
-  EXPECT_TRUE(descartes_model_->setOptions(options));
-
-  ROS_INFO_STREAM("Modified options");
-  descartes_core::RobotModelOptions mod_options = descartes_model_->getOptions();
-  for(auto opt : options)
-  {
-    EXPECT_TRUE(mod_options[opt.first] == opt.second);
-    ROS_INFO_STREAM("option name: "<<opt.first<<", value: "<<opt.second);
-  }
+  descartes_model_->setCheckCollisions(true);
+  EXPECT_TRUE(descartes_model_->getCheckCollisions());
+  ROS_INFO_STREAM("Descartes robot enabled collision checks");
 
   return descartes_model_;
 }

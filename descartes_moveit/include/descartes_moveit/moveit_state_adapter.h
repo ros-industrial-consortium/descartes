@@ -41,6 +41,17 @@ public:
 
   MoveitStateAdapter();
 
+  /**
+   * Constructor for Moveit state adapters (implements Descartes robot model interface)
+   * @param robot_state robot state object utilized for kinematic/dynamic state checking
+   * @param group_name planning group name
+   * @param tool_frame tool frame name
+   * @param world_frame work object frame name
+   */
+  MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
+                    const std::string & tool_frame, const std::string & world_frame,
+                     size_t sample_iterations = 10);
+
   virtual ~MoveitStateAdapter()
   {
   }
@@ -61,16 +72,6 @@ public:
 
   virtual int getDOF() const;
 
-  /* @brief parses the RobotModelOptions map in order to set the options for the robot model
-   * @param options: a map containing the following entries:
-   *    - key: check_collision, type: bool
-   *    - key: sampled_discretization, type: double
-   */
-  virtual bool setOptions(const descartes_core::RobotModelOptions& options);
-
-  virtual descartes_core::RobotModelOptions getOptions();
-
-
 protected:
 
   /**
@@ -85,6 +86,14 @@ protected:
    * @brief Pointer to moveit robot state (mutable object state is reset with
    * each function call
    */
+
+  /**
+   * TODO: Checks for collisions at this joint pose. The setCollisionCheck(true) must have been
+   * called previously in order to enable collision checks, otherwise it will return false.
+   * @param joint_pose the joint values at which check for collisions will be made
+   */
+  bool isInCollision(const std::vector<double> &joint_pose) const;
+
   mutable moveit::core::RobotStatePtr robot_state_;
   planning_scene::PlanningScenePtr planning_scene_;
   robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
@@ -114,9 +123,6 @@ protected:
    * @brief Joint solution sample iterations for returning "all" joints
    */
   size_t sample_iterations_;
-  bool check_collisions_;
-
-  descartes_core::RobotModelOptions options_;
 
 };
 
