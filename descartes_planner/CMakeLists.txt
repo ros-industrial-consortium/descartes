@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_planner)
-add_definitions(-std=gnu++0x)
+
 find_package(catkin REQUIRED COMPONENTS
   descartes_core
   descartes_trajectory
@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   pluginlib
 )
+
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 

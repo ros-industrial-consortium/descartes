@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_core)
 
-add_definitions(-std=gnu++0x)
 find_package(catkin REQUIRED COMPONENTS
   console_bridge
   moveit_core
@@ -22,6 +21,8 @@ catkin_package(
     Boost
     console_bridge
     Eigen
+  CFG_EXTRAS
+    descartes_core-extras.cmake
 )
 
 ###########
