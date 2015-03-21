@@ -2,14 +2,13 @@ cmake_minimum_required(VERSION 2.8.3)
 project(descartes_core)
 
 find_package(catkin REQUIRED COMPONENTS
-  console_bridge
   moveit_core
   roscpp
+  cmake_modules
 )
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
-
 
 catkin_package(
   INCLUDE_DIRS
@@ -19,7 +18,6 @@ catkin_package(
     moveit_core
   DEPENDS
     Boost
-    console_bridge
     Eigen
   CFG_EXTRAS
     descartes_core-extras.cmake

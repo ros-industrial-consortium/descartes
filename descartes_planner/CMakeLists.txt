@@ -4,10 +4,10 @@ project(descartes_planner)
 find_package(catkin REQUIRED COMPONENTS
   descartes_core
   descartes_trajectory
-  console_bridge
   moveit_core
   roscpp
   pluginlib
+  cmake_modules
 )
 
 find_package(Boost REQUIRED)
@@ -25,9 +25,10 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     moveit_core
+    descartes_core
+    descartes_trajectory
   DEPENDS
     Boost
-    console_bridge
     Eigen
 )
 
