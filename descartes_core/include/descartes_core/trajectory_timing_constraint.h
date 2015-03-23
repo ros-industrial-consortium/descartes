@@ -49,7 +49,7 @@ namespace descartes_core
 
     /**
      * @brief Constructs a timing constraint with a nominal time value (window width of zero)
-     * @param  nominal The desired time in seconds to achieve this point from the previous
+     * @param nominal The desired time in seconds to achieve this point from the previous
      */
     explicit TimingConstraint(double nominal)
       : lower_(nominal)

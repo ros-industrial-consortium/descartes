@@ -28,8 +28,9 @@ const static int SAMPLE_ITERATIONS = 10;
 
 namespace
 {
-std::vector<double> getJointVelocityLimits(const moveit::core::RobotState& state,
-                                           const std::string& group_name)
+bool getJointVelocityLimits(const moveit::core::RobotState& state,
+                            const std::string& group_name,
+                            std::vector<double>& output)
 {
   std::vector<double> result;
 
@@ -38,11 +39,11 @@ std::vector<double> getJointVelocityLimits(const moveit::core::RobotState& state
   {
     const auto& bounds = model->getVariableBounds();
     // Check to see if there is a single bounds constraint (more might indicate
-    // not revulate joint)
+    // not revolute joint)
     if (bounds.size() != 1)
     {
       ROS_ERROR_STREAM(__FUNCTION__ << " Unexpected joint bounds array size (did not equal 1)");
-      result.push_back(0.0);
+      return false;
     }
     else
     {
@@ -50,7 +51,8 @@ std::vector<double> getJointVelocityLimits(const moveit::core::RobotState& state
     }
   }
 
-  return result;
+  output = result;
+  return true;
 }
 
 } // end anon namespace
@@ -76,6 +78,12 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
   {
+    // Find the velocity limits
+    if (!getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
+    {
+      logWarn("Could not determine velocity limits of RobotModel from MoveIt");
+    }
+
     joint_model_group_ptr->printGroupInfo();
 
     const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
@@ -121,6 +129,12 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   {
     seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
     ROS_INFO_STREAM("Generated "<<seed_states_.size()<< " random seeds");
+  }
+
+  // Find the velocity limits
+  if (!getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
+  {
+    logWarn("Could not determine velocity limits of RobotModel from MoveIt");
   }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
