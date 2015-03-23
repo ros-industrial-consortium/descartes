@@ -49,8 +49,8 @@ public:
 
   virtual int getDOF() const;
 
-  virtual bool initialize(const std::string robot_description, const std::string& group_name,
-                                         const std::string& world_frame,const std::string& tcp_frame);
+  virtual bool initialize(const std::string& robot_description, const std::string& group_name,
+                          const std::string& world_frame,const std::string& tcp_frame);
   double pos_range_;
   double orient_range_;
   int dof_;

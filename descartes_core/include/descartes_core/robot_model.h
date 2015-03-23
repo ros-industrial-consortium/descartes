@@ -99,7 +99,7 @@ public:
    * @param tcp_frame tool link attached to the robot. When it's not in 'group_name' then it should have
    * a fixed location relative to the last link in 'group_name'.
    */
-  virtual bool initialize(const std::string robot_description, const std::string& group_name,
+  virtual bool initialize(const std::string& robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame) = 0;
 
 
