@@ -102,9 +102,31 @@ public:
   virtual bool initialize(const std::string robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame) = 0;
 
+
+  /**
+   * @brief Enables collision checks
+   * @param check_collisions enables or disables collisions
+   */
+  virtual void setCheckCollisions(bool check_collisions)
+  {
+    check_collisions_ = check_collisions;
+  }
+
+  /**
+   * @brief Indicates if collision checks are enabled
+   * @return Bool
+   */
+  virtual bool getCheckCollisions()
+  {
+    return check_collisions_;
+  }
+
+
 protected:
 
-  RobotModel(){}
+  RobotModel(): check_collisions_(false){}
+
+  bool check_collisions_;
 
 };
 

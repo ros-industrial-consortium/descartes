@@ -24,6 +24,7 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include "moveit/robot_model/robot_model.h"
 #include "moveit/kinematics_base/kinematics_base.h"
+#include <moveit/planning_scene/planning_scene.h>
 #include <string>
 
 namespace descartes_moveit
@@ -85,7 +86,16 @@ protected:
    * @brief Pointer to moveit robot state (mutable object state is reset with
    * each function call
    */
+
+  /**
+   * TODO: Checks for collisions at this joint pose. The setCollisionCheck(true) must have been
+   * called previously in order to enable collision checks, otherwise it will return false.
+   * @param joint_pose the joint values at which check for collisions will be made
+   */
+  bool isInCollision(const std::vector<double> &joint_pose) const;
+
   mutable moveit::core::RobotStatePtr robot_state_;
+  planning_scene::PlanningScenePtr planning_scene_;
   robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
   robot_model::RobotModelConstPtr robot_model_ptr_;
 

@@ -23,15 +23,13 @@
 #include "descartes_core/pretty_print.hpp"
 #include <sstream>
 
-
-#define NOT_IMPLEMENTED_ERR logError("%s not implemented", __PRETTY_FUNCTION__)
-
 const static int SAMPLE_ITERATIONS = 10;
 
 namespace descartes_moveit
 {
 
-MoveitStateAdapter::MoveitStateAdapter()
+MoveitStateAdapter::MoveitStateAdapter():
+    sample_iterations_(SAMPLE_ITERATIONS)
 {
 
 }
@@ -39,11 +37,13 @@ MoveitStateAdapter::MoveitStateAdapter()
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
                                      const std::string & tool_frame, const std::string & world_frame,
                                        const size_t sample_iterations) :
-    robot_state_(new moveit::core::RobotState(robot_state)), group_name_(group_name),
-  tool_frame_(tool_frame), world_frame_(world_frame), sample_iterations_(sample_iterations),
+  robot_state_(new moveit::core::RobotState(robot_state)),
+  group_name_(group_name),
+  tool_frame_(tool_frame),
+  world_frame_(world_frame),
+  sample_iterations_(sample_iterations),
   world_to_root_(Eigen::Affine3d::Identity())
 {
-
   moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
@@ -84,10 +84,10 @@ bool MoveitStateAdapter::initialize(const std::string robot_description, const s
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
   robot_model_ptr_ = robot_model_loader_->getModel();
   robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
+  planning_scene_.reset(new planning_scene::PlanningScene(robot_model_loader_->getModel()));
   group_name_ = group_name;
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
-  sample_iterations_ = SAMPLE_ITERATIONS;
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
@@ -140,12 +140,20 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
                               tool_frame_))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
-    rtn = true;
+    if(isInCollision(joint_pose))
+    {
+      ROS_ERROR_STREAM("Robot is in collision for this pose of the tool '"<<tool_frame_<<"'");
+    }
+    else
+    {
+      rtn = true;
+    }
   }
   else
   {
     rtn = false;
   }
+
   return rtn;
 }
 
@@ -212,6 +220,17 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
   }
 }
 
+bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
+{
+  bool in_collision = false;
+  if(check_collisions_)
+  {
+    robot_state_->setJointGroupPositions(group_name_, joint_pose);
+    in_collision = planning_scene_->isStateColliding(*robot_state_,group_name_);
+  }
+  return in_collision;
+}
+
 bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const
 {
   bool rtn = false;
@@ -220,6 +239,7 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
   {
     if (robot_state_->knowsFrameTransform(tool_frame_))
     {
+
       pose = world_to_root_.frame*robot_state_->getFrameTransform(tool_frame_);
       rtn = true;
     }
@@ -263,6 +283,13 @@ bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
       msg << "Joint pose: " << joint_pose << ", outside joint boundaries";
       logDebug(msg.str().c_str());
     }
+
+    if(isInCollision(joint_pose))
+    {
+      ROS_INFO_STREAM("Robot is in collision at this joint pose");
+      rtn = false;
+    }
+
   }
   else
   {
