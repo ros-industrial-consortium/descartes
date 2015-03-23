@@ -581,6 +581,8 @@ bool PlanningGraph::findStartVertices(std::list<JointGraph::vertex_descriptor> &
   // Test for error case
   if (cart_id.is_nil())
   {
+    // Users can insert points with any given previous and next point using the addTrajectory
+    // function.
     ROS_ERROR("Could not locate TrajectoryPt with nil previous point. Graph may be cyclic.");
     return false;
   }
@@ -619,6 +621,8 @@ bool PlanningGraph::findEndVertices(std::list<JointGraph::vertex_descriptor> &en
   // Test for error case
   if (cart_id.is_nil())
   {
+    // Users can insert points with any given previous and next point using the addTrajectory
+    // function.
     ROS_ERROR("Could not locate TrajectoryPt with nil next point. Graph may be cyclic.");
     return false;
   }
