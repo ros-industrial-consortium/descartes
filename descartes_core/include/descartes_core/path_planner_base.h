@@ -51,7 +51,7 @@ public:
    * @param model robot model implementation for which to plan a path
    * @param config A map containing the parameter/value pairs.
    */
-  virtual bool initialize(RobotModelConstPtr &model) = 0;
+  virtual bool initialize(RobotModelConstPtr model) = 0;
 
   /**
    * @brief Configure the planner's parameters. Should return 'true' when all the entries were properly parsed.

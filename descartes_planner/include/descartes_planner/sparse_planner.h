@@ -38,11 +38,11 @@ class SparsePlanner: public descartes_core::PathPlannerBase
 public:
   typedef std::vector<std::tuple<int,descartes_core::TrajectoryPtPtr,descartes_trajectory::JointTrajectoryPt> > SolutionArray;
 public:
-  SparsePlanner(descartes_core::RobotModelConstPtr &model,double sampling = 0.1f);
+  SparsePlanner(descartes_core::RobotModelConstPtr model,double sampling = 0.1f);
   SparsePlanner();
   virtual ~SparsePlanner();
 
-  virtual bool initialize(descartes_core::RobotModelConstPtr &model);
+  virtual bool initialize(descartes_core::RobotModelConstPtr model);
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
