@@ -36,7 +36,7 @@ const double MAX_JOINT_CHANGE = M_PI_4;
 const double DEFAULT_SAMPLING = 0.1f;
 const std::string SAMPLING_CONFIG = "sampling";
 
-SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
+SparsePlanner::SparsePlanner(RobotModelConstPtr model,double sampling):
     sampling_(sampling),
     error_code_(descartes_core::PlannerError::UNINITIALIZED)
 {
@@ -49,7 +49,7 @@ SparsePlanner::SparsePlanner(RobotModelConstPtr &model,double sampling):
                  {PlannerError::INCOMPLETE_PATH,"Input trajectory and output path point cound differ"}
                };
 
-  initialize(model);
+  initialize(std::move(model));
   config_ = {{SAMPLING_CONFIG,std::to_string(sampling)}};
 }
 
@@ -69,9 +69,9 @@ SparsePlanner::SparsePlanner():
   config_ = {{SAMPLING_CONFIG,std::to_string(DEFAULT_SAMPLING)}};
 }
 
-bool SparsePlanner::initialize(RobotModelConstPtr &model)
+bool SparsePlanner::initialize(RobotModelConstPtr model)
 {
-  planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(new descartes_planner::PlanningGraph(model));
+  planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(new descartes_planner::PlanningGraph(std::move(model)));
   error_code_ = PlannerError::EMPTY_PATH;
   return true;
 }

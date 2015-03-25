@@ -79,7 +79,7 @@ class PlanningGraph
 {
 public:
   // TODO: add constructor that takes RobotState as param
-  PlanningGraph(descartes_core::RobotModelConstPtr &model);
+  PlanningGraph(descartes_core::RobotModelConstPtr model);
 
   virtual ~PlanningGraph();
 

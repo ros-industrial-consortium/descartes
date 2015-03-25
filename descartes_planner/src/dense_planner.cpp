@@ -31,10 +31,10 @@ DensePlanner::~DensePlanner()
 
 }
 
-bool DensePlanner::initialize(descartes_core::RobotModelConstPtr &model)
+bool DensePlanner::initialize(descartes_core::RobotModelConstPtr model)
 {
   planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(
-      new descartes_planner::PlanningGraph(model));
+      new descartes_planner::PlanningGraph(std::move(model)));
   error_code_ = descartes_core::PlannerErrors::EMPTY_PATH;
   return true;
 }
