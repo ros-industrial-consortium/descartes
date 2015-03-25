@@ -20,6 +20,7 @@
 #define CARTESIAN_INTERPOLATOR_H_
 
 #include <descartes_trajectory/cart_trajectory_pt.h>
+#include <limits>
 #include <tf/transform_datatypes.h>
 
 namespace descartes_trajectory
@@ -46,16 +47,23 @@ class BlendSegment: public TrajectorySegment
 {
 public:
 
-  BlendSegment(const descartes_trajectory::CartTrajectoryPt& start,
-               const descartes_trajectory::CartTrajectoryPt& end,
-               double duration,
+  BlendSegment(const Eigen::Affine3d& start_pose,
+               const Eigen::Affine3d& end_pose,
+               const Eigen::Vector3d& start_vel,
+               const Eigen::Vector3d& end_vel,
                double time_step);
   virtual ~BlendSegment();
   virtual bool interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points);
 
 protected:
 
-
+  Eigen::Affine3d start_pose_;
+  Eigen::Affine3d end_pose_;
+  Eigen::Vector3d start_vel_;
+  Eigen::Vector3d end_vel_;
+  Eigen::Vector3d accel_;
+  double duration_;
+  double time_step_;
 
 };
 
@@ -65,8 +73,9 @@ public:
 
   LinearSegment(const Eigen::Affine3d& start_pose,
                 const Eigen::Affine3d& end_pose,
-                double total_time,
-                double interpolation_step);
+                double duration,
+                double time_step,
+                const std::pair<double,double>& interval = std::make_pair(0,std::numeric_limits<double>::max()));
 
   virtual ~LinearSegment();
   virtual bool interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points);
@@ -75,8 +84,9 @@ protected:
 
   Eigen::Affine3d start_pose_;
   Eigen::Affine3d end_pose_;
-  double total_time_;
-  double interpolation_step_;
+  double duration_;
+  double time_step_;
+  std::pair<double,double> interval_;
 
 };
 

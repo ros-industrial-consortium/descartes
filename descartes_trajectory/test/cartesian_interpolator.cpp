@@ -25,10 +25,10 @@ using namespace descartes_core;
 using namespace descartes_trajectory;
 using namespace descartes_trajectory_test;
 
-const static double TOOL_SPEED = 0.01f; // m/s
+const static double TOOL_SPEED = 2.0f; // m/s
 const static double ZONE_RADIUS = 0.01f; // meters
-const static double INTERPOLATION_INTERVAL = 0.1f; // secs
-const static double POINT_DISTANCE = 0.1f;
+const static double INTERPOLATION_INTERVAL = 2.0f; // secs
+const static double POINT_DISTANCE = 20.0f;
 const static int NUM_POINTS = 4;
 const double POS_RANGE = 2.0;
 const double ORIENT_RANGE = 1.0;
@@ -69,7 +69,7 @@ TEST(CartesianInterpolator,interpolate)
   EXPECT_TRUE(c.interpolate(coarse_traj,interpolated_traj));
 
   // expected point count
-  EXPECT_TRUE(interpolated_traj.size() == expected_points);
+  EXPECT_EQ(interpolated_traj.size() ,expected_points);
 }
 
 
