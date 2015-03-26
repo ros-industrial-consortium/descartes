@@ -20,75 +20,12 @@
 #define CARTESIAN_INTERPOLATOR_H_
 
 #include <descartes_trajectory/cart_trajectory_pt.h>
+#include <descartes_trajectory/trajectory_segment.h>
 #include <limits>
 #include <tf/transform_datatypes.h>
 
 namespace descartes_trajectory
 {
-
-class TrajectorySegment
-{
-public:
-
-  virtual ~TrajectorySegment()
-  {
-
-  }
-
-  virtual bool interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points) = 0;
-
-protected:
-
-  TrajectorySegment(){}
-
-};
-
-class BlendSegment: public TrajectorySegment
-{
-public:
-
-  BlendSegment(const Eigen::Affine3d& start_pose,
-               const Eigen::Affine3d& end_pose,
-               const Eigen::Vector3d& start_vel,
-               const Eigen::Vector3d& end_vel,
-               double time_step);
-  virtual ~BlendSegment();
-  virtual bool interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points);
-
-protected:
-
-  Eigen::Affine3d start_pose_;
-  Eigen::Affine3d end_pose_;
-  Eigen::Vector3d start_vel_;
-  Eigen::Vector3d end_vel_;
-  Eigen::Vector3d accel_;
-  double duration_;
-  double time_step_;
-
-};
-
-class LinearSegment: public TrajectorySegment
-{
-public:
-
-  LinearSegment(const Eigen::Affine3d& start_pose,
-                const Eigen::Affine3d& end_pose,
-                double duration,
-                double time_step,
-                const std::pair<double,double>& interval = std::make_pair(0,std::numeric_limits<double>::max()));
-
-  virtual ~LinearSegment();
-  virtual bool interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points);
-
-protected:
-
-  Eigen::Affine3d start_pose_;
-  Eigen::Affine3d end_pose_;
-  double duration_;
-  double time_step_;
-  std::pair<double,double> interval_;
-
-};
 
 class CartesianInterpolator
 {
@@ -98,19 +35,19 @@ public:
 
   /*
    * @brief Initializes the interpolator
-   * @param robot_model A robot model implementation
-   * @param tool_speed magnitude of the speed vector followed by the robot tool
-   * @param interpolation_interval time elapsed between each point in the interpolated trajectory
-   * @param zone_radius radius around each point in the coarse trajectory where parabolic
-   *        blending starts (not used at the moment)
+   * @param robot_model   A robot model implementation
+   * @param tool_speed    Magnitude of the speed vector followed by the robot tool
+   * @param time_step     Time elapsed between each point in the interpolated trajectory
+   * @param zone_radius   Radius around each point in the coarse trajectory where parabolic
+   *                      blending starts (not used at the moment)
    */
-  bool initialize(descartes_core::RobotModelConstPtr robot_model, double tool_speed,double interpolation_interval,
+  bool initialize(descartes_core::RobotModelConstPtr robot_model, double tool_speed,double time_step,
                   double zone_radius);
 
   /*
    * @brief Interpolates a coarse trajectory in cartesian space
-   * @param coarse_traj the coarse trajectory that is to be interpolated
-   * @param interpolated_traj the interpolated trajectory
+   * @param coarse_traj       The coarse trajectory that is to be interpolated
+   * @param interpolated_traj The interpolated trajectory
    */
   bool interpolate(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                    std::vector<descartes_core::TrajectoryPtPtr>& interpolated_traj);
@@ -123,7 +60,7 @@ protected:
 
   descartes_core::RobotModelConstPtr robot_model_;
   double tool_speed_; // magnitude of the tool's linear displacement
-  double interpolation_interval_ ; // time step between interpolated points
+  double time_step_ ; // time step between interpolated points
   double zone_radius_; // radius around each point where parabolic blending starts
 };
 

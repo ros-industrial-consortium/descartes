@@ -17,221 +17,18 @@
  */
 
 #include <descartes_trajectory/cartesian_interpolator.h>
-#include <tf_conversions/tf_eigen.h>
 #include <boost/uuid/uuid_io.hpp>
-#include <math.h>
-
 
 #define NOT_IMPLEMENTED_ERR(ret) ROS_ERROR("%s not implemented", __PRETTY_FUNCTION__); return ret;
-const static unsigned int MIN_NUM_STEPS = 1;
-const double ZERO = 0.0f;
-const double EPSILON = 1.0e-10;
 
 using namespace descartes_core;
 
 namespace descartes_trajectory
 {
-LinearSegment::LinearSegment(const Eigen::Affine3d& start_pose,
-                             const Eigen::Affine3d& end_pose,
-                             double duration,
-                             double time_step,
-                             const std::pair<double,double>& interval):
-                             start_pose_(start_pose),
-                             end_pose_(end_pose),
-                             duration_(duration),
-                             time_step_(time_step),
-                             interval_(interval)
-{
-
-}
-
-LinearSegment::~LinearSegment()
-{
-
-}
-
-bool LinearSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points)
-{
-
-  if( duration_<= ZERO )
-  {
-    ROS_ERROR_STREAM("The values for 'duration'  must be > 0, a negative number was passed");
-    return false;
-  }
-
-  if(time_step_ <= ZERO )
-  {
-    ROS_ERROR_STREAM("The values for 'time_step' must be > 0, a negative number was passed");
-    return false;
-  }
-
-  if(duration_ <= time_step_)
-  {
-    ROS_ERROR("The segment duration = %f can not be less than the interpolation time step = %f",duration_,time_step_);
-    return false;
-  }
-
-  if(interval_.first < 0)
-  {
-    ROS_ERROR_STREAM("Interval must start at a value >= 0 , an incorrect value of "<<interval_.first<<" was passed");
-    return false;
-  }
-
-  if((interval_.second - interval_.first) < time_step_)
-  {
-    ROS_ERROR_STREAM("The difference between the start and end of the interval is smaller than the time step, ("<<
-                     interval_.second<<" - "<<interval_.first<<") < "<<time_step_);
-    return false;
-  }
-
-
-  // conversions to tf
-  tf::Transform end_pose_tf, start_pose_tf;
-  tf::poseEigenToTF(start_pose_,start_pose_tf);
-  tf::poseEigenToTF(end_pose_,end_pose_tf);
-
-  tf::Vector3 vel = (end_pose_tf.getOrigin() - start_pose_tf.getOrigin())/duration_;
-  std::size_t num_steps = std::floor(duration_/time_step_ + 1)-1;
-  ROS_DEBUG_STREAM("LINEAR SEGMENT DURATION: "<<duration_ <<", TIME_STEP: "<<time_step_ <<", NUM_STEPS: "<<num_steps<<
-                   " INTERVAL: ["<<interval_.first<<", "<<interval_.second<<"]");
-
-  if(num_steps <= MIN_NUM_STEPS)
-  {
-    ROS_ERROR_STREAM("Interpolation steps value of "<<num_steps<<" is less that the minimum allowed "<<MIN_NUM_STEPS);
-    return false;
-  }
-
-  segment_points.clear();
-  segment_points.reserve(num_steps+1);
-
-  tf::Transform p;
-  Eigen::Affine3d eigen_pose;
-  double dt = 0;
-  for(std::size_t i = 0; i <= num_steps; i++)
-  {
-
-    dt = i*time_step_;
-
-    if(dt < interval_.first)
-    {
-      if((interval_.first -     dt) < time_step_)
-      {
-        dt = interval_.first;
-      }
-      else
-      {
-        continue;
-      }
-    }
-
-    if(dt > interval_.second)
-    {
-      if( (dt - interval_.second) < time_step_)
-      {
-        dt = interval_.second;
-      }
-      else
-      {
-        break;
-      }
-    }
-
-    p.setOrigin(start_pose_tf.getOrigin() +  vel*dt);
-    p.setRotation(start_pose_tf.getRotation().slerp(end_pose_tf.getRotation(),dt/duration_));
-    tf::poseTFToEigen(p,eigen_pose);
-    segment_points.push_back(TrajectoryPtPtr(new CartTrajectoryPt(eigen_pose)));
-  }
-
-  ROS_DEBUG_STREAM("Segment contains "<<segment_points.size()<<" interpolated points for "<<num_steps<<" time steps");
-
-  return true;
-}
-
-BlendSegment::BlendSegment(const Eigen::Affine3d& start_pose,
-                           const Eigen::Affine3d& end_pose,
-               const Eigen::Vector3d& start_vel,
-               const Eigen::Vector3d& end_vel,
-               double time_step):
-                   start_pose_(start_pose),
-                   end_pose_(end_pose),
-                   start_vel_(start_vel),
-                   end_vel_(end_vel),
-                   time_step_(time_step)
-{
-  Eigen::Vector3d start_pos = start_pose_.translation();
-  Eigen::Vector3d end_pos = end_pose_.translation();
-
-  // determining segment duration
-  duration_ = 2*((end_pos - start_pos).norm())/((start_vel + end_vel).norm());
-
-  // determining linear acceleration vector
-  accel_ = (end_vel - start_vel)/duration_;
-}
-
-BlendSegment::~BlendSegment()
-{
-
-}
-
-bool BlendSegment::interpolate(std::vector<descartes_core::TrajectoryPtPtr>& segment_points)
-{
-  if( duration_<= ZERO )
-  {
-    ROS_ERROR_STREAM("The blend segment duration must be >= 0, it was computed to 2*(Pf - P0)/(Vf + V0): "<<duration_);
-    return false;
-  }
-
-  if(time_step_ <= ZERO )
-  {
-    ROS_ERROR_STREAM("The values for 'time_step' must be >= 0, a negative number was passed");
-    return false;
-  }
-
-  if(duration_ <= time_step_)
-  {
-    ROS_ERROR("The blend segment duration = %f can not be less than the interpolation time step = %f",duration_,time_step_);
-    return false;
-  }
-
-  // determining number of points
-  unsigned int num_steps = std::floor(duration_/time_step_ + 1 ) -1;
-  segment_points.clear();
-  segment_points.reserve(num_steps+1);
-  ROS_DEBUG_STREAM("BLEND SEGMENT DURATION: "<<duration_<<", TIME_STEP: "<<time_step_ <<", NUM_STEPS: "<<num_steps
-                   <<", ACCEL: ["<<accel_(0)<<", "<<accel_(1)<<", "<<accel_(2)<<"]");
-
-  tf::Transform p;
-  Eigen::Affine3d eigen_pose;
-  tf::Transform end_pose_tf, start_pose_tf;
-  tf::poseEigenToTF(start_pose_,start_pose_tf);
-  tf::poseEigenToTF(end_pose_,end_pose_tf);
-  Eigen::Vector3d vel;
-  Eigen::Vector3d pos, pos0;
-  tf::vectorTFToEigen(start_pose_tf.getOrigin(),pos0);
-  double t;
-
-  for(unsigned int i = 0 ; i <= num_steps; i++)
-  {
-    t = i * time_step_;
-    t = (t > duration_ ) ? duration_ : t;
-
-
-    vel = start_vel_ + accel_ * t;
-    pos = pos0 + start_vel_*t + 0.5f*accel_*std::pow(t,2);
-
-    p.setOrigin(tf::Vector3(pos(0),pos(1),pos(2)));
-    p.setRotation(start_pose_tf.getRotation().slerp(end_pose_tf.getRotation(),t/duration_));
-
-    tf::poseTFToEigen(p,eigen_pose);
-    segment_points.push_back(TrajectoryPtPtr(new CartTrajectoryPt(eigen_pose)));
-  }
-
-  return true;
-}
 
 CartesianInterpolator::CartesianInterpolator():
     tool_speed_(0),
-    interpolation_interval_(0),
+    time_step_(0),
     zone_radius_(0),
     robot_model_()
 {
@@ -279,11 +76,11 @@ bool CartesianInterpolator::computeFullSegmentTimes(const std::vector<descartes_
 }
 
 bool CartesianInterpolator::initialize(descartes_core::RobotModelConstPtr robot_model,
-                                       double tool_speed,double interpolation_interval, double zone_radius)
+                                       double tool_speed,double time_step, double zone_radius)
 {
   robot_model_ = robot_model;
   tool_speed_ = std::abs(tool_speed);
-  interpolation_interval_= std::abs(interpolation_interval);
+  time_step_= std::abs(time_step);
   zone_radius_ = std::abs(zone_radius);
 
   return true;
@@ -335,7 +132,7 @@ bool CartesianInterpolator::interpolate(const std::vector<descartes_core::Trajec
 
     double start_time = (i == 0 ? 0.0f : 0.5f*blend_segment_time);
     double end_time = (i == segment_times.size() - 1) ? segment_times[i] : (segment_times[i] - 0.5f*blend_segment_time);
-    LinearSegment lsegment = LinearSegment(pose_start,pose_end,segment_times[i],interpolation_interval_,
+    LinearSegment lsegment = LinearSegment(pose_start,pose_end,segment_times[i],time_step_,
                                            std::make_pair(start_time,end_time));
 
     if(lsegment.interpolate(segment_points))
@@ -372,7 +169,7 @@ bool CartesianInterpolator::interpolate(const std::vector<descartes_core::Trajec
 
     BlendSegment bsegment = BlendSegment(pose_start,pose_end,
                                          segment_velocities[i-1],segment_velocities[i],
-                                         interpolation_interval_);
+                                         time_step_);
     if(bsegment.interpolate(segment_points))
     {
       blend_segments[i - 1] = segment_points;

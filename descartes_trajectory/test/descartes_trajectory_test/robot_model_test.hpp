@@ -51,7 +51,7 @@ public:
   virtual void SetUp()
   {
     ROS_INFO("Setting up RobotModelTest fixture(base) (parameterized)");
-    ASSERT_TRUE(this->model_);
+    ASSERT_TRUE(static_cast<bool>(this->model_));
   }
 
   virtual void TearDown()
