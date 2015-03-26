@@ -118,8 +118,6 @@ protected:
 
   bool computeFullSegmentTimes(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
                                std::vector<double>& ft);
-  bool computeBlendSegmentTimes(const std::vector<descartes_core::TrajectoryPtPtr>& coarse_traj,
-                                std::vector<double>& bt);
 
 protected:
 
