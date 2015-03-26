@@ -26,11 +26,23 @@ namespace descartes_trajectory
 
 /**
  * @brief Specialization of cartesian trajectory point.
- *        Represents a cartesian pointwhose yaw (about z) is free.
+ *        Represents a cartesian point whose rotation
+ *        about a chosen axis is unconstrained.
  */
 class AxialSymmetricPt : public descartes_trajectory::CartTrajectoryPt
 {
 public:
+
+  /**
+   * @brief Enum used to select the free axis of rotation for this point
+   */
+  enum FreeAxis
+  {
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS
+  };
+
   /**
    * @brief This default constructor is exactly equivalent to CartTrajectoryPt's. Initializes all
    *        frames to identity.
@@ -40,19 +52,27 @@ public:
   /**
    * @brief Constructs a cartesian trajectory point that places the robot tip at the position
    *        defined by the transform from the origin of the world. The transform is first a
-   *        translation by the vector (x,y,z) followed by an XYZ rotation by (rx,ry,rz) respectively.
+   *        translation by the vector (x,y,z) followed by an XYZ rotation
+   *        (moving axis) by (rx,ry,rz) respectively.
    *
    * @param x x component of translation part of transform
    * @param y y component of translation part of transform
    * @param z z component of translation part of transform
-   * @param rx rotation about x axis
-   * @param ry rotation about y axis
-   * @param rz rotation about z axis (included only for nominal purposes)
+   * @param rx rotation about x axis of nominal pose
+   * @param ry rotation about y axis of nominal pose
+   * @param rz rotation about z axis of nominal pose
    * @param orient_increment (in radians, discretization of space [-2Pi, 2Pi])
+   * @param axis The free-axis of the nominal pose of the tool
    */
-  AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz, double orient_increment);
+  AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
+                   double orient_increment, FreeAxis axis);
 
-  virtual ~AxialSymmetricPt() {}
+  /**
+   * @brief Similar to other constructor except that it takes an affine pose instead of
+   *        individual translation and rotation arguments.
+   */
+  AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis);
+
 };
 
 
