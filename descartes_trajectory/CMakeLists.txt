@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_core
   moveit_core
   roscpp
+  tf_conversions
 )
 
 find_package(Boost REQUIRED)
@@ -43,6 +44,8 @@ add_library(descartes_trajectory
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
             src/trajectory.cpp
+            src/trajectory_segment.cpp
+            src/cartesian_interpolator.cpp
             test/cartesian_robot.cpp
 )
 
@@ -65,7 +68,8 @@ if(CATKIN_ENABLE_TESTING)
       test/cart_trajectory_pt.cpp
       test/joint_trajectory_pt.cpp
       test/cartesian_robot.cpp
-      test/cartesian_robot_test.cpp)
+      test/cartesian_robot_test.cpp
+      test/cartesian_interpolator.cpp)
   catkin_add_gtest(${PROJECT_NAME}_utest ${UTEST_SRC_FILES})
   target_link_libraries(${PROJECT_NAME}_utest descartes_trajectory)
 

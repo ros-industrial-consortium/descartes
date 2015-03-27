@@ -92,7 +92,7 @@ public:
   virtual bool isValid(const Eigen::Affine3d &pose) const = 0;
 
   /**
-   * @brief Initializes the robot model when it is instantiated as a moveit_core plugin.
+   * @brief Initializes the robot model when it is instantiated as a descartes_core plugin.
    * @param robot_description name of the ros parameter containing the urdf description
    * @param group_name the manipulation group for all the robot links that are part of the same kinematic chain
    * @param world_frame name of the root link in the urdf
