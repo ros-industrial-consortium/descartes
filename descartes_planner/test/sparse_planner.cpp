@@ -136,7 +136,7 @@ TEST(SparsePlanner, planPath)
   EXPECT_TRUE(Planner.planPath(TEST_TRAJECTORY));
 }
 
-TEST(DensePlanner, getPath)
+TEST(SparsePlanner, getPath)
 {
   std::vector<descartes_core::TrajectoryPtPtr> path;
   EXPECT_TRUE(Planner.getPath(path));
