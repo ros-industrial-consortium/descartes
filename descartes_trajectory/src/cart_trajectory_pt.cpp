@@ -130,6 +130,27 @@ namespace descartes_trajectory
   return rtn;
 }
 
+double distance(const std::vector<double>& j1, const std::vector<double>& j2)
+{
+ double rt = 0;
+ double d;
+ if(j1.size() == j2.size())
+ {
+   for(int i = 0 ; i < j1.size(); i++)
+   {
+     d = j1[i] - j2[i];
+     rt += d*d;
+   }
+ }
+ else
+ {
+   ROS_WARN_STREAM("Unequal size vectors, returning negative distance");
+   return -1;
+ }
+
+ return std::sqrt(rt);
+}
+
 CartTrajectoryPt::CartTrajectoryPt():
   tool_base_(Eigen::Affine3d::Identity()),
   tool_pt_(Eigen::Affine3d::Identity()),
@@ -262,6 +283,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
         closest_pose_vals[i] = lower;
       }
     }
+
   }
 
   if(solve_ik)
@@ -276,12 +298,40 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
                                                                  descartes_core::utils::EulerConventions::XYZ);
     if(!model.getIK(closest_pose,seed_state,joint_pose))
     {
-      ROS_ERROR_STREAM("Ik failed on closest pose");
+      ROS_WARN_STREAM("Ik failed on closest pose");
+
+      std::vector<std::vector<double> > joint_poses;
+      getJointPoses(model,joint_poses);
+      if(joint_poses.size() > 0)
+      {
+
+        ROS_WARN_STREAM("Closest cartesian pose not found, returning closest to seed joint pose");
+
+        double sd = std::numeric_limits<double>::max();
+        double d;
+        for(auto j: joint_poses)
+        {
+          d = distance(seed_state,j);
+          if(sd > d)
+          {
+            sd = d;
+            joint_pose = j;
+          }
+        }
+
+      }
+      else
+      {
+        ROS_ERROR_STREAM("getClosestJointPose failed, no valid joint poses for this point");
+        return false;
+      }
+
       return false;
     }
   }
   else
   {
+
     joint_pose.assign(seed_state.begin(),seed_state.end());
   }
 
