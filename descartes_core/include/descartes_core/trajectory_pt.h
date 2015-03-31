@@ -33,6 +33,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include "descartes_core/robot_model.h"
 #include "descartes_core/trajectory_pt_transition.h"
+#include "descartes_core/trajectory_id.h"
 
 
 namespace descartes_core
@@ -71,8 +72,8 @@ DESCARTES_CLASS_FORWARD(TrajectoryPt);
 class TrajectoryPt
 {
 public:
-  typedef boost::uuids::uuid ID;
-  TrajectoryPt() : id_(boost::uuids::random_generator()()) {}
+  typedef TrajectoryID ID;
+  TrajectoryPt() : id_(TrajectoryID::make_id()) {}
   virtual ~TrajectoryPt() {}
 
   /**@name Getters for Cartesian pose(s)
@@ -176,7 +177,7 @@ public:
   virtual void cloneTo(TrajectoryPt &clone) const
   {
     clone = *this;
-    clone.setID(boost::uuids::random_generator()());
+    clone.setID(TrajectoryID::make_id());
   }
 
 

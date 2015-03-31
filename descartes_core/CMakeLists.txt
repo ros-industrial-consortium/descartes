@@ -13,6 +13,8 @@ find_package(Eigen REQUIRED)
 catkin_package(
   INCLUDE_DIRS
     include
+  LIBRARIES
+    descartes_core
   CATKIN_DEPENDS
     roscpp
     moveit_core
@@ -31,4 +33,13 @@ include_directories(include
                     ${Boost_INCLUDE_DIRS}
                     ${Eigen_INCLUDE_DIRS}
 )
+
+add_library(descartes_core
+            src/trajectory_id.cpp
+)
+
+target_link_libraries(descartes_core
+                      ${catkin_LIBRARIES}
+)
+
 

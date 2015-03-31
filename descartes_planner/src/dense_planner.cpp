@@ -62,7 +62,7 @@ descartes_core::TrajectoryPt::ID DensePlanner::getPrevious(const descartes_core:
   auto pos = std::find_if(path_.begin()++,path_.end(),predicate);
   if(pos == path_.end() )
   {
-    id =  boost::uuids::nil_uuid();
+    id =  descartes_core::TrajectoryID::make_nil();
   }
   else
   {
@@ -77,11 +77,11 @@ bool DensePlanner::updatePath()
 {
   std::vector<descartes_core::TrajectoryPtPtr> traj;
   const CartesianMap& cart_map = planning_graph_->getCartesianMap();
-  descartes_core::TrajectoryPt::ID first_id = boost::uuids::nil_uuid();
+  descartes_core::TrajectoryPt::ID first_id = descartes_core::TrajectoryID::make_nil();
   auto predicate = [&first_id](const std::pair<descartes_core::TrajectoryPt::ID,CartesianPointInformation>& p)
     {
       const auto& info = p.second;
-      if(info.links_.id_previous == boost::uuids::nil_uuid())
+      if(info.links_.id_previous == descartes_core::TrajectoryID::make_nil())
       {
         first_id = p.first;
         return true;
@@ -95,7 +95,7 @@ bool DensePlanner::updatePath()
   // finding first point
   if(cart_map.empty()
       || (std::find_if(cart_map.begin(),cart_map.end(),predicate) == cart_map.end())
-      || first_id == boost::uuids::nil_uuid())
+      || first_id == descartes_core::TrajectoryID::make_nil())
   {
     error_code_ = descartes_core::PlannerError::INVALID_ID;
     return false;
@@ -159,7 +159,7 @@ descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::Tra
   auto pos = std::find_if(path_.begin(),path_.end()-2,predicate);
   if(pos == path_.end() )
   {
-    id =  boost::uuids::nil_uuid();
+    id =  descartes_core::TrajectoryID::make_nil();
   }
   else
   {

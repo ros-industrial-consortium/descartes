@@ -56,7 +56,7 @@ PlanningGraph::~PlanningGraph()
 
 CartesianMap PlanningGraph::getCartesianMap()
 {
-  TrajectoryPt::ID cart_id = generate_nil();
+  TrajectoryPt::ID cart_id = descartes_core::TrajectoryID::make_nil();
   for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
       c_iter != cartesian_point_link_->end(); c_iter++)
   {
@@ -107,7 +107,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
 
   // DEBUG
   //printMaps();
-  TrajectoryPt::ID previous_id = boost::uuids::nil_uuid();
+  TrajectoryPt::ID previous_id = descartes_core::TrajectoryID::make_nil();
 
   // input is valid, copy to local maps that will be maintained by the planning graph
   for (std::vector<TrajectoryPtPtr>::const_iterator point_iter = points->begin();
@@ -116,8 +116,8 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     (*cartesian_point_link_)[point_iter->get()->getID()].source_trajectory_ = (*point_iter);
     CartesianPointRelationship point_link = CartesianPointRelationship();
     point_link.id = point_iter->get()->getID();
-    point_link.id_next = generate_nil(); // default to nil UUID
-    point_link.id_previous = generate_nil(); // default to nil UUID
+    point_link.id_next = descartes_core::TrajectoryID::make_nil(); // default to nil UUID
+    point_link.id_previous = descartes_core::TrajectoryID::make_nil(); // default to nil UUID
 
     // if the previous_id exists, set it's next_id to the new id
     if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
