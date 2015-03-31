@@ -1,0 +1,22 @@
+<package>
+  <name>descartes</name>
+  <version>0.1.0</version>
+  <description>Descartes  core stack contains packages and libraries for supporing industrial systems</description>
+
+  <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
+  <maintainer email="jorge.nicho@swri.org">Jorge L. Nicho</maintainer>
+  <maintainer email="jonathan.meyer@swri.org">Jonathan W. Meyer</maintainer>
+  <license>BSD</license>
+  <url type="website">http://wiki.ros.org/descartes_moveit</url>
+  <author email="ratneshmadaan@gmail.com">Ratnesh Madaan</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>descartes_core</run_depend>
+  <run_depend>descartes_moveit</run_depend>
+  <run_depend>descartes_planner</run_depend>
+  <run_depend>descartes_trajectory</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
