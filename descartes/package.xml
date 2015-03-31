@@ -1,7 +1,7 @@
 <package>
   <name>descartes</name>
   <version>0.1.0</version>
-  <description>Descartes  core stack contains packages and libraries for supporing industrial systems</description>
+  <description>Descartes is a ROS-Industrial project for performing path-planning on under-defined Cartesian trajectories. More details regarding motivation can be found in <a class="https" href="https://github.com/ros-industrial/rep/blob/master/rep-I0003.rst">rep-I0003.rst</a>.</description>
 
   <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
   <maintainer email="jorge.nicho@swri.org">Jorge L. Nicho</maintainer>
