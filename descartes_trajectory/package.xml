@@ -19,5 +19,6 @@
   <run_depend>roscpp</run_depend>
 
   <export>
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>

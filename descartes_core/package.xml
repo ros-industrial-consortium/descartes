@@ -26,5 +26,6 @@
   <test_depend>rosunit</test_depend>
 
   <export>
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>

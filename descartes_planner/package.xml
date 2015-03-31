@@ -26,5 +26,6 @@
 
   <export>
     <descartes_core plugin="${prefix}/descartes_planner_plugins.xml"/>
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>
