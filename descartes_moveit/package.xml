@@ -3,8 +3,13 @@
   <name>descartes_moveit</name>
   <version>0.0.0</version>
   <description>Moveit wrapper functions for descartes base types</description>
-  <maintainer email="Edwards@todo.todo">Shaun Edwards</maintainer>
+
+  <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
+  <maintainer email="jonathan.meyer@swri.org">Jonathan Meyer</maintainer>
+  <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
+  
   <license>Apache2</license>
+
   <author >Shaun Edwards</author>
 
   <buildtool_depend>catkin</buildtool_depend>
