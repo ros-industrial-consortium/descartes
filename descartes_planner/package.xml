@@ -3,9 +3,15 @@
   <name>descartes_planner</name>
   <version>0.0.0</version>
   <description>The descartes_planner package</description>
+
   <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
+  <maintainer email="jonathan.meyer@swri.org">Jonathan Meyer</maintainer>
+  <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
+
   <license>Apache2.0</license>
+
   <author email="jnicho@swri.org">Jorge Nicho</author>
+
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>descartes_core</build_depend>
@@ -26,5 +32,6 @@
 
   <export>
     <descartes_core plugin="${prefix}/descartes_planner_plugins.xml"/>
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>

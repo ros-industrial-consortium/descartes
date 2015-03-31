@@ -4,7 +4,9 @@
   <version>0.0.0</version>
   <description>The descartes_core package creates joint trajectories for trajectory plans. Trajectory plans are typically underdefined paths through space that allow for kinematic/dynamic tolerances, such as unspecified tool roll.</description>
 
-  <maintainer email="dpsolomon@gmail.com">Dan Solomon</maintainer>
+  <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
+  <maintainer email="jonathan.meyer@swri.org">Jonathan Meyer</maintainer>
+  <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
 
   <license>Apache2.0</license>
   <url type="website">https://github.com/industrial-moveit/descartes_core</url>
@@ -26,5 +28,6 @@
   <test_depend>rosunit</test_depend>
 
   <export>
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>

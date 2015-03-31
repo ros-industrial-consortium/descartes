@@ -30,8 +30,8 @@ namespace descartes_trajectory_test
                      << ", orientation: " << orient_range_);
   }
 
-  bool CartesianRobot::initialize(const std::string robot_description, const std::string& group_name,
-                          const std::string& world_frame,const std::string& tcp_frame)
+  bool CartesianRobot::initialize(const std::string& robot_description, const std::string& group_name,
+                                  const std::string& world_frame,const std::string& tcp_frame)
   {
     return true;
   }
@@ -42,7 +42,6 @@ namespace descartes_trajectory_test
     ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
                      << ", orientation: " << orient_range_);
   }
-
 
   bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const
@@ -64,12 +63,9 @@ namespace descartes_trajectory_test
     else
     {
       rtn = false;
-      ROS_WARN("IK calculated pose, not valid");
     }
     return rtn;
   }
-
-
 
   bool CartesianRobot::getAllIK(const Eigen::Affine3d &pose,
                                 std::vector<std::vector<double> > &joint_poses) const
@@ -78,8 +74,6 @@ namespace descartes_trajectory_test
     joint_poses.resize(1);
     return getIK(pose, empty, joint_poses[0]);
   }
-
-
 
   bool CartesianRobot::getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const
   {
@@ -152,6 +146,7 @@ namespace descartes_trajectory_test
 
     return rtn;
   }
+
 
 } //descartes_trajectory_test
 

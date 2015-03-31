@@ -19,6 +19,7 @@
 #include "descartes_core/trajectory_pt.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
 #include "descartes_trajectory/joint_trajectory_pt.h"
+#include "descartes_trajectory/axial_symmetric_pt.h"
 #include "ros/console.h"
 #include <gtest/gtest.h>
 
@@ -39,6 +40,12 @@ template <>
 TrajectoryPt* CreateTrajectoryPt<JointTrajectoryPt>()
 {
   return new JointTrajectoryPt();
+}
+
+template <>
+TrajectoryPt* CreateTrajectoryPt<AxialSymmetricPt>()
+{
+  return new AxialSymmetricPt();
 }
 
 template <class T>
@@ -71,7 +78,7 @@ class TrajectoryPtTest : public testing::Test {
 using testing::Types;
 
 // Add types of trajectory points here:
-typedef Types<CartTrajectoryPt, JointTrajectoryPt> Implementations;
+typedef Types<CartTrajectoryPt, JointTrajectoryPt, AxialSymmetricPt> Implementations;
 
 TYPED_TEST_CASE(TrajectoryPtTest, Implementations);
 

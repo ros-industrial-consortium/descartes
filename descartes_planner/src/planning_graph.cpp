@@ -44,8 +44,8 @@ namespace descartes_planner
 const double MAX_JOINT_DIFF = M_PI;
 const double MAX_EXCEEDED_PENALTY = 10000.0f;
 
-PlanningGraph::PlanningGraph(RobotModelConstPtr &model)
-  : robot_model_(model)
+PlanningGraph::PlanningGraph(RobotModelConstPtr model)
+  : robot_model_(std::move(model))
   , cartesian_point_link_(NULL)
 {}
 
