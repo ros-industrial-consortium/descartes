@@ -32,5 +32,6 @@
 
   <export>
     <descartes_core plugin="${prefix}/moveit_adapter_plugins.xml"/>
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>
