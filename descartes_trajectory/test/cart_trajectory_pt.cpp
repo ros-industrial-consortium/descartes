@@ -167,12 +167,3 @@ TEST(CartTrajPt, closestJointPose)
   ROS_INFO_STREAM("Testing equality between seed joint pose and closest joint pose");
   EXPECT_EQ(joint_pose,closest_joint_pose);
 }
-
-TEST(CartTrajPt, generationTimeTest)
-{
-  for (size_t i = 0; i < 100; i++)
-  {
-    CartTrajectoryPt pt;
-    ROS_INFO_STREAM(pt.getID());
-  }
-}
