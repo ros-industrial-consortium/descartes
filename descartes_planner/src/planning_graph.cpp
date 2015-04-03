@@ -33,7 +33,6 @@
 
 #include <ros/console.h>
 
-#include <boost/uuid/uuid_io.hpp> // streaming operators
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 using namespace descartes_core;
@@ -568,7 +567,7 @@ bool PlanningGraph::findStartVertices(std::list<JointGraph::vertex_descriptor> &
   int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
 
   // Find the TrajectoryPt ID of the first point specified by the user
-  TrajectoryPt::ID cart_id = generate_nil();
+  TrajectoryPt::ID cart_id = descartes_core::TrajectoryID::make_nil();
 
   for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
       c_iter != cartesian_point_link_->end(); c_iter++)
@@ -606,7 +605,7 @@ bool PlanningGraph::findEndVertices(std::list<JointGraph::vertex_descriptor> &en
   int num_joints = recalculateJointSolutionsVertexMap(joint_vertex_map);
 
   // Find the TrajectoryPt ID of the last point specified by the user
-  TrajectoryPt::ID cart_id = generate_nil();
+  TrajectoryPt::ID cart_id = descartes_core::TrajectoryID::make_nil();
 
   for(std::map<TrajectoryPt::ID, CartesianPointInformation>::iterator c_iter = cartesian_point_link_->begin();
       c_iter != cartesian_point_link_->end(); c_iter++)
@@ -921,10 +920,6 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
 
       has_valid_transition = true;
 
-      ROS_DEBUG("CALC EDGE WEIGHT: %s -> %s = %f",
-               boost::uuids::to_string(*previous_joint_iter).c_str(),
-               boost::uuids::to_string(*next_joint_iter).c_str(),
-               transition_cost);
       JointEdge edge;
       edge.joint_start = *previous_joint_iter;
       edge.joint_end = *next_joint_iter;
