@@ -23,7 +23,6 @@
  */
 
 #include <descartes_planner/sparse_planner.h>
-#include <boost/uuid/uuid_io.hpp>
 #include <algorithm>
 
 using namespace descartes_core;

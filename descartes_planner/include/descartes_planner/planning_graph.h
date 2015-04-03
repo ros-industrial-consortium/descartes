@@ -124,8 +124,6 @@ public:
   descartes_core::RobotModelConstPtr getRobotModel();
 
 protected:
-  boost::uuids::nil_generator generate_nil;
-
   descartes_core::RobotModelConstPtr robot_model_;
 
   JointGraph dg_;

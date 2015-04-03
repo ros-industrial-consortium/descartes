@@ -6,7 +6,6 @@
  */
 
 #include <descartes_planner/dense_planner.h>
-#include <boost/uuid/uuid_io.hpp> // streaming operators
 
 namespace descartes_planner
 {
