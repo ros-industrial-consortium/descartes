@@ -1,8 +1,9 @@
 #ifndef TRAJECTORY_ID_H
 #define TRAJECTORY_ID_H
 
-#include <boost/atomic.hpp>
 #include <iostream>
+
+#include <boost/thread/mutex.hpp>
 
 namespace descartes_core
 {
@@ -38,6 +39,7 @@ struct IdGenerator<uint64_t>
 
   static value_type make_id()
   {
+    boost::unique_lock<boost::mutex> scoped_lock (counter_mutex_);
     return counter_++;
   }
 
@@ -48,7 +50,8 @@ struct IdGenerator<uint64_t>
 
 private:
   // Initialized to 1
-  static boost::atomic<value_type> counter_;
+  static value_type counter_;
+  static boost::mutex counter_mutex_;
 };
 
 }
