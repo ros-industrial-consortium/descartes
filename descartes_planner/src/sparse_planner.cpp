@@ -27,6 +27,24 @@
 
 using namespace descartes_core;
 using namespace descartes_trajectory;
+
+namespace
+{
+    std::vector<descartes_core::TimingConstraint>
+    extractTiming(const std::vector<descartes_core::TrajectoryPtPtr>& points)
+    {
+      std::vector<descartes_core::TimingConstraint> result;
+      result.reserve(points.size());
+
+      for (const auto& ptr : points)
+      {
+        result.push_back(ptr->getTiming());
+      }
+      return result;
+    }
+}
+
+
 namespace descartes_planner
 {
 
@@ -130,6 +148,15 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
   }
 
   ros::Time start_time = ros::Time::now();
+
+  // Save the timing information
+  timing_cache_ = extractTiming(traj);
+  // Unconstrian the times for the sparse sampling
+  for (std::size_t i = 0; i < traj.size(); ++i)
+  {
+    traj[i]->setTiming(descartes_core::TimingConstraint()); // default timing is (0,0)
+  }
+
   cart_points_.assign(traj.begin(),traj.end());
   std::vector<TrajectoryPtPtr> sparse_trajectory_array;
   sampleTrajectory(sampling_,cart_points_,sparse_trajectory_array);
@@ -527,7 +554,9 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
   {
     TrajectoryPtPtr p = cart_points_[i];
     const JointTrajectoryPt& j = joint_points_map_.at(p->getID());
-    path[i] = TrajectoryPtPtr(new JointTrajectoryPt(j));
+    TrajectoryPtPtr new_pt = TrajectoryPtPtr(new JointTrajectoryPt(j));
+    new_pt->setTiming(timing_cache_[i]);
+    path[i] = new_pt;
   }
 
   return true;
@@ -729,6 +758,22 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
         if(checkJointChanges(rough_interp,aprox_interp,MAX_JOINT_CHANGE))
         {
           ROS_DEBUG_STREAM("Interpolated point at position "<<pos);
+
+          // look up previous points joint solution
+          const JointTrajectoryPt& last_joint_pt = joint_points_map_.at(cart_points_[pos-1]->getID());
+          std::vector<double> sol;
+          last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, sol);
+          // look up dt
+          double dt = timing_cache_[pos].upper_;
+          // check validity of joint motion
+
+          if (!robot_model->isValidMove(sol, aprox_interp, dt))
+          {
+            ROS_WARN_STREAM("Joint velocity checking failed for point " << pos << ". Replanning.");
+            return static_cast<int>(InterpolationResult::REPLAN);
+          }
+
+          // otherwise add point
           joint_points_map_.insert(std::make_pair(cart_point->getID(),JointTrajectoryPt(aprox_interp)));
         }
         else
@@ -739,7 +784,6 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
           point_pos = pos;
           return (int)InterpolationResult::REPLAN;
         }
-
       }
       else
       {
