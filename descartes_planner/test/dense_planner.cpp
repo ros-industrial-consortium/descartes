@@ -24,6 +24,9 @@
 #include <gtest/gtest.h>
 #include <descartes_core/pretty_print.hpp>
 #include <tuple>
+#include <ThreeDOFRobot>
+#include <TestPoint>
+
 
 using namespace descartes_core;
 using namespace descartes_trajectory;
@@ -33,57 +36,7 @@ Trajectory createTestTrajectory();
 Trajectory TEST_TRAJECTORY = createTestTrajectory();
 descartes_planner::DensePlanner Planner;
 
-class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
-{
-public:
-  ThreeDOFRobot():
-    descartes_trajectory_test::CartesianRobot(0,0,3)
-  {
 
-  }
-
-  virtual ~ThreeDOFRobot()
-  {
-
-  }
-
-};
-
-class TestPoint: public descartes_trajectory::CartTrajectoryPt
-{
-public:
-  TestPoint(const std::vector<double>& joints)
-  {
-    vals_.resize(joints.size());
-    vals_.assign(joints.begin(),joints.end());
-  }
-
-  virtual ~TestPoint()
-  {
-
-  }
-
-  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                     const RobotModel &model,
-                                     std::vector<double> &joint_pose) const
-  {
-    joint_pose.clear();
-    joint_pose.assign(vals_.begin(),vals_.end());
-    return true;
-  }
-
-  virtual void getJointPoses(const RobotModel &model,
-                                       std::vector<std::vector<double> > &joint_poses) const
-  {
-    joint_poses.clear();
-    joint_poses.push_back(vals_);
-
-  }
-
-protected:
-
-  std::vector<double> vals_;
-};
 
 Trajectory createTestTrajectory()
 {
