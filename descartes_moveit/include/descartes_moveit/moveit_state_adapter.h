@@ -49,8 +49,8 @@ public:
    * @param world_frame work object frame name
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                    const std::string & tool_frame, const std::string & world_frame,
-                     size_t sample_iterations = 10);
+                     const std::string & tool_frame, const std::string & world_frame,
+                     const std::vector<std::pair<unsigned,unsigned> >& joint_pairs);
 
   virtual ~MoveitStateAdapter()
   {
@@ -100,6 +100,11 @@ protected:
   robot_model::RobotModelConstPtr robot_model_ptr_;
 
   /**
+   * @brief Vector of starting configurations for the numerical solver
+   */
+  std::vector<std::vector<double> > seed_states_;
+
+  /**
    * @brief Planning group name
    */
   std::string group_name_;
@@ -118,11 +123,6 @@ protected:
    * @brief convenient transformation frame
    */
   descartes_core::Frame world_to_root_;
-
-  /**
-   * @brief Joint solution sample iterations for returning "all" joints
-   */
-  size_t sample_iterations_;
 
 };
 

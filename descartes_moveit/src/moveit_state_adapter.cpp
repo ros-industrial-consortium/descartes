@@ -21,308 +21,29 @@
 #include "eigen_conversions/eigen_msg.h"
 #include "random_numbers/random_numbers.h"
 #include "descartes_core/pretty_print.hpp"
+#include "descartes_moveit/seed_search.h"
 #include <sstream>
 
 const static int SAMPLE_ITERATIONS = 10;
 
-namespace seed_search
-{
-typedef std::vector<double> JointConfig;
-typedef std::vector<JointConfig> JointConfigVec;
-
-class CombinationManager
-{
-public:
-  struct ComboHandle
-  {
-    ComboHandle(size_t n)
-      : combos_(n)
-    {}
-
-    uint8_t& operator[](size_t idx)
-    {
-      return combos_[idx];
-    }
-
-    const uint8_t& operator[](size_t idx) const
-    {
-      return combos_[idx];
-    }
-
-    const std::size_t size() const { return combos_.size(); }
-
-    std::vector<uint8_t> combos_;
-  };
-
-  CombinationManager(unsigned n_joints, unsigned n_discs)
-    : n_joints_(n_joints)
-    , n_discs_(n_discs)
-  {}
-
-  size_t count() const
-  {
-    size_t result = 1;
-    for (size_t i = 0; i < n_joints_; ++i) result *= n_discs_;
-    return result;
-  }
-
-  ComboHandle fromNumber(size_t n)
-  {
-    ComboHandle result (n_joints_);
-    for (size_t i = 0; i < n_joints_; i++)
-    {
-      result[n_joints_-1-i] = static_cast<uint8_t>(n % n_discs_);
-      n /= n_discs_;
-    }
-    return result;
-  }
-
-private:
-  unsigned n_joints_;
-  unsigned n_discs_;
-};
-
-bool operator<(const CombinationManager::ComboHandle& lhs, const CombinationManager::ComboHandle& rhs)
-{
-  for (std::size_t i = 0; i < lhs.size(); ++i)
-  {
-    if ( lhs[i] != rhs[i] )
-    {
-      return lhs[i] < rhs[i];
-    }
-  }
-  // equal
-  return false;
-}
-
-unsigned FIRST_N = 2;
-
-typedef std::vector<unsigned> BijectionVec;
-
-JointConfig toJointConfig(const CombinationManager::ComboHandle& handle, const BijectionVec& bij)
-{
-  const static double min = -M_PI;
-  const static double step = M_PI/2;
-
-  const static unsigned DOF = 6;
-
-  JointConfig result;
-  result.resize(DOF);
-
-  std::size_t i;
-  for (i = 0; i < handle.size(); i++)
-  {
-    result[bij[i]] = min + handle[i] * step;
-  }
-
-  for (; i < bij.size(); ++i)
-  {
-    result[bij[i]] = 0.0;
-  }
-
-  result[4] = 1.57;
-
-  return result;
-}
-
-bool doFK(moveit::core::RobotState& state,
-          const moveit::core::JointModelGroup* group,
-          const std::string& tool,
-          const JointConfig& joint_pose,
-          Eigen::Affine3d& result)
-{
-  state.setJointGroupPositions(group, joint_pose);
-  if (!state.knowsFrameTransform(tool))
-  {
-    ROS_WARN("NO TOOL TRANSFORM");
-    return false;
-  }
-
-  if (!state.satisfiesBounds())
-  {
-    ROS_WARN("Bad state!");
-    return false;
-  }
-
-  result = state.getFrameTransform(tool);
-  return true;
-}
-
-bool doIK(moveit::core::RobotState& state,
-          const moveit::core::JointModelGroup* group,
-          const std::string& group_name,
-          const std::string& tool,
-          const Eigen::Affine3d& pose,
-          const JointConfig& seed,
-          JointConfig& result)
-{
-  state.setJointGroupPositions(group_name, seed);
-  if (!state.setFromIK(group, pose, tool))
-  {
-    return false;
-  }
-  state.copyJointGroupPositions(group, result);
-  return true;
-}
-
-void printJointConfig(const JointConfig& a, const char* prefix = "")
-{
-//  std::ostringstream ss;
-//  ss << prefix;
-//  for (std::size_t i = 0; i < a.size(); ++i)
-//    ss << a[i] << " ";
-//  ROS_INFO_STREAM(ss.str());
-
-  ROS_INFO("%s%.4f %.4f %.4f %.4f %.4f %.4f", prefix, a[0], a[1], a[2], a[3], a[4], a[5]);
-}
-
-//inline double circularDiff(double a, double b)
-//{
-//  double diff =
-//}
-
-inline bool sameJointConfig(const JointConfig& a, const JointConfig& b, const BijectionVec& bij)
-{
-  for (std::size_t i = 0; i < FIRST_N; i++)
-  {
-    if (std::fmod(std::abs(a[bij[i]] - b[bij[i]]), 2*M_PI) > M_PI/4) return false;
-  }
-  return true;
-}
-
-inline bool inJointSet(const JointConfig& c, const JointConfigVec& set, const BijectionVec& bij)
-{
-  for (std::size_t i = 0; i < set.size(); ++i)
-  {
-    if (sameJointConfig(c, set[i], bij)) return true;
-  }
-  return false;
-}
-
-bool printJacobian(moveit::core::RobotState& state,
-                   const moveit::core::JointModelGroup* group)
-{
-  Eigen::Vector3d reference_point_position(0.0,0.0,0.0);
-  Eigen::MatrixXd jacobian;
-  state.getJacobian(group, state.getLinkModel(group->getLinkModelNames().back()),
-                               reference_point_position,
-                               jacobian);
-//  ROS_INFO_STREAM("Jacobian: " << jacobian);
-//  ROS_ERROR_STREAM("Determinant: " << jacobian.determinant());
-
-  return std::abs(jacobian.determinant()) > 0.0001;
-}
-
-
-
-JointConfigVec findSeedStates(moveit::core::RobotStatePtr state, const std::string& group_name, const std::string& tool_frame)
-{
-  // Get the DOF
-  const moveit::core::JointModelGroup* group = state->getJointModelGroup(group_name);
-
-  // Generate a set of valid seed joint configs
-  CombinationManager combos (FIRST_N, 4);
-  std::vector<CombinationManager::ComboHandle> seed_state_solutions;
-
-
-//  const static BijectionVec bij = {1,2,0,3,4,5};
-  const static BijectionVec bij = {3,5,0,1,2,4};
-
-  // For each joint pose, calculate its 6d pose
-  for (std::size_t i = 0; i < combos.count(); i++)
-  {
-    // For every point, keep track of the IK solutions seen so far
-    JointConfigVec iks_seen_so_far; // iks seen so far
-    std::vector<CombinationManager::ComboHandle> unique_solution_seeds; // seed states that led to iks seen so far
-
-    auto handle = combos.fromNumber(i);
-    JointConfig seed = toJointConfig(handle, bij);
-    printJointConfig(seed, "SOURCE SEED: ");
-
-    iks_seen_so_far.push_back(seed);
-    unique_solution_seeds.push_back(handle);
-
-    // Compute the pose of this point
-    Eigen::Affine3d pose;
-    if (!doFK(*state, group, tool_frame, seed, pose))
-    {
-      ROS_INFO_STREAM("No FK for this point");
-      continue;
-    }
-
-    // Check the Jacobian to see if the current state of the system
-    // is a singularity
-    if (!printJacobian(*state, group))
-    {
-      ROS_WARN("Small jacobian!");
-      continue;
-    }
-
-    // for every other joint pose, try to IK to this pose; keep only the unique solutions
-    for (std::size_t j = 0; j < combos.count(); j++)
-    {
-      // skip the situation where pose is generated from current seed
-      // we already have that ik
-      if (i == j) continue;
-
-      auto handle2 = combos.fromNumber(j);
-      JointConfig seed2 = toJointConfig(handle2, bij);
-      JointConfig ik;
-
-      if (!doIK(*state, group, group_name, tool_frame, pose, seed2, ik))
-      {
-        continue;
-      }
-
-      if (!inJointSet(ik, iks_seen_so_far, bij))
-      {
-        iks_seen_so_far.push_back(ik);
-        unique_solution_seeds.push_back(handle2);
-        // push handle to global solutions array as well
-        seed_state_solutions.push_back(handle2);
-      }
-
-    }
-
-    // Debug Info
-    ROS_INFO_STREAM("Calculated " << iks_seen_so_far.size() << " unique IK states this round");
-    for (JointConfig::size_type k = 0; k < iks_seen_so_far.size(); ++k)
-    {
-      printJointConfig(toJointConfig(unique_solution_seeds[k],bij), "seed ");
-      printJointConfig(iks_seen_so_far[k], "found: ");
-      ROS_INFO_STREAM("");
-    }
-  }
-
-  // Consolodate the solutions from each round into one set of recommendations
-  std::set<CombinationManager::ComboHandle> handle_set;
-  handle_set.insert(seed_state_solutions.begin(), seed_state_solutions.end());
-  ROS_INFO_STREAM("FOUND: " << handle_set.size());
-  return JointConfigVec();
-}
-
-} // end namespace seed_search
-
 namespace descartes_moveit
 {
 
-MoveitStateAdapter::MoveitStateAdapter():
-    sample_iterations_(SAMPLE_ITERATIONS)
-{
-
-}
+MoveitStateAdapter::MoveitStateAdapter()
+{}
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                                     const std::string & tool_frame, const std::string & world_frame,
-                                       const size_t sample_iterations) :
+                                       const std::string & tool_frame, const std::string & world_frame,
+                                       const std::vector<std::pair<unsigned, unsigned> >& joint_pairs) :
   robot_state_(new moveit::core::RobotState(robot_state)),
   group_name_(group_name),
   tool_frame_(tool_frame),
   world_frame_(world_frame),
-  sample_iterations_(sample_iterations),
   world_to_root_(Eigen::Affine3d::Identity())
 {
-  moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
+  // Calculate seed states given a set of joint pairs
+  seed_states_ = seed::findSeedStates(robot_state_, group_name, tool_frame, joint_pairs);
+
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
   {
@@ -367,7 +88,13 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
 
-  seed_search::JointConfigVec configs = seed_search::findSeedStates(robot_state_, group_name, tcp_frame);
+  // Generate seeds for the IK solver. If they were provided through another means ( !seeds.empty() ) then
+  // we ignore this step
+  if (seed_states_.empty())
+  {
+    ROS_INFO_STREAM("Generated random seeds");
+    seed_states_ = seed::findRandomSeeds(robot_state_, group_name, SAMPLE_ITERATIONS);
+  }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
@@ -447,9 +174,9 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
       getSearchDiscretization();
   logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
-  for (size_t sample_iter = 0; sample_iter < sample_iterations_; ++sample_iter)
+  for (size_t sample_iter = 0; sample_iter < seed_states_.size(); ++sample_iter)
   {
-    robot_state_->setToRandomPositions();
+    robot_state_->setJointGroupPositions(group_name_, seed_states_[sample_iter]);
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
@@ -487,15 +214,15 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
       }
     }
   }
-  logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
+  logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), seed_states_.size());
   if (joint_poses.empty())
   {
-    logError("Found 0 joint solutions out of %d iterations", sample_iterations_);
+    logError("Found 0 joint solutions out of %d iterations", seed_states_.size());
     return false;
   }
   else
   {
-    logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
+    logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), seed_states_.size());
     return true;
   }
 }
