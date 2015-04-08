@@ -304,6 +304,10 @@ public:
 
 
 protected:
+
+  bool computeCartesianPoses(EigenSTL::vector_Affine3d& poses) const;
+
+protected:
   descartes_core::Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */
   TolerancedFrame               tool_pt_;       /**<@brief Underconstrained transform from tool_base to effective pt on tool. */
   descartes_core::Frame                         wobj_base_;     /**<@brief Fixed transform from WCS to base of object. */
