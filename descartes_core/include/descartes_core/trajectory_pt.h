@@ -171,15 +171,22 @@ public:
   }
   /** @} (end section) */
 
-  /**@brief Clones a trajectory point.  Performs a copy operation and then creates a new ID
-   * @param clone A copy of this trajectory point with a different ID
+  /**
+   * @brief Makes a copy of the underlying trajectory point and returns a polymorphic handle to it
+   * @return A copy, with the same ID, of the underlying point type
    */
-  virtual void cloneTo(TrajectoryPt &clone) const
-  {
-    clone = *this;
-    clone.setID(TrajectoryID::make_id());
-  }
+  virtual TrajectoryPtPtr copy() const = 0;
 
+  /**
+   * @brief Makes a clone of the underlying trajectory point and returns a polymorphic handle to it
+   * @return A clone, with the same data but a unique ID, of the underlying point type
+   */
+  virtual TrajectoryPtPtr clone() const
+  {
+    TrajectoryPtPtr cp = copy();
+    cp->setID(TrajectoryID::make_id());
+    return cp;
+  }
 
 protected:
   ID                            id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
