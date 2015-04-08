@@ -215,7 +215,7 @@ void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vect
   if(computeCartesianPoses(all_poses))
   {
     poses.reserve(all_poses.size());
-    for(auto pose: all_poses)
+    for(const auto& pose: all_poses)
     {
       if(model.isValid(pose))
       {
@@ -337,7 +337,7 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model,
   if(computeCartesianPoses(poses))
   {
     poses.reserve(poses.size());
-    for(auto pose: poses)
+    for(const auto& pose: poses)
     {
       std::vector<std::vector<double> > local_joint_poses;
       if(model.getAllIK(pose, local_joint_poses))
