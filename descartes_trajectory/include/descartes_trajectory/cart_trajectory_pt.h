@@ -288,6 +288,11 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+  virtual descartes_core::TrajectoryPtPtr copy() const
+  {
+    return descartes_core::TrajectoryPtPtr(new CartTrajectoryPt(*this));
+  }
+
   inline
   void setTool(const descartes_core::Frame &base, const TolerancedFrame &pt)
   {
