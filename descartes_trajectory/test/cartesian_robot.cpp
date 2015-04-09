@@ -147,6 +147,14 @@ namespace descartes_trajectory_test
     return rtn;
   }
 
+  bool CartesianRobot::isValidMove(const std::vector<double>& from_joint_pose, 
+                                   const std::vector<double>& to_joint_pose,
+                                   double dt) const
+  {
+    return true;
+  }
+  
+
 
 } //descartes_trajectory_test
 

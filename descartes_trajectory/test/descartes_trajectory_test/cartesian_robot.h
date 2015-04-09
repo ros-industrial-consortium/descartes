@@ -51,6 +51,10 @@ public:
 
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
                           const std::string& world_frame,const std::string& tcp_frame);
+
+  virtual bool isValidMove(const std::vector<double>& from_joint_pose, const std::vector<double>& to_joint_pose,
+                           double dt) const;
+  
   double pos_range_;
   double orient_range_;
   int dof_;
