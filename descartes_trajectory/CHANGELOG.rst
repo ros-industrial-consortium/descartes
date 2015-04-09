@@ -2,8 +2,8 @@
 Changelog for package descartes_trajectory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2015-04-09)
+------------------
 * Created two new base class methods for trajectory points: clone and copy that preserve the prior semantics while making sure that the underlying data type is copied correctly
 * Added install to CMakeLists.txt
 * Merge pull request `#85 <https://github.com/ros-industrial-consortium/descartes/issues/85>`_ from `ros-industrial-consortium/issue_#84 <https://github.com/ros-industrial-consortium/issue_/issues/84>`__incorrect_cartesian_discretization

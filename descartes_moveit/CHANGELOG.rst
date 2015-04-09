@@ -2,8 +2,8 @@
 Changelog for package descartes_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2015-04-09)
+------------------
 * Added install to CMakeLists.txt
 * Contributors: Shaun Edwards
 

@@ -2,8 +2,8 @@
 Changelog for package descartes_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2015-04-09)
+------------------
 * Created two new base class methods for trajectory points: clone and copy that preserve the prior semantics while making sure that the underlying data type is copied correctly
 * Added install to CMakeLists.txt
 * Removed the use of boost atomic and replaced with mutex in order to support old versions of boost library
