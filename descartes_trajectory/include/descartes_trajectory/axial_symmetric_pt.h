@@ -73,6 +73,11 @@ public:
    */
   AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis);
 
+  virtual descartes_core::TrajectoryPtPtr copy() const
+  {
+    return descartes_core::TrajectoryPtPtr(new AxialSymmetricPt(*this));
+  }
+
 };
 
 

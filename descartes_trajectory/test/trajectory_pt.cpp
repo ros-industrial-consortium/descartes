@@ -52,27 +52,22 @@ template <class T>
 class TrajectoryPtTest : public testing::Test {
  protected:
 
-  TrajectoryPtTest() : lhs_(CreateTrajectoryPt<T>()), rhs_(CreateTrajectoryPt<T>()),
-    lhs_copy_(CreateTrajectoryPt<T>()), lhs_clone_(CreateTrajectoryPt<T>())
+  TrajectoryPtTest() 
+    : lhs_(CreateTrajectoryPt<T>()) 
+    , rhs_(CreateTrajectoryPt<T>())
+    , lhs_copy_(CreateTrajectoryPt<T>())
+    , lhs_clone_(CreateTrajectoryPt<T>())
   {
-    *lhs_copy_ = *lhs_;
-    lhs_->cloneTo(*lhs_clone_);
+    lhs_copy_ = lhs_->copy();
+    lhs_clone_ = lhs_->clone();
     lhs_same_ = lhs_;
   }
 
-  virtual ~TrajectoryPtTest()
-  {
-    delete lhs_;
-    delete rhs_;
-    delete lhs_copy_;
-    delete lhs_clone_;
-  }
-
-  TrajectoryPt* lhs_;
-  TrajectoryPt* rhs_;
-  TrajectoryPt* lhs_copy_;
-  TrajectoryPt* lhs_clone_;
-  TrajectoryPt* lhs_same_;
+  TrajectoryPtPtr lhs_;
+  TrajectoryPtPtr rhs_;
+  TrajectoryPtPtr lhs_copy_;
+  TrajectoryPtPtr lhs_clone_;
+  TrajectoryPtPtr lhs_same_;
 };
 
 using testing::Types;
