@@ -38,8 +38,8 @@ TEST(CartTrajPt, getPoses)
   const double POS_TOL = 2.0;
   const double POS_INC = 0.2;
 
-  const double ORIENT_TOL = 1.0;
-  const double ORIENT_INC = 0.2;
+  const double ORIENT_TOL = 2*M_PI;
+  const double ORIENT_INC = M_PI/4;
 
   const double EPSILON = 0.001;
 

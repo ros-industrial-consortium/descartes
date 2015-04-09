@@ -288,6 +288,11 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+  virtual descartes_core::TrajectoryPtPtr copy() const
+  {
+    return descartes_core::TrajectoryPtPtr(new CartTrajectoryPt(*this));
+  }
+
   inline
   void setTool(const descartes_core::Frame &base, const TolerancedFrame &pt)
   {
@@ -302,6 +307,10 @@ public:
     wobj_pt_ = pt;
   }
 
+
+protected:
+
+  bool computeCartesianPoses(EigenSTL::vector_Affine3d& poses) const;
 
 protected:
   descartes_core::Frame                         tool_base_;     /**<@brief Fixed transform from wrist/tool_plate to tool base. */

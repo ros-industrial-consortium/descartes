@@ -214,7 +214,7 @@ bool SparsePlanner::addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
     return false;
   }
 
-  prev_id = (sparse_index == 0) ? boost::uuids::nil_uuid() : std::get<1>(sparse_solution_array_[sparse_index - 1])->getID();
+  prev_id = (sparse_index == 0) ? descartes_core::TrajectoryID::make_nil() : std::get<1>(sparse_solution_array_[sparse_index - 1])->getID();
   next_id = std::get<1>(sparse_solution_array_[sparse_index])->getID();
 
   // inserting into dense array
@@ -459,11 +459,11 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
 bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array)
 {
   const CartesianMap& cart_map = planning_graph_->getCartesianMap();
-  TrajectoryPt::ID first_id = boost::uuids::nil_uuid();
+  TrajectoryPt::ID first_id = descartes_core::TrajectoryID::make_nil();
   auto predicate = [&first_id](const std::pair<TrajectoryPt::ID,CartesianPointInformation>& p)
     {
       const auto& info = p.second;
-      if(info.links_.id_previous == boost::uuids::nil_uuid())
+      if(info.links_.id_previous == descartes_core::TrajectoryID::make_nil())
       {
         first_id = p.first;
         return true;
@@ -477,7 +477,7 @@ bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_a
   // finding first point
   if(cart_map.empty()
       || (std::find_if(cart_map.begin(),cart_map.end(),predicate) == cart_map.end())
-      || first_id == boost::uuids::nil_uuid())
+      || first_id == descartes_core::TrajectoryID::make_nil())
   {
     return false;
   }
@@ -623,7 +623,7 @@ bool SparsePlanner::plan()
 
           if(sparse_index == 0)
           {
-            prev_id = boost::uuids::nil_uuid();
+            prev_id = descartes_core::TrajectoryID::make_nil();
             next_id = std::get<1>(sparse_solution_array_[sparse_index])->getID();
           }
           else

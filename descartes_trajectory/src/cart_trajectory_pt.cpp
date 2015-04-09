@@ -130,6 +130,27 @@ namespace descartes_trajectory
   return rtn;
 }
 
+double distance(const std::vector<double>& j1, const std::vector<double>& j2)
+{
+ double rt = 0;
+ double d;
+ if(j1.size() == j2.size())
+ {
+   for(int i = 0 ; i < j1.size(); i++)
+   {
+     d = j1[i] - j2[i];
+     rt += d*d;
+   }
+ }
+ else
+ {
+   ROS_WARN_STREAM("Unequal size vectors, returning negative distance");
+   return -1;
+ }
+
+ return std::sqrt(rt);
+}
+
 CartTrajectoryPt::CartTrajectoryPt():
   tool_base_(Eigen::Affine3d::Identity()),
   tool_pt_(Eigen::Affine3d::Identity()),
@@ -184,29 +205,60 @@ bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state,
   return true;  //TODO can this ever return false?
 }
 
-void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
+bool CartTrajectoryPt::computeCartesianPoses(EigenSTL::vector_Affine3d &poses) const
 {
-  poses.clear();
   EigenSTL::vector_Affine3d sampled_wobj_pts = uniform(wobj_pt_, orient_increment_,
                                                      pos_increment_);
-  poses.reserve(sampled_wobj_pts.size());
+  EigenSTL::vector_Affine3d sampled_tool_pts = uniform(tool_pt_, orient_increment_,
+                                                       pos_increment_);
+
+  poses.clear();
+  poses.reserve(sampled_wobj_pts.size()*sampled_tool_pts.size());
   for(size_t wobj_pt = 0; wobj_pt < sampled_wobj_pts.size(); ++wobj_pt)
   {
-    Eigen::Affine3d pose = wobj_base_.frame * sampled_wobj_pts[wobj_pt];
-    if(model.isValid(pose))
+    for(size_t tool_pt = 0; tool_pt < sampled_tool_pts.size(); ++tool_pt)
     {
+      Eigen::Affine3d pose = wobj_base_.frame * sampled_wobj_pts[wobj_pt] *
+          sampled_tool_pts[tool_pt].inverse() * tool_base_.frame_inv;
+
       poses.push_back(pose);
     }
   }
-  if( poses.empty())
+
+  return !poses.empty();
+}
+
+void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
+{
+  EigenSTL::vector_Affine3d all_poses;
+  poses.clear();
+
+  if(computeCartesianPoses(all_poses))
   {
-    ROS_WARN("Failed for find ANY cartesian poses, returning");
+    poses.reserve(all_poses.size());
+    for(const auto& pose: all_poses)
+    {
+      if(model.isValid(pose))
+      {
+        poses.push_back(pose);
+      }
+    }
   }
   else
   {
-    ROS_DEBUG_STREAM("Get cartesian poses, sampled: " << sampled_wobj_pts.size()
+    ROS_ERROR("Failed for find ANY cartesian poses");
+  }
+
+  if( poses.empty())
+  {
+    ROS_WARN("Failed for find VALID cartesian poses, returning");
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Get cartesian poses, sampled: " << all_poses.size()
                      << ", with " << poses.size() << " valid(returned) poses");
   }
+
 }
 
 bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state,
@@ -262,6 +314,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
         closest_pose_vals[i] = lower;
       }
     }
+
   }
 
   if(solve_ik)
@@ -276,12 +329,40 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
                                                                  descartes_core::utils::EulerConventions::XYZ);
     if(!model.getIK(closest_pose,seed_state,joint_pose))
     {
-      ROS_ERROR_STREAM("Ik failed on closest pose");
+      ROS_WARN_STREAM("Ik failed on closest pose");
+
+      std::vector<std::vector<double> > joint_poses;
+      getJointPoses(model,joint_poses);
+      if(joint_poses.size() > 0)
+      {
+
+        ROS_WARN_STREAM("Closest cartesian pose not found, returning closest to seed joint pose");
+
+        double sd = std::numeric_limits<double>::max();
+        double d;
+        for(auto j: joint_poses)
+        {
+          d = distance(seed_state,j);
+          if(sd > d)
+          {
+            sd = d;
+            joint_pose = j;
+          }
+        }
+
+      }
+      else
+      {
+        ROS_ERROR_STREAM("getClosestJointPose failed, no valid joint poses for this point");
+        return false;
+      }
+
       return false;
     }
   }
   else
   {
+
     joint_pose.assign(seed_state.begin(),seed_state.end());
   }
 
@@ -301,18 +382,13 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model,
                                      std::vector<std::vector<double> > &joint_poses) const
 {
   joint_poses.clear();
-  EigenSTL::vector_Affine3d sampled_wobj_pts = uniform(wobj_pt_, orient_increment_,
-                                                     pos_increment_);
-  EigenSTL::vector_Affine3d sampled_tool_pts = uniform(tool_pt_, orient_increment_,
-                                                       pos_increment_);
-  size_t sample_size = sampled_wobj_pts.size() * sampled_tool_pts.size();
-  joint_poses.reserve(sample_size);
-  for(size_t wobj_pt = 0; wobj_pt < sampled_wobj_pts.size(); ++wobj_pt)
+
+  EigenSTL::vector_Affine3d poses;
+  if(computeCartesianPoses(poses))
   {
-    for(size_t tool_pt = 0; tool_pt < sampled_tool_pts.size(); ++tool_pt)
+    poses.reserve(poses.size());
+    for(const auto& pose: poses)
     {
-      Eigen::Affine3d pose = wobj_base_.frame * sampled_wobj_pts[wobj_pt] *
-          sampled_tool_pts[tool_pt].inverse() * tool_base_.frame_inv;
       std::vector<std::vector<double> > local_joint_poses;
       if(model.getAllIK(pose, local_joint_poses))
       {
@@ -320,13 +396,18 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model,
       }
     }
   }
+  else
+  {
+    ROS_ERROR("Failed for find ANY cartesian poses");
+  }
+
   if( joint_poses.empty())
   {
     ROS_WARN("Failed for find ANY joint poses, returning");
   }
   else
   {
-    ROS_DEBUG_STREAM("Get joint poses, sampled: " << sample_size
+    ROS_DEBUG_STREAM("Get joint poses, sampled: " << poses.size()
                      << ", with " << joint_poses.size() << " valid(returned) poses");
   }
 }

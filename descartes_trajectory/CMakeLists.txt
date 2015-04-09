@@ -51,9 +51,18 @@ target_link_libraries(descartes_trajectory
                       ${catkin_LIBRARIES}
 )
 
+
 #############
 ## Install ##
 #############
+
+install(
+    TARGETS ${PROJECT_NAME} 
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+install(
+    DIRECTORY include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 
 #############
