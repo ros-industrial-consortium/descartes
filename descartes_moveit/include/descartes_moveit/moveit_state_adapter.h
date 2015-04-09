@@ -49,8 +49,7 @@ public:
    * @param world_frame work object frame name
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                     const std::string & tool_frame, const std::string & world_frame,
-                     const std::vector<std::pair<unsigned,unsigned> >& joint_pairs);
+                     const std::string & tool_frame, const std::string & world_frame);
 
   virtual ~MoveitStateAdapter()
   {
@@ -71,6 +70,24 @@ public:
   virtual bool isValid(const Eigen::Affine3d &pose) const;
 
   virtual int getDOF() const;
+
+  /**
+   * @brief Set the initial states used for iterative inverse kineamtics
+   * @param seeds Vector of vector of doubles representing joint positions.
+   *              Be sure that it's sized correctly for the DOF.
+   */
+  void setSeedStates(const std::vector<std::vector<double> >& seeds)
+  {
+    seed_states_ = seeds;
+  }
+
+  /**
+   * @brief Retrieves the initial seed states used by iterative inverse kinematic solvers
+   */
+  const std::vector<std::vector<double> >& getSeedStates() const
+  {
+    return seed_states_;
+  }
 
 protected:
 

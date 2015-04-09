@@ -50,15 +50,36 @@ namespace seed
  * @return A vector of seed states
  */
 std::vector<std::vector<double> >
-findSeedStates(moveit::core::RobotStatePtr state,
-                              const std::string& group_name,
-                              const std::string& tool_frame,
-                              const std::vector<std::pair<unsigned, unsigned> >& pairs);
+findSeedStatesByPairs(moveit::core::RobotStatePtr state,
+                      const std::string& group_name,
+                      const std::string& tool_frame,
+                      const std::vector<std::pair<unsigned, unsigned> >& pairs);
 
+/**
+ * @brief findIndustrialSixDOFSeeds() is a specialization of findSeedStatesByPairs()
+ *        that searches for seed states over joints 2,3 and 4,6 (1 indexed). These
+ *        joints often form elbow and wrist configurations.
+ */
+inline std::vector<std::vector<double> >
+findIndustrialSixDOFSeeds(moveit::core::RobotStatePtr state,
+                          const std::string& group_name,
+                          const std::string& tool_frame)
+{
+  return findSeedStatesByPairs(state, group_name, tool_frame, {{1,2}, {3,5}});
+}
+
+/**
+ * @brief Uses moveit's underlying random function to find n random joint configurations
+ *        that satisfy model bounds.
+ * @param state Shared pointer to robot state used to perform FK/IK
+ * @param group_name Name of the move group for which to generate seeds
+ * @param n Number of random seeds to create
+ * @return n random valid positions of 'group_name' in moveit config defined by state
+ */
 std::vector<std::vector<double> >
 findRandomSeeds(moveit::core::RobotStatePtr state,
-                               const std::string& group_name,
-                               unsigned n);
+                const std::string& group_name,
+                unsigned n);
 
 } // end namespace seed
 } // end namespace descartes_moveit

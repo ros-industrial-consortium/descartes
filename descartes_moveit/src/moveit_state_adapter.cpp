@@ -33,16 +33,16 @@ MoveitStateAdapter::MoveitStateAdapter()
 {}
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                                       const std::string & tool_frame, const std::string & world_frame,
-                                       const std::vector<std::pair<unsigned, unsigned> >& joint_pairs) :
+                                       const std::string & tool_frame, const std::string & world_frame) :
   robot_state_(new moveit::core::RobotState(robot_state)),
   group_name_(group_name),
   tool_frame_(tool_frame),
   world_frame_(world_frame),
   world_to_root_(Eigen::Affine3d::Identity())
 {
-  // Calculate seed states given a set of joint pairs
-  seed_states_ = seed::findSeedStates(robot_state_, group_name, tool_frame, joint_pairs);
+
+  ROS_INFO_STREAM("Generated random seeds");
+  seed_states_ = seed::findRandomSeeds(robot_state_, group_name_, SAMPLE_ITERATIONS);
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
@@ -88,12 +88,10 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
 
-  // Generate seeds for the IK solver. If they were provided through another means ( !seeds.empty() ) then
-  // we ignore this step
   if (seed_states_.empty())
   {
     ROS_INFO_STREAM("Generated random seeds");
-    seed_states_ = seed::findRandomSeeds(robot_state_, group_name, SAMPLE_ITERATIONS);
+    seed_states_ = seed::findRandomSeeds(robot_state_, group_name_, SAMPLE_ITERATIONS);
   }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);

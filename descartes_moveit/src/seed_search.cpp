@@ -10,7 +10,6 @@ typedef std::vector<JointPair> JointPairVec;
 typedef std::vector<double> JointConfig;
 typedef std::vector<JointConfig> JointConfigVec;
 
-
 /**
  * @brief Forward kinematics helper
  */
@@ -62,18 +61,18 @@ bool doIK(moveit::core::RobotState& state,
 }
 
 /**
- * @brief Returns true if the determinant of the jacobian is not zero.
- *        Returns false if it is close to zero (and robot is near singularity)
+ * @brief Returns true if the determinant of the jacobian is near zero.
  */
 bool isSingularity(moveit::core::RobotState& state,
                    const moveit::core::JointModelGroup* group)
 {
+ const static double MIN_DETERMINANT_VALUE = 0.0001;
  Eigen::Vector3d reference_point_position(0.0, 0.0, 0.0);
  Eigen::MatrixXd jacobian;
  state.getJacobian(group, state.getLinkModel(group->getLinkModelNames().back()),
                    reference_point_position, jacobian);
 
- return std::abs(jacobian.determinant()) > 0.0001;
+ return std::abs(jacobian.determinant()) < MIN_DETERMINANT_VALUE;
 }
 
 // Compares the first n_compare bijection joint values from a and b and tests
@@ -99,6 +98,7 @@ inline bool isInJointSet(const JointConfig& c, const JointConfigVec& set, const 
 std::vector<double> createValidJointPositions(const moveit::core::JointModel& model,
                                               double increment)
 {
+  // Should never be called with fixed joint
   const moveit::core::JointModel::Bounds& bounds = model.getVariableBounds();
   double min = bounds[0].min_position_;
   double max = bounds[0].max_position_;
@@ -128,10 +128,6 @@ std::vector<double> createSeedFromPerms(const std::vector<double>& initial,
   return seed;
 }
 
-/**
- * @brief Returns possible seed states generated from permuting the given pair of joints
- *        (using joint numbering starting at 0)
- */
 JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
                                      const std::string& group_name,
                                      const std::string& tool_frame,
@@ -145,8 +141,8 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
   // check each joint to see if it is revolute
   for (const JointModel* model : active_joints)
   {
-      if (model->getType() != JointModel::REVOLUTE)
-          ROS_WARN_STREAM("Joint '" << model->getName() << "' does not appear to be revolute");
+    if (model->getType() != JointModel::REVOLUTE)
+      ROS_WARN_STREAM("Joint '" << model->getName() << "' does not appear to be revolute");
   }
 
   // compute random starting values for all joints
@@ -180,7 +176,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
     }
 
     // Check to make sure we're not in a singularity
-    if (!isSingularity(*state, group))
+    if (isSingularity(*state, group))
     {
       ROS_DEBUG_STREAM("Pose " << i << " at singularity.");
       continue;
@@ -253,10 +249,10 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
   return result;
 }
 
-JointConfigVec seed::findSeedStates(moveit::core::RobotStatePtr state,
-                                    const std::string& group_name,
-                                    const std::string& tool_frame,
-                                    const JointPairVec& pairs)
+JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotStatePtr state,
+                                           const std::string& group_name,
+                                           const std::string& tool_frame,
+                                           const JointPairVec& pairs)
 {
   JointConfigVec result;
   for (const auto& pair : pairs)
