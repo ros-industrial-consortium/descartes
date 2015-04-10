@@ -15,16 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *
- * This file defines methods that can be used to generate seed values for iterative
- * numerical solvers used by Moveit for a generic robot.
+ */
+
+/**
+ * @file seed_search.h
+ * @author Jonathan Meyer
+ * @date April 2015
+ * 
+ * @brief This file defines methods that can be used to generate seed values for iterative
+ *        numerical solvers used by Moveit for a generic robot.
  *
  * Users can call the findSeedStates() function with a robot state object, a
  * particular Moveit move group, and a series of joint pairs. These joint pairs
  * should define arm configurations such as elbow up or elbow down. For many 6 DOF
  * robots, joints 2 & 3 and joints 4 & 6 (starting counting at 1) will form elbow
  * and wrist configurations.
- *
  */
 
 
