@@ -42,7 +42,7 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
 {
 
   ROS_INFO_STREAM("Generated random seeds");
-  seed_states_ = seed::findRandomSeeds(robot_state_, group_name_, SAMPLE_ITERATIONS);
+  seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
@@ -91,7 +91,7 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   if (seed_states_.empty())
   {
     ROS_INFO_STREAM("Generated random seeds");
-    seed_states_ = seed::findRandomSeeds(robot_state_, group_name_, SAMPLE_ITERATIONS);
+    seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
   }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);

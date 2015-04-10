@@ -55,7 +55,7 @@ namespace seed
  * @return A vector of seed states
  */
 std::vector<std::vector<double> >
-findSeedStatesByPairs(moveit::core::RobotStatePtr state,
+findSeedStatesByPairs(moveit::core::RobotState& state,
                       const std::string& group_name,
                       const std::string& tool_frame,
                       const std::vector<std::pair<unsigned, unsigned> >& pairs);
@@ -66,7 +66,7 @@ findSeedStatesByPairs(moveit::core::RobotStatePtr state,
  *        joints often form elbow and wrist configurations.
  */
 inline std::vector<std::vector<double> >
-findIndustrialSixDOFSeeds(moveit::core::RobotStatePtr state,
+findIndustrialSixDOFSeeds(moveit::core::RobotState& state,
                           const std::string& group_name,
                           const std::string& tool_frame)
 {
@@ -82,7 +82,7 @@ findIndustrialSixDOFSeeds(moveit::core::RobotStatePtr state,
  * @return n random valid positions of 'group_name' in moveit config defined by state
  */
 std::vector<std::vector<double> >
-findRandomSeeds(moveit::core::RobotStatePtr state,
+findRandomSeeds(moveit::core::RobotState& state,
                 const std::string& group_name,
                 unsigned n);
 

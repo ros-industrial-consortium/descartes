@@ -128,14 +128,14 @@ std::vector<double> createSeedFromPerms(const std::vector<double>& initial,
   return seed;
 }
 
-JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
+JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state,
                                      const std::string& group_name,
                                      const std::string& tool_frame,
                                      const JointPair& pair)
 {
   using namespace moveit::core;
   
-  const JointModelGroup* group = state->getJointModelGroup(group_name);
+  const JointModelGroup* group = state.getJointModelGroup(group_name);
   const std::vector<const JointModel*> active_joints = group->getActiveJointModels();
 
   // check each joint to see if it is revolute
@@ -146,9 +146,9 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
   }
 
   // compute random starting values for all joints
-  state->setToRandomPositions();
+  state.setToRandomPositions();
   JointConfig init_state;
-  state->copyJointGroupPositions(group, init_state);
+  state.copyJointGroupPositions(group, init_state);
 
   // Precompute the valid positions for the two joints we'll iterate over
   std::vector<double> joint1_perms = createValidJointPositions(*active_joints[pair.first], M_PI_2);
@@ -169,14 +169,14 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
 
     // Forward kinematics
     Eigen::Affine3d target_pose;
-    if (!doFK(*state, group, tool_frame, round_ik, target_pose))
+    if (!doFK(state, group, tool_frame, round_ik, target_pose))
     {
       ROS_DEBUG_STREAM("No FK for pose " << i);
       continue;
     }
 
     // Check to make sure we're not in a singularity
-    if (isSingularity(*state, group))
+    if (isSingularity(state, group))
     {
       ROS_DEBUG_STREAM("Pose " << i << " at singularity.");
       continue;
@@ -194,7 +194,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
                                              joint2_perms, pair.second, idx);
       JointConfig ik;
       // perform ik
-      if (!doIK(*state, group, group_name, tool_frame, target_pose, seed, ik))
+      if (!doIK(state, group, group_name, tool_frame, target_pose, seed, ik))
       {
         continue;
       }
@@ -218,7 +218,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
       JointConfig seed = createSeedFromPerms(init_state, joint1_perms, pair.first,
                                              joint2_perms, pair.second, j);
       JointConfig ik;
-      if (!doIK(*state, group, group_name, tool_frame, target_pose, seed, ik))
+      if (!doIK(state, group, group_name, tool_frame, target_pose, seed, ik))
       {
         continue;
       }
@@ -249,7 +249,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotStatePtr state,
   return result;
 }
 
-JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotStatePtr state,
+JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotState& state,
                                            const std::string& group_name,
                                            const std::string& tool_frame,
                                            const JointPairVec& pairs)
@@ -263,20 +263,20 @@ JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotStatePtr state,
   return result;
 }
 
-JointConfigVec seed::findRandomSeeds(moveit::core::RobotStatePtr state,
+JointConfigVec seed::findRandomSeeds(moveit::core::RobotState& state,
                                      const std::string& group_name,
                                      unsigned n)
 {
-  auto group = state->getJointModelGroup(group_name);
+  auto group = state.getJointModelGroup(group_name);
 
   JointConfigVec result;
   
   for (unsigned i = 0; i < n; ++i)
   {
-    state->setToRandomPositions();
+    state.setToRandomPositions();
 
     JointConfig c;
-    state->copyJointGroupPositions(group, c);
+    state.copyJointGroupPositions(group, c);
     
     result.push_back(c);
   }

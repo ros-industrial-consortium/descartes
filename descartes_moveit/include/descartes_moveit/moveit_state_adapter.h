@@ -89,6 +89,14 @@ public:
     return seed_states_;
   }
 
+  /**
+   * @brief Returns the underlying moveit state object so it can be used to generate seeds
+   */
+  moveit::core::RobotStatePtr getState()
+  {
+    return robot_state_;
+  }
+
 protected:
 
   /**
