@@ -16,26 +16,25 @@
  * limitations under the License.
  */
 
-#include "descartes_trajectory_test/cartesian_robot.h"
-#include "descartes_trajectory_test/robot_model_test.hpp"
+#ifndef THREE_DOF_ROBOT_H_
+#define THREE_DOF_ROBOT_H_
 
-
-using namespace descartes_core;
-
-using testing::Types;
+#include "descartes_core/robot_model.h"
 
 namespace descartes_trajectory_test
-{
+{	
+	/**@brief ThreeDOFRobot is used for test purposes. 
+	*/
+	class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
+	{
+		public:
+		  ThreeDOFRobot(): 
+		  	descartes_trajectory_test::CartesianRobot(0,0,3);
 
-template <>
-RobotModelPtr CreateRobotModel<CartesianRobot>()
-{
-  return RobotModelPtr(new CartesianRobot());
-}
+		  virtual ~ThreeDOFRobot();
+	};
 
-template<class T>
-class CartesianRobotModelTest : public descartes_trajectory_test::RobotModelTest<T>{};
+};
 
-INSTANTIATE_TYPED_TEST_CASE_P(CartesianRobotModelTest, RobotModelTest, CartesianRobot);
 
-} //descartes_trajectory_test
+#endif // THREE_DOF_ROBOT_H_
