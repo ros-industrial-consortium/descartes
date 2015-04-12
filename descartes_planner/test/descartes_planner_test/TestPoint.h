@@ -19,6 +19,7 @@
 #ifndef TestPoint_H
 #define TestPoint_H
 
+#include "descartes_core/robot_model.h"
 #include <descartes_trajectory/cart_trajectory_pt.h>
 
 namespace descartes_trajectory

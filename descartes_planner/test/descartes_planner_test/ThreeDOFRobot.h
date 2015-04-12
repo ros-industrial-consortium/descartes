@@ -20,6 +20,7 @@
 #define THREE_DOF_ROBOT_H_
 
 #include "descartes_core/robot_model.h"
+#include <descartes_trajectory_test/cartesian_robot.h>
 
 namespace descartes_trajectory_test
 {	

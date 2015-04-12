@@ -21,6 +21,7 @@
 
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_core/robot_model.h"
+#include <descartes_core/path_planner_base.h>
 #include "ros/console.h"
 #include <gtest/gtest.h>
 
@@ -55,7 +56,7 @@ public:
     ROS_INFO("Desctructing DescartesPlannerTest fixture(base) (parameterized)");
   }
 
-  descartes_core::RobotModelPtr planner_;
+  descartes_core::PathPlannerBase planner_;
 };
 
 using namespace descartes_core;
