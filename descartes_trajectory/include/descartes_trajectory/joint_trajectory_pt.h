@@ -161,6 +161,11 @@ public:
    */
   virtual bool setDiscretization(const std::vector<double> &discretization);
 
+  virtual descartes_core::TrajectoryPtPtr copy() const
+  {
+    return descartes_core::TrajectoryPtPtr(new JointTrajectoryPt(*this));
+  }
+
 inline
   void setJoints(const std::vector<TolerancedJointValue> &joints)
   {
