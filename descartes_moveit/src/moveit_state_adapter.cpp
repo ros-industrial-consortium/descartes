@@ -90,8 +90,8 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
 
   if (seed_states_.empty())
   {
-    ROS_INFO_STREAM("Generated random seeds");
     seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
+    ROS_INFO_STREAM("Generated "<<seed_states_.size()<< " random seeds");
   }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
@@ -145,9 +145,9 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d &pose, std::vector<double> 
                               tool_frame_))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
-    if(isInCollision(joint_pose))
+    if(!isValid(joint_pose))
     {
-      ROS_ERROR_STREAM("Robot is in collision for this pose of the tool '"<<tool_frame_<<"'");
+      ROS_DEBUG_STREAM("Robot joint pose is invalid");
     }
     else
     {
