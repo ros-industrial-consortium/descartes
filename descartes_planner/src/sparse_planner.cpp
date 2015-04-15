@@ -761,13 +761,13 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
 
           // look up previous points joint solution
           const JointTrajectoryPt& last_joint_pt = joint_points_map_.at(cart_points_[pos-1]->getID());
-          std::vector<double> sol;
-          last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, sol);
+          std::vector<double> last_joint_pose;
+          last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, last_joint_pose);
           // look up dt
-          double dt = timing_cache_[pos].upper_;
+          double dt = timing_cache_[pos].upper;
           // check validity of joint motion
 
-          if (!robot_model->isValidMove(sol, aprox_interp, dt))
+          if (!robot_model->isValidMove(last_joint_pose, aprox_interp, dt))
           {
             ROS_WARN_STREAM("Joint velocity checking failed for point " << pos << ". Replanning.");
             return static_cast<int>(InterpolationResult::REPLAN);

@@ -31,7 +31,7 @@ namespace descartes_core
    * @brief A window of time for this point to be achieved relative to a previous point or 
    *        the starting position.
    *
-   * This struct defines a lower_ and upper_ bound for the desired time. If the upper bound
+   * This struct defines a 'lower' and 'upper' bound for the desired time. If the upper bound
    * is zero or negative, it is considered unspecified and the behavior of your planner
    * or filter is considered undefined.
    *
@@ -43,8 +43,8 @@ namespace descartes_core
      * @brief The default constructor creates an unspecified point
      */
     TimingConstraint()
-      : lower_(0.0)
-      , upper_(0.0)
+      : lower(0.0)
+      , upper(0.0)
     {}
 
     /**
@@ -52,8 +52,8 @@ namespace descartes_core
      * @param nominal The desired time in seconds to achieve this point from the previous
      */
     explicit TimingConstraint(double nominal)
-      : lower_(nominal)
-      , upper_(nominal)
+      : lower(nominal)
+      , upper(nominal)
     {}
 
     /**
@@ -62,17 +62,17 @@ namespace descartes_core
      * @param upper The upper bound of the acceptable time window in seconds.
      */
     TimingConstraint(double lower, double upper)
-      : lower_(lower)
-      , upper_(upper)
+      : lower(lower)
+      , upper(upper)
     {}
 
     /**
      * @brief Checks if the given timing constraint has been specified
      * @return true if the point is specified
      */
-    bool isSpecified() const { return upper_ > 0.0; }
+    bool isSpecified() const { return upper > 0.0; }
 
-    double lower_, upper_;
+    double lower, upper;
   };
 
 } // end namespace descartes core

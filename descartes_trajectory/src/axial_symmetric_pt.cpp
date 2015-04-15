@@ -57,7 +57,7 @@ AxialSymmetricPt::AxialSymmetricPt(const descartes_core::TimingConstraint& timin
 AxialSymmetricPt::AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
                                    double orient_increment, FreeAxis axis,
                                    const descartes_core::TimingConstraint& timing) :
-  CartTrajectoryPt(makeUnconstrainedRotation(x, y, z, rx, ry, rz, axis)
+  CartTrajectoryPt(makeUnconstrainedRotation(x, y, z, rx, ry, rz, axis),
                    0.0, // The position discretization
                    orient_increment, // Orientation discretization (starting at -2Pi and marching to 2Pi)
                    timing)

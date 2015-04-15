@@ -30,7 +30,7 @@ using namespace descartes_trajectory;
 bool equal(const descartes_core::TimingConstraint& a,
            const descartes_core::TimingConstraint& b)
 {
-  return std::abs(a.upper_ - b.upper_) < 0.001;
+  return std::abs(a.upper - b.upper) < 0.001;
 }
 
 // Factory methods for trajectory point construction

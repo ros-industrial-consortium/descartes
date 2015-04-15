@@ -675,7 +675,6 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
 
     for (std::list<JointGraph::vertex_descriptor>::iterator end = end_points.begin(); end != end_points.end(); end++)
     {
-      // ROS_INFO("Checking path: S[%d] -> E[%d]", *start, *end);
       // actual weight(cost) from start_id to end_id
       double weight = weights[*end];
 
@@ -1014,7 +1013,7 @@ PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTraject
       // Check to see if time is specified and if so, check to see if the
       // joint motion is possible in the window provided
       if (end.getTiming().isSpecified() &&
-          !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper_))
+          !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper))
       {
         return result;
       }

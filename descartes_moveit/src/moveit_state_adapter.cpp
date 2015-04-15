@@ -370,6 +370,13 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
   std::vector<double> max_joint_deltas;
   max_joint_deltas.reserve(velocity_limits_.size());
 
+  // Check for equal sized arrays
+  if (from_joint_pose.size() != to_joint_pose.size())
+  {
+    ROS_DEBUG_STREAM("To and From joint poses are of different sizes.");
+    return false;
+  }
+
   // Build a vector of the maximum angle delta per joint 
   for (std::vector<double>::const_iterator it = velocity_limits_.begin(); it != velocity_limits_.end(); ++it)
   {
