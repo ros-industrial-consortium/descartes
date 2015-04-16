@@ -21,6 +21,7 @@
 #include "eigen_conversions/eigen_msg.h"
 #include "random_numbers/random_numbers.h"
 #include "descartes_core/pretty_print.hpp"
+#include "descartes_moveit/seed_search.h"
 #include <sstream>
 
 const static int SAMPLE_ITERATIONS = 10;
@@ -28,23 +29,21 @@ const static int SAMPLE_ITERATIONS = 10;
 namespace descartes_moveit
 {
 
-MoveitStateAdapter::MoveitStateAdapter():
-    sample_iterations_(SAMPLE_ITERATIONS)
-{
-
-}
+MoveitStateAdapter::MoveitStateAdapter()
+{}
 
 MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                                     const std::string & tool_frame, const std::string & world_frame,
-                                       const size_t sample_iterations) :
+                                       const std::string & tool_frame, const std::string & world_frame) :
   robot_state_(new moveit::core::RobotState(robot_state)),
   group_name_(group_name),
   tool_frame_(tool_frame),
   world_frame_(world_frame),
-  sample_iterations_(sample_iterations),
   world_to_root_(Eigen::Affine3d::Identity())
 {
-  moveit::core::RobotModelConstPtr robot_model_ = robot_state_->getRobotModel();
+
+  ROS_INFO_STREAM("Generated random seeds");
+  seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
+
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
   {
@@ -88,6 +87,12 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   group_name_ = group_name;
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
+
+  if (seed_states_.empty())
+  {
+    ROS_INFO_STREAM("Generated random seeds");
+    seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
+  }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
@@ -167,9 +172,9 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
       getSearchDiscretization();
   logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
-  for (size_t sample_iter = 0; sample_iter < sample_iterations_; ++sample_iter)
+  for (size_t sample_iter = 0; sample_iter < seed_states_.size(); ++sample_iter)
   {
-    robot_state_->setToRandomPositions();
+    robot_state_->setJointGroupPositions(group_name_, seed_states_[sample_iter]);
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
@@ -207,15 +212,15 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, std::vector<std::
       }
     }
   }
-  logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
+  logDebug("Found %d joint solutions out of %d iterations", joint_poses.size(), seed_states_.size());
   if (joint_poses.empty())
   {
-    logError("Found 0 joint solutions out of %d iterations", sample_iterations_);
+    logError("Found 0 joint solutions out of %d iterations", seed_states_.size());
     return false;
   }
   else
   {
-    logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), sample_iterations_);
+    logInform("Found %d joint solutions out of %d iterations", joint_poses.size(), seed_states_.size());
     return true;
   }
 }
