@@ -109,7 +109,7 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
     if (world_frame_ != robot_state_->getRobotModel()->getModelFrame())
     {
       logWarn("World frame '%s' does not match model root frame '%s', all poses will be transformed to world frame '%s'",
-               world_frame_.c_str(), link_names.front().c_str(),world_frame_.c_str());
+               world_frame_.c_str(), robot_state_->getRobotModel()->getModelFrame().c_str(),world_frame_.c_str());
 
       Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(world_frame_);
       world_to_root_ = descartes_core::Frame(root_to_world.inverse());
@@ -291,7 +291,7 @@ bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
 
     if(isInCollision(joint_pose))
     {
-      ROS_INFO_STREAM("Robot is in collision at this joint pose");
+      ROS_DEBUG_STREAM("Robot is in collision at this joint pose");
       rtn = false;
     }
 
