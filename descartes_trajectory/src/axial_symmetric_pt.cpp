@@ -5,20 +5,7 @@ using descartes_trajectory::TolerancedFrame;
 using descartes_trajectory::AxialSymmetricPt;
 using namespace descartes_core::utils;
 
-static TolerancedFrame makeRotationalAxis(AxialSymmetricPt::FreeAxis axis)
-{
-  using namespace descartes_trajectory;
-
-  Eigen::Affine3d rot = Eigen::Affine3d::Identity();
-  PositionTolerance pos_tol = ToleranceBase::zeroTolerance<PositionTolerance>(0,0,0);
-  OrientationTolerance orient_tol = ToleranceBase::createSymmetric<OrientationTolerance>(0.0, 0.0, 0.0, 
-                                    ((axis == AxialSymmetricPt::X_AXIS) ? 2*M_PI : 0.0),
-                                    ((axis == AxialSymmetricPt::Y_AXIS) ? 2*M_PI : 0.0),
-                                    ((axis == AxialSymmetricPt::Z_AXIS) ? 2*M_PI : 0.0));
-  return TolerancedFrame(rot, pos_tol, orient_tol);
-} 
-
-static TolerancedFrame makeRotationalAxis(double x, double y, double z, double rx, double ry, double rz,
+static TolerancedFrame makeUnconstrainedRotation(double x, double y, double z, double rx, double ry, double rz,
                                           AxialSymmetricPt::FreeAxis axis)
 {
   using namespace descartes_trajectory;
@@ -26,7 +13,7 @@ static TolerancedFrame makeRotationalAxis(double x, double y, double z, double r
   Eigen::Affine3d pose = toFrame(x, y, z, rx, ry, rz, EulerConventions::XYZ);
   PositionTolerance pos_tol = ToleranceBase::zeroTolerance<PositionTolerance>(x,y,z);
   OrientationTolerance orient_tol = ToleranceBase::createSymmetric<OrientationTolerance>(
-      ((axis == AxialSymmetricPt::X_AXIS) ? 0.0 :  rx),
+      ((axis == AxialSymmetricPt::X_AXIS) ? 0.0 : rx),
       ((axis == AxialSymmetricPt::Y_AXIS) ? 0.0 : ry),
       ((axis == AxialSymmetricPt::Z_AXIS) ? 0.0 : rz),
       ((axis == AxialSymmetricPt::X_AXIS) ? 2*M_PI : 0.0),
@@ -35,7 +22,7 @@ static TolerancedFrame makeRotationalAxis(double x, double y, double z, double r
   return TolerancedFrame(pose, pos_tol, orient_tol);
 }
 
-static TolerancedFrame makeRotationalAxis(const Eigen::Affine3d& pose,
+static TolerancedFrame makeUnconstrainedRotation(const Eigen::Affine3d& pose,
                                           AxialSymmetricPt::FreeAxis axis)
 {
   using namespace descartes_trajectory;
@@ -60,21 +47,19 @@ static TolerancedFrame makeRotationalAxis(const Eigen::Affine3d& pose,
 }
 
 
-
-
 namespace descartes_trajectory
 {
 
 AxialSymmetricPt::AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
                                    double orient_increment, FreeAxis axis) :
-  CartTrajectoryPt(makeRotationalAxis(x, y, z, rx, ry, rz,axis),
+  CartTrajectoryPt(makeUnconstrainedRotation(x, y, z, rx, ry, rz,axis),
                    0.0, // The position discretization
                    orient_increment) // Orientation discretization (starting at -2Pi and marching to 2Pi)
 {
 }
 
 AxialSymmetricPt::AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis) :
-  CartTrajectoryPt(makeRotationalAxis(pose,axis),
+  CartTrajectoryPt(makeUnconstrainedRotation(pose,axis),
                    0.0, // The position discretization
                    orient_increment) // Orientation discretization (starting at -2Pi and marching to 2Pi)
 {
