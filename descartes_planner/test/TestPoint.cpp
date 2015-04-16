@@ -19,6 +19,8 @@
 #include <descartes_trajectory/cart_trajectory_pt.h>
 #include "descartes_core/robot_model.h"
 
+using namespace descartes_core;
+
 class TestPoint: public descartes_trajectory::CartTrajectoryPt
 {
 public:
