@@ -19,24 +19,42 @@
 #include "descartes_planner/sparse_planner.h"
 #include "descartes_planner/dense_planner.h"
 #include "descartes_planner/planning_graph.h"
+#include "descartes_planner_test/descartes_planner_test.h"
+// #include <gtest/gtest.h>
 
 using namespace descartes_core;
-
+using namespace descartes_planner;
 using testing::Types;
 
 namespace descartes_planner_test
 {
 
-descartes_planner::SparsePlanner SparsePlanner;
-descartes_planner::DensePlanner DensePlanner;
+// descartes_planner::SparsePlanner SparsePlanner;
+// descartes_planner::DensePlanner DensePlanner;
+
+template<>
+PathPlannerBase CreateDescartesPlanner<SparsePlanner>()
+{
+  return new SparsePlanner;
+};
+
+template<>
+PathPlannerBase CreateDescartesPlanner<DensePlanner>()
+{
+  return new DensePlanner;
+};
 
 template<class T>
 class SparsePlannerTest : public descartes_planner_test::DescartesPlannerTest<T>{};
 
-template<class T>
-class DensePlannerTest : public descartes_planner_test::DescartesPlannerTest<T>{};
+typedef Types<SparsePlanner, DensePlanner>
+    DescartesPlannerImplementations;
 
-INSTANTIATE_TYPED_TEST_CASE_P(SparsePlannerTest, DescartesPlannerTest, SparsePlanner);
-INSTANTIATE_TYPED_TEST_CASE_P(DensePlannerTest, DescartesPlannerTest, DensePlanner);
+
+// template<class T>
+// class DensePlannerTest : public descartes_planner_test::DescartesPlannerTest<T>{};
+
+INSTANTIATE_TYPED_TEST_CASE_P(SparsePlannerTest, DescartesPlannerTest, DescartesPlannerImplementations);
+// INSTANTIATE_TYPED_TEST_CASE_P(DensePlannerTest, DescartesPlannerTest, DensePlanner);
 
 } //descartes_planner_test

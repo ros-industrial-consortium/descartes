@@ -22,20 +22,17 @@
 #include "descartes_core/robot_model.h"
 #include <descartes_trajectory_test/cartesian_robot.h>
 
-namespace descartes_trajectory_test
-{	
-	/**@brief ThreeDOFRobot is used for test purposes. 
-	*/
-	class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
-	{
-		public:
-		  ThreeDOFRobot(): 
-		  	descartes_trajectory_test::CartesianRobot(0,0,3);
+/**@brief ThreeDOFRobot is used for test purposes. 
+*/
+class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
+{
+	public:
+	  ThreeDOFRobot(): 
+	  	descartes_trajectory_test::CartesianRobot(0,0,3){};
 
-		  virtual ~ThreeDOFRobot();
-	};
-
+	  virtual ~ThreeDOFRobot();
 };
+
 
 
 #endif // THREE_DOF_ROBOT_H_

@@ -22,6 +22,8 @@
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_core/robot_model.h"
 #include <descartes_core/path_planner_base.h>
+#include "ThreeDOFRobot.h"
+#include "TestPoint.h"
 #include "ros/console.h"
 #include <gtest/gtest.h>
 
@@ -29,7 +31,7 @@ namespace descartes_planner_test
 {
 
 template <class T>
-descartes_planner CreateDescartesPlanner();
+descartes_core::PathPlannerBase CreateDescartesPlanner();
 
 template <class T>
 class DescartesPlannerTest : public ::testing::Test
@@ -60,6 +62,43 @@ public:
 };
 
 using namespace descartes_core;
+using namespace descartes_trajectory;
+typedef std::vector<descartes_core::TrajectoryPtPtr> Trajectory;
+const int NUM_DENSE_POINTS = 1000;
+Trajectory createTestTrajectory();
+Trajectory TEST_TRAJECTORY = createTestTrajectory();
+
+Trajectory createTestTrajectory()
+{
+  ROS_INFO_STREAM("Creating test trajectory with "<<NUM_DENSE_POINTS<<" points");
+  Trajectory traj;
+  std::vector<std::tuple<double, double>>joint_bounds = {std::make_tuple(0,M_PI),
+                                                         std::make_tuple(-M_PI_2,M_PI_2),
+                                                         std::make_tuple(M_PI/8,M_PI/3)};
+  std::vector<double> deltas;
+  for(auto& e:joint_bounds)
+  {
+    double d = (std::get<1>(e)- std::get<0>(e))/NUM_DENSE_POINTS;
+    deltas.push_back(d);
+  }
+
+  // creating trajectory points
+  std::vector<double> joint_vals(deltas.size(),0);
+  traj.reserve(NUM_DENSE_POINTS);
+  for(int i = 0 ; i < NUM_DENSE_POINTS; i++)
+  {
+    for(int j = 0; j < deltas.size(); j++)
+    {
+      joint_vals[j] = std::get<0>(joint_bounds[j]) + deltas[j]*i;
+    }
+
+    TrajectoryPtPtr tp(new TestPoint(joint_vals));
+    traj.push_back(tp);
+  }
+  return traj;
+}
+
+TYPED_TEST_CASE_P(DescartesPlannerTest);
 
 TYPED_TEST_P(DescartesPlannerTest, initialize)
 {
@@ -92,4 +131,5 @@ TYPED_TEST_P(DescartesPlannerTest, getPath)
 REGISTER_TYPED_TEST_CASE_P(DescartesPlannerTest, initialize, configure, planPath, getPath);
 
 }
+
 #endif // DESCARTES_PLANNER_H
