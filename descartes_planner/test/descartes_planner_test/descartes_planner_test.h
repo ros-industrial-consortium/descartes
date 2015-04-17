@@ -19,19 +19,23 @@
 #ifndef DESCARTES_PLANNER_H
 #define DESCARTES_PLANNER_H
 
+#include <ros/node_handle.h>
+#include <descartes_core/utils.h>
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_core/robot_model.h"
-#include <descartes_core/path_planner_base.h>
+#include "descartes_core/path_planner_base.h"
 #include "ThreeDOFRobot.h"
 #include "TestPoint.h"
 #include "ros/console.h"
 #include <gtest/gtest.h>
+#include <tuple>
+
 
 namespace descartes_planner_test
 {
 
 template <class T>
-descartes_core::PathPlannerBase CreateDescartesPlanner();
+descartes_core::PathPlannerBase* CreateDescartesPlanner();
 
 template <class T>
 class DescartesPlannerTest : public ::testing::Test
@@ -58,7 +62,7 @@ public:
     ROS_INFO("Desctructing DescartesPlannerTest fixture(base) (parameterized)");
   }
 
-  descartes_core::PathPlannerBase planner_;
+  descartes_core::PathPlannerBase* planner_;
 };
 
 using namespace descartes_core;

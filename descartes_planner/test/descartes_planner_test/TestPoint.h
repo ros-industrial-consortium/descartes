@@ -27,8 +27,8 @@ using namespace descartes_core;
 class TestPoint: public descartes_trajectory::CartTrajectoryPt
 {
 public:
-  TestPoint(const std::vector<double>& joints);
-  virtual ~TestPoint();
+  TestPoint(const std::vector<double>& joints){};
+  virtual ~TestPoint(){};
   virtual bool getClosestJointPose(const std::vector<double> &seed_state,
                                      const RobotModel &model,
                                      std::vector<double> &joint_pose) const;
