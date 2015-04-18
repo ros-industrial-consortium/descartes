@@ -24,21 +24,24 @@
 
 using namespace descartes_core;
 
-class TestPoint: public descartes_trajectory::CartTrajectoryPt
+namespace descartes_planner_test
 {
-public:
-  TestPoint(const std::vector<double>& joints){};
-  virtual ~TestPoint(){};
-  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                     const RobotModel &model,
-                                     std::vector<double> &joint_pose) const;
-  virtual void getJointPoses(const RobotModel &model,
-                                       std::vector<std::vector<double> > &joint_poses) const;
+	class TestPoint: public descartes_trajectory::CartTrajectoryPt
+	{
+	public:
+	  TestPoint(const std::vector<double>& joints){};
+	  virtual ~TestPoint(){};
+	  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
+	                                     const RobotModel &model,
+	                                     std::vector<double> &joint_pose) const;
+	  virtual void getJointPoses(const RobotModel &model,
+	                                       std::vector<std::vector<double> > &joint_poses) const;
 
-protected:
+	protected:
 
-  std::vector<double> vals_;
-};
+	  std::vector<double> vals_;
+	};
+}
 
 
 #endif // TestPoint_H

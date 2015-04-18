@@ -78,7 +78,9 @@ install(
 if(CATKIN_ENABLE_TESTING)
 
   set(UTEST_SRC_FILES test/utest.cpp
-      test/planner_test.cpp)
+      test/planner_test.cpp
+      test/TestPoint.cpp
+      test/ThreeDOFRobot.cpp)
   catkin_add_gtest(${PROJECT_NAME}_utest ${UTEST_SRC_FILES})
   target_link_libraries(${PROJECT_NAME}_utest descartes_planner)
 

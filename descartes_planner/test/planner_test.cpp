@@ -41,12 +41,12 @@ PathPlannerBase* CreateDescartesPlanner<DensePlanner>()
   return new DensePlanner;
 };
 
-template<class T>
-class SparsePlannerTest : public descartes_planner_test::DescartesPlannerTest<T>{};
+// template<class T>
+// class SparsePlannerTest : public descartes_planner_test::DescartesPlannerTest<T>{};
 
 typedef Types<SparsePlanner, DensePlanner>
     DescartesPlannerImplementations;
 
-INSTANTIATE_TYPED_TEST_CASE_P(SparsePlannerTest, DescartesPlannerTest, DescartesPlannerImplementations);
+INSTANTIATE_TYPED_TEST_CASE_P(test, DescartesPlannerTest, DescartesPlannerImplementations);
 
 } //descartes_planner_test
