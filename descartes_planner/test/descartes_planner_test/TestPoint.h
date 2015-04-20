@@ -21,6 +21,7 @@
 
 #include "descartes_core/robot_model.h"
 #include <descartes_trajectory/cart_trajectory_pt.h>
+#include <descartes_core/utils.h>
 
 using namespace descartes_core;
 
@@ -29,7 +30,7 @@ namespace descartes_planner_test
 	class TestPoint: public descartes_trajectory::CartTrajectoryPt
 	{
 	public:
-	  TestPoint(const std::vector<double>& joints){};
+	  TestPoint(const std::vector<double>& joints);
 	  virtual ~TestPoint(){};
 	  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
 	                                     const RobotModel &model,

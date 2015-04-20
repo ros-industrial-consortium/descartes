@@ -18,44 +18,34 @@
  
 #include <descartes_trajectory/cart_trajectory_pt.h>
 #include "descartes_core/robot_model.h"
+#include <descartes_core/utils.h>
+#include "descartes_planner_test/TestPoint.h"
 
 using namespace descartes_core;
 
 namespace descartes_planner_test
 { 
-  class TestPoint: public descartes_trajectory::CartTrajectoryPt
+  TestPoint::TestPoint(const std::vector<double>& joints)
   {
-  public:
-    TestPoint(const std::vector<double>& joints)
-    {
-      vals_.resize(joints.size());
-      vals_.assign(joints.begin(),joints.end());
-    }
+    vals_.resize(joints.size());
+    vals_.assign(joints.begin(),joints.end());
+  }
 
-    virtual ~TestPoint()
-    {
+  bool TestPoint::getClosestJointPose(const std::vector<double> &seed_state,
+                                     const RobotModel &model,
+                                     std::vector<double> &joint_pose) const
+  {
+    joint_pose.clear();
+    joint_pose.assign(vals_.begin(),vals_.end());
+    return true;
+  }
 
-    }
+  void TestPoint::getJointPoses(const RobotModel &model,
+                                       std::vector<std::vector<double> > &joint_poses) const
+  {
+    joint_poses.clear();
+    joint_poses.push_back(vals_);
 
-    virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                       const RobotModel &model,
-                                       std::vector<double> &joint_pose) const
-    {
-      joint_pose.clear();
-      joint_pose.assign(vals_.begin(),vals_.end());
-      return true;
-    }
+  }
 
-    virtual void getJointPoses(const RobotModel &model,
-                                         std::vector<std::vector<double> > &joint_poses) const
-    {
-      joint_poses.clear();
-      joint_poses.push_back(vals_);
-
-    }
-
-  protected:
-
-    std::vector<double> vals_;
-  };
 }//descartes_planner_test
