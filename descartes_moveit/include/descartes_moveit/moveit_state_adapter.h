@@ -49,8 +49,7 @@ public:
    * @param world_frame work object frame name
    */
   MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                    const std::string & tool_frame, const std::string & world_frame,
-                     size_t sample_iterations = 10);
+                     const std::string & tool_frame, const std::string & world_frame);
 
   virtual ~MoveitStateAdapter()
   {
@@ -71,6 +70,32 @@ public:
   virtual bool isValid(const Eigen::Affine3d &pose) const;
 
   virtual int getDOF() const;
+
+  /**
+   * @brief Set the initial states used for iterative inverse kineamtics
+   * @param seeds Vector of vector of doubles representing joint positions.
+   *              Be sure that it's sized correctly for the DOF.
+   */
+  void setSeedStates(const std::vector<std::vector<double> >& seeds)
+  {
+    seed_states_ = seeds;
+  }
+
+  /**
+   * @brief Retrieves the initial seed states used by iterative inverse kinematic solvers
+   */
+  const std::vector<std::vector<double> >& getSeedStates() const
+  {
+    return seed_states_;
+  }
+
+  /**
+   * @brief Returns the underlying moveit state object so it can be used to generate seeds
+   */
+  moveit::core::RobotStatePtr getState()
+  {
+    return robot_state_;
+  }
 
 protected:
 
@@ -100,6 +125,11 @@ protected:
   robot_model::RobotModelConstPtr robot_model_ptr_;
 
   /**
+   * @brief Vector of starting configurations for the numerical solver
+   */
+  std::vector<std::vector<double> > seed_states_;
+
+  /**
    * @brief Planning group name
    */
   std::string group_name_;
@@ -118,11 +148,6 @@ protected:
    * @brief convenient transformation frame
    */
   descartes_core::Frame world_to_root_;
-
-  /**
-   * @brief Joint solution sample iterations for returning "all" joints
-   */
-  size_t sample_iterations_;
 
 };
 
