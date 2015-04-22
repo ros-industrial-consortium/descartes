@@ -357,7 +357,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
         return false;
       }
 
-      return false;
+      return true;
     }
   }
   else
