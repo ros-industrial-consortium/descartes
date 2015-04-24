@@ -61,7 +61,7 @@ public:
    * @param rx rotation about x axis of nominal pose
    * @param ry rotation about y axis of nominal pose
    * @param rz rotation about z axis of nominal pose
-   * @param orient_increment (in radians, discretization of space [-2Pi, 2Pi])
+   * @param orient_increment (in radians, discretization of space [-Pi, Pi])
    * @param axis The free-axis of the nominal pose of the tool
    */
   AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,

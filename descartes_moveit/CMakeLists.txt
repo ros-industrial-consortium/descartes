@@ -45,6 +45,7 @@ include_directories(include
 add_library(descartes_moveit
             src/moveit_state_adapter.cpp
             src/plugin_init.cpp
+            src/seed_search.cpp
 )
 target_link_libraries(descartes_moveit
                       ${catkin_LIBRARIES}
