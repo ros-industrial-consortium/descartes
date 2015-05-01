@@ -2,6 +2,10 @@
 Changelog for package descartes_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* No changes
+
 0.0.2 (2015-04-09)
 ------------------
 * Added install to CMakeLists.txt

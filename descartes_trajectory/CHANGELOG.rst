@@ -2,6 +2,11 @@
 Changelog for package descartes_trajectory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Initializes the wobj_pt tolerance frame member with a fully defined nominal pose
+* Contributors: Shaun Edwards, jrgnicho
+
 0.0.2 (2015-04-09)
 ------------------
 * Created two new base class methods for trajectory points: clone and copy that preserve the prior semantics while making sure that the underlying data type is copied correctly
