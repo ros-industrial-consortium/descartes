@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>descartes_moveit</name>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
   <description>Moveit wrapper functions for descartes base types</description>
 
   <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>

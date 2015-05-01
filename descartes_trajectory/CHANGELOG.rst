@@ -2,8 +2,8 @@
 Changelog for package descartes_trajectory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2015-05-01)
+------------------
 * Initializes the wobj_pt tolerance frame member with a fully defined nominal pose
 * Contributors: Shaun Edwards, jrgnicho
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>descartes_core</name>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
   <description>The descartes_core package creates joint trajectories for trajectory plans. Trajectory plans are typically underdefined paths through space that allow for kinematic/dynamic tolerances, such as unspecified tool roll.</description>
 
   <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
