@@ -28,6 +28,7 @@ const static int SAMPLE_ITERATIONS = 10;
 
 namespace
 {
+
 bool getJointVelocityLimits(const moveit::core::RobotState& state,
                             const std::string& group_name,
                             std::vector<double>& output)
@@ -40,9 +41,10 @@ bool getJointVelocityLimits(const moveit::core::RobotState& state,
     const auto& bounds = model->getVariableBounds();
     // Check to see if there is a single bounds constraint (more might indicate
     // not revolute joint)
-    if (bounds.size() != 1)
+    if (model->getType() != moveit::core::JointModel::REVOLUTE &&
+        model->getType() != moveit::core::JointModel::PRISMATIC)
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << " Unexpected joint bounds array size (did not equal 1)");
+      ROS_ERROR_STREAM(__FUNCTION__ << " Unexpected joint type. Currently works only with single axis prismatic or revolute joints.");
       return false;
     }
     else
@@ -373,7 +375,7 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
   // Check for equal sized arrays
   if (from_joint_pose.size() != to_joint_pose.size())
   {
-    ROS_DEBUG_STREAM("To and From joint poses are of different sizes.");
+    ROS_ERROR_STREAM("To and From joint poses are of different sizes.");
     return false;
   }
 
