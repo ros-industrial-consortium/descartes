@@ -25,6 +25,8 @@
 #ifndef TRAJECTORY_TIMING_CONSTRAINT_H
 #define TRAJECTORY_TIMING_CONSTRAINT_H
 
+#include <ros/assert.h>
+
 namespace descartes_core
 {
   /**
@@ -64,7 +66,9 @@ namespace descartes_core
     TimingConstraint(double lower, double upper)
       : lower(lower)
       , upper(upper)
-    {}
+    {
+      ROS_ASSERT(lower >= 0.0 && upper >= 0.0);
+    }
 
     /**
      * @brief Checks if the given timing constraint has been specified
