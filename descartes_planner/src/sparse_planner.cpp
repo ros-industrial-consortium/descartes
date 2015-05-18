@@ -151,7 +151,7 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
 
   // Save the timing information
   timing_cache_ = extractTiming(traj);
-  // Unconstrian the times for the sparse sampling
+  // Unconstrain the times for the sparse sampling
   for (std::size_t i = 0; i < traj.size(); ++i)
   {
     traj[i]->setTiming(descartes_core::TimingConstraint()); // default timing is (0,0)
@@ -169,7 +169,7 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
     int interp_count = cart_points_.size()  - sparse_solution_array_.size();
     ROS_INFO("Sparse planner succeeded with %i planned point and %i interpolated points in %f seconds",planned_count,interp_count,
              (ros::Time::now() - start_time).toSec());
-    error_code_ == descartes_core::PlannerError::OK;
+    error_code_ = descartes_core::PlannerError::OK;
   }
   else
   {
