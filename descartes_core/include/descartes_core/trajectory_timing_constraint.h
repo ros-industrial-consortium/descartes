@@ -25,7 +25,7 @@
 #ifndef TRAJECTORY_TIMING_CONSTRAINT_H
 #define TRAJECTORY_TIMING_CONSTRAINT_H
 
-#include <ros/assert.h>
+#include <ros/console.h>
 
 namespace descartes_core
 {
@@ -56,7 +56,14 @@ namespace descartes_core
     explicit TimingConstraint(double nominal)
       : lower(nominal)
       , upper(nominal)
-    {}
+    {
+      if (nominal < 0.0)
+      {
+        ROS_WARN_STREAM("Nominal time value must be greater than or equal to 0.0");
+        lower = 0.0;
+        upper = 0.0;
+      }
+    }
 
     /**
      * @brief Constructs a timing constraint using the provided time window
@@ -67,7 +74,17 @@ namespace descartes_core
       : lower(lower)
       , upper(upper)
     {
-      ROS_ASSERT(lower >= 0.0 && upper >= 0.0);
+      if (lower < 0.0)
+      {
+        ROS_WARN_STREAM("Lower time value must be greater than or equal to 0.0");
+        lower = 0.0;
+      }
+
+      if (upper < 0.0)
+      {
+        ROS_WARN_STREAM("Upper time value must be greater than or equal to 0.0");
+        upper = 0.0;
+      }
     }
 
     /**
