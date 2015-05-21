@@ -29,12 +29,10 @@
 #include <Eigen/Geometry>
 #include <eigen_stl_containers/eigen_stl_vector_container.h>
 #include <vector>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include "descartes_core/robot_model.h"
-#include "descartes_core/trajectory_pt_transition.h"
-#include "descartes_core/trajectory_id.h"
 
+#include "descartes_core/robot_model.h"
+#include "descartes_core/trajectory_id.h"
+#include "descartes_core/trajectory_timing_constraint.h"
 
 namespace descartes_core
 {
@@ -73,7 +71,12 @@ class TrajectoryPt
 {
 public:
   typedef TrajectoryID ID;
-  TrajectoryPt() : id_(TrajectoryID::make_id()) {}
+
+  TrajectoryPt(const TimingConstraint& timing) 
+    : id_(TrajectoryID::make_id())
+    , timing_(timing)
+  {}
+  
   virtual ~TrajectoryPt() {}
 
   /**@name Getters for Cartesian pose(s)
@@ -188,9 +191,19 @@ public:
     return cp;
   }
 
+  const TimingConstraint& getTiming() const
+  {
+    return timing_;
+  }
+
+  void setTiming(const TimingConstraint& timing)
+  {
+    timing_ = timing;
+  }
+
 protected:
-  ID                            id_;                    /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
-  TrajectoryPtTransitionPtr     transition_;            /**<@brief Velocities at, and interpolation method to reach this point **/
+  ID                    id_;      /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
+  TimingConstraint      timing_;  /**<@brief Information specifying acceptable timing from this point to the next. */
 
 };
 

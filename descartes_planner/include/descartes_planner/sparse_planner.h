@@ -95,6 +95,7 @@ protected:
   std::vector<descartes_core::TrajectoryPtPtr> cart_points_;
   SolutionArray sparse_solution_array_;
   std::map<descartes_core::TrajectoryPt::ID,descartes_trajectory::JointTrajectoryPt> joint_points_map_;
+  std::vector<descartes_core::TimingConstraint> timing_cache_;
 
 
 };

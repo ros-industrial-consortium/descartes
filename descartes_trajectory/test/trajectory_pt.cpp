@@ -26,6 +26,13 @@
 using namespace descartes_core;
 using namespace descartes_trajectory;
 
+// Helper function for testing timing data
+bool equal(const descartes_core::TimingConstraint& a,
+           const descartes_core::TimingConstraint& b)
+{
+  return std::abs(a.upper - b.upper) < 0.001;
+}
+
 // Factory methods for trajectory point construction
 template <class T>
 TrajectoryPt* CreateTrajectoryPt();
@@ -58,6 +65,8 @@ class TrajectoryPtTest : public testing::Test {
     , lhs_copy_(CreateTrajectoryPt<T>())
     , lhs_clone_(CreateTrajectoryPt<T>())
   {
+    lhs_->setTiming(descartes_core::TimingConstraint(10.0));
+    
     lhs_copy_ = lhs_->copy();
     lhs_clone_ = lhs_->clone();
     lhs_same_ = lhs_;
@@ -104,4 +113,9 @@ TYPED_TEST(TrajectoryPtTest, construction) {
   //Pointers to the same objects should be identical (like a copy, but no ambiguity)
   //EXPECT_EQ(*(this->lhs_), *(this->lhs_same_));
   EXPECT_EQ(this->lhs_->getID(), this->lhs_same_->getID());
+
+  // Copied and cloned points should have the same timing information
+  EXPECT_TRUE(equal(this->lhs_->getTiming(), this->lhs_copy_->getTiming()));
+  EXPECT_TRUE(equal(this->lhs_->getTiming(), this->lhs_clone_->getTiming()));
+  EXPECT_FALSE(equal(this->lhs_->getTiming(), this->rhs_->getTiming()));
 }

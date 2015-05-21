@@ -88,10 +88,10 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;      //TODO is this needed when Frame already has it?
 public:
   /**
-    @brief Default joint trajectory point constructor.  All frames initialized to Identity, joint
+    @brief All frames initialized to Identity, joint
     values left empty
     */
-  JointTrajectoryPt();
+  JointTrajectoryPt(const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   /**
     @brief Full joint trajectory point constructor
@@ -99,21 +99,25 @@ public:
     @param tool Transform from robot wrist to active tool pt.
     @param wobj Transform from world to active workobject pt.
     */
-  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, const descartes_core::Frame &tool, const descartes_core::Frame &wobj);
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, const descartes_core::Frame &tool, 
+                    const descartes_core::Frame &wobj, 
+                    const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
 
   /**
     @brief Full joint trajectory point constructor
     @param joints Fixed joint position with tolerance
     */
-  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints);
+  JointTrajectoryPt(const std::vector<TolerancedJointValue> &joints, 
+                    const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
 
   /**
     @brief Full joint trajectory point constructor
     @param joints Fixed joint position
     */
-  JointTrajectoryPt(const std::vector<double> &joints);
+  JointTrajectoryPt(const std::vector<double> &joints, 
+                    const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   virtual ~JointTrajectoryPt() {};
 

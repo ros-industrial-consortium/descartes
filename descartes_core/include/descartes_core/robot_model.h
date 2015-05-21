@@ -100,8 +100,7 @@ public:
    * a fixed location relative to the last link in 'group_name'.
    */
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
-                          const std::string& world_frame,const std::string& tcp_frame) = 0;
-
+                          const std::string& world_frame, const std::string& tcp_frame) = 0;
 
   /**
    * @brief Enables collision checks
@@ -121,6 +120,16 @@ public:
     return check_collisions_;
   }
 
+  /**
+   * @brief Performs necessary checks to see if the robot is capable of moving from the initial joint pose
+   *        to the final pose in dt seconds
+   * @param  from_joint_pose [description]
+   * @param  to_joint_pose   [description]
+   * @param  dt              [description]
+   * @return                 [description]
+   */
+  virtual bool isValidMove(const std::vector<double>& from_joint_pose, const std::vector<double>& to_joint_pose,
+                           double dt) const = 0;
 
 protected:
 

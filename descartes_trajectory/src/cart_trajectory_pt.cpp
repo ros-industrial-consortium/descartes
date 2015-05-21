@@ -130,6 +130,7 @@ namespace descartes_trajectory
   return rtn;
 }
 
+
 double distance(const std::vector<double>& j1, const std::vector<double>& j2)
 {
  double rt = 0;
@@ -151,7 +152,8 @@ double distance(const std::vector<double>& j1, const std::vector<double>& j2)
  return std::sqrt(rt);
 }
 
-CartTrajectoryPt::CartTrajectoryPt():
+CartTrajectoryPt::CartTrajectoryPt(const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing),
   tool_base_(Eigen::Affine3d::Identity()),
   tool_pt_(Eigen::Affine3d::Identity()),
   wobj_base_(Eigen::Affine3d::Identity()),
@@ -161,7 +163,9 @@ CartTrajectoryPt::CartTrajectoryPt():
 {}
 
 CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame &wobj_pt, const Frame &tool,
-                 const TolerancedFrame &tool_pt, double pos_increment, double orient_increment):
+                 const TolerancedFrame &tool_pt, double pos_increment, double orient_increment,
+                 const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing),
   tool_base_(tool),
   tool_pt_(tool_pt),
   wobj_base_(wobj_base),
@@ -172,7 +176,8 @@ CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame
 
 
 CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_increment,
-                                   double orient_increment):
+                                   double orient_increment, const descartes_core::TimingConstraint& timing)
+  : descartes_core::TrajectoryPt(timing),
   tool_base_(Eigen::Affine3d::Identity()),
   tool_pt_(Eigen::Affine3d::Identity()),
   wobj_base_(Eigen::Affine3d::Identity()),
@@ -182,7 +187,8 @@ CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_in
 {}
 
 
-CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt):
+CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt, const descartes_core::TimingConstraint& timing)
+: descartes_core::TrajectoryPt(timing),
 tool_base_(Eigen::Affine3d::Identity()),
 tool_pt_(Eigen::Affine3d::Identity()),
 wobj_base_(Eigen::Affine3d::Identity()),
