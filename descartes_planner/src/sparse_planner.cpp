@@ -767,9 +767,11 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
           double dt = timing_cache_[pos].upper;
           // check validity of joint motion
 
-          if (!robot_model->isValidMove(last_joint_pose, aprox_interp, dt))
+          if (dt > 0.0 && !robot_model->isValidMove(last_joint_pose, aprox_interp, dt))
           {
             ROS_WARN_STREAM("Joint velocity checking failed for point " << pos << ". Replanning.");
+            sparse_index = k;
+            point_pos = pos;
             return static_cast<int>(InterpolationResult::REPLAN);
           }
 
