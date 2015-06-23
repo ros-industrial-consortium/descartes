@@ -129,8 +129,8 @@ bool JointTrajectoryPt::isValid(const RobotModel &model) const
   std::vector<double> upper(joint_position_.size());
   for (size_t ii = 0; ii < joint_position_.size(); ++ii)
   {
-    lower[ii] = joint_position_[ii].tolerance.lower;
-    upper[ii] = joint_position_[ii].tolerance.upper;
+    lower[ii] = joint_position_[ii].nominal + joint_position_[ii].tolerance.lower;
+    upper[ii] =  joint_position_[ii].nominal + joint_position_[ii].tolerance.upper;
   }
 return model.isValid(lower) && model.isValid(upper);
 }
