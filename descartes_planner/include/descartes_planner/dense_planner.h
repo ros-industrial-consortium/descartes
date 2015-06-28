@@ -25,7 +25,7 @@ public:
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
-  virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const;
+  virtual bool getPath(std::vector<descartes_trajectory::JointTrajectoryPtPtr>& path) const;
   virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
   virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
   virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id);
@@ -45,7 +45,7 @@ protected:
   boost::shared_ptr<descartes_planner::PlanningGraph> planning_graph_;
   int error_code_;
   descartes_core::PlannerConfig config_;
-  std::vector<descartes_core::TrajectoryPtPtr> path_;
+  std::vector<descartes_trajectory::JointTrajectoryPtPtr> path_;
   std::map<int,std::string> error_map_;
 
 };

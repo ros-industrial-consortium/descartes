@@ -130,7 +130,7 @@ bool DensePlanner::updatePath()
       path_.resize(list.size());
       for(auto p : list)
       {
-        path_[counter] = descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(p));
+        path_[counter] = descartes_trajectory::JointTrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(p)); // descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(p));
         path_[counter]->setID(traj[counter]->getID());
         counter++;
       }
@@ -213,7 +213,7 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
   return descartes_core::PlannerError::OK == error_code_;
 }
 
-bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
+bool DensePlanner::getPath(std::vector<descartes_trajectory::JointTrajectoryPtPtr>& path) const
 {
   if (path_.empty()) return false;
   

@@ -542,7 +542,7 @@ bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, J
   return true;
 }
 
-bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
+bool SparsePlanner::getPath(std::vector<descartes_trajectory::JointTrajectoryPtPtr>& path) const
 {
   if(cart_points_.empty() || joint_points_map_.empty())
   {
@@ -554,7 +554,7 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
   {
     TrajectoryPtPtr p = cart_points_[i];
     const JointTrajectoryPt& j = joint_points_map_.at(p->getID());
-    TrajectoryPtPtr new_pt = TrajectoryPtPtr(new JointTrajectoryPt(j));
+    descartes_trajectory::JointTrajectoryPtPtr new_pt = descartes_trajectory::JointTrajectoryPtPtr(new JointTrajectoryPt(j));
     new_pt->setTiming(timing_cache_[i]);
     path[i] = new_pt;
   }

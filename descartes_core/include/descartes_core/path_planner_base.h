@@ -8,7 +8,7 @@
 #ifndef DESCARTES_CORE_PATH_PLANNER_BASE_H_
 #define DESCARTES_CORE_PATH_PLANNER_BASE_H_
 
-#include <descartes_core/trajectory_pt.h>
+#include <descartes_trajectory/joint_trajectory_pt.h>
 #include <descartes_core/robot_model.h>
 #include <vector>
 
@@ -76,7 +76,7 @@ public:
    * @brief Returns the last robot path generated from the input trajectory
    * @param path Array that contains the points in the robot path
    */
-  virtual bool getPath(std::vector<TrajectoryPtPtr>& path) const = 0;
+  virtual bool getPath(std::vector<descartes_trajectory::JointTrajectoryPtPtr>& path) const = 0;
 
   /**
    * @brief Add a point to the current path after the point with 'ref_id'.

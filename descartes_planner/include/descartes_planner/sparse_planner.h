@@ -50,7 +50,7 @@ public:
   virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
   virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
   virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id);
-  virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const;
+  virtual bool getPath(std::vector<descartes_trajectory::JointTrajectoryPtPtr>& path) const;
   virtual int getErrorCode() const;
   virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
