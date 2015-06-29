@@ -31,43 +31,25 @@
 namespace descartes_trajectory
 {
 
-//TODO add warning if non-zero tolerances are specified because initial implementation will only allow fixed joints
-struct JointTolerance
-{
-  JointTolerance(): lower(0.), upper(0.) {};
-  JointTolerance(double low, double high):
-    lower(std::abs(low)), upper(std::abs(high)) {};
-
-  double lower, upper;
-};
-
+/**
+ * @brief Structure to specify a valid joint range [lower, upper] with a nominal position given by 'nominal'.
+ */
 struct TolerancedJointValue
 {
-  TolerancedJointValue() {};
-  TolerancedJointValue(double _nominal, double _tol_above, double _tol_below):
-    nominal(_nominal), tolerance(_tol_above, _tol_below) {};
-  TolerancedJointValue(double _nominal)
-  {
-    *this = TolerancedJointValue(_nominal, 0., 0.);
-  }
+  TolerancedJointValue(double nominal, double lower, double upper)
+    : nominal(nominal), lower(lower), upper(upper)
+  {}
 
-  double upperBound() const
-  {
-    return nominal+tolerance.upper;
-  }
-
-  double lowerBound() const
-  {
-    return nominal-tolerance.lower;
-  }
+  TolerancedJointValue(double nominal)
+    : nominal(nominal), lower(nominal), upper(nominal)
+  {}
 
   double range() const
   {
-    return upperBound() - lowerBound();
+    return upper - lower;
   }
 
-  double nominal;
-  JointTolerance tolerance;
+  double nominal, lower, upper;
 };
 
 /**@brief Joint Trajectory Point used to describe a joint goal for a robot trajectory.
@@ -170,11 +152,7 @@ public:
     return descartes_core::TrajectoryPtPtr(new JointTrajectoryPt(*this));
   }
 
-inline
-  void setJoints(const std::vector<TolerancedJointValue> &joints)
-  {
-    joint_position_ = joints;
-  }
+  void setJoints(const std::vector<TolerancedJointValue> &joints);
 
   inline
   void setTool(const descartes_core::Frame &tool)
@@ -188,9 +166,30 @@ inline
     wobj_ = wobj;
   }
   /**@} (end Setters section) */
+
+  inline
+  const std::vector<double>& nominal() const
+  {
+    return nominal_;
+  }
+
+  inline
+  const std::vector<double>& upper() const
+  {
+    return upper_;
+  }
+
+  inline
+  const std::vector<double>& lower() const
+  {
+    return lower_;
+  }
+
 protected:
-  std::vector<TolerancedJointValue> joint_position_;  /**<@brief Fixed joint position with tolerance */
-  std::vector<double>               discretization_;  /**<@brief How finely to discretize each joint */
+  std::vector<double> nominal_;
+  std::vector<double> lower_;
+  std::vector<double> upper_;
+  std::vector<double> discretization_;  /**<@brief How finely to discretize each joint */
 
   /** @name JointTrajectoryPt transforms. Used in get*CartPose() methods and for interpolation.
    *  @{
