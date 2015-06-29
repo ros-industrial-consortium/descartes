@@ -996,48 +996,33 @@ PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTraject
   LinearWeightResult result;
   result.first = false;
 
-  // Retrieve the nominal joint position
-  std::vector<std::vector<double> > joint_poses_start;
-  start.getJointPoses(*robot_model_, joint_poses_start);
-
-  std::vector<std::vector<double> > joint_poses_end;
-  end.getJointPoses(*robot_model_, joint_poses_end);
-
-  // each should only return one
-  if (joint_poses_start.size() == 1 && joint_poses_end.size() == 1)
+  const std::vector<double>& start_vector = start.nominal();
+  const std::vector<double>& end_vector = end.nominal();
+  if (start_vector.size() == end_vector.size())
   {
-    const std::vector<double>& start_vector = joint_poses_start[0];
-    const std::vector<double>& end_vector = joint_poses_end[0];
-    if (start_vector.size() == end_vector.size())
+    // Check to see if time is specified and if so, check to see if the
+    // joint motion is possible in the window provided
+    if (end.getTiming().isSpecified() &&
+        !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper))
     {
-      // Check to see if time is specified and if so, check to see if the
-      // joint motion is possible in the window provided
-      if (end.getTiming().isSpecified() &&
-          !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper))
-      {
-        return result;
-      }
-
-      double vector_diff = 0;
-      for (unsigned i = 0; i < start_vector.size(); i++)
-      {
-        double joint_diff = std::abs(end_vector[i] - start_vector[i]);
-        vector_diff += joint_diff ;
-      }
-
-      result.first = true;
-      result.second = vector_diff;
       return result;
     }
-    else
+
+    double vector_diff = 0;
+    for (unsigned i = 0; i < start_vector.size(); i++)
     {
-      ROS_WARN_STREAM("unequal joint pose vector lengths: "
-                      << start_vector.size() << " != " << end_vector.size());
+      double joint_diff = std::abs(end_vector[i] - start_vector[i]);
+      vector_diff += joint_diff ;
     }
+
+    result.first = true;
+    result.second = vector_diff;
+    return result;
   }
   else
   {
-    ROS_WARN_STREAM("invalid joint pose(s) found");
+    ROS_WARN_STREAM("unequal joint pose vector lengths: "
+                    << start_vector.size() << " != " << end_vector.size());
   }
 
   return result;
