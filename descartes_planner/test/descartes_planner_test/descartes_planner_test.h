@@ -122,12 +122,17 @@ TYPED_TEST_P(DescartesPlannerTest, configure)
 TYPED_TEST_P(DescartesPlannerTest, planPath)
 {
   ROS_INFO_STREAM("Testing planPath() with "<<NUM_DENSE_POINTS<<" points");
+  RobotModelConstPtr robot(new ThreeDOFRobot());
+  this->planner_->initialize(robot);
   EXPECT_TRUE(this->planner_->planPath(TEST_TRAJECTORY));
 }
 
 TYPED_TEST_P(DescartesPlannerTest, getPath)
 {
   std::vector<descartes_core::TrajectoryPtPtr> path;
+  RobotModelConstPtr robot(new ThreeDOFRobot());
+  this->planner_->initialize(robot);
+  this->planner_->planPath(TEST_TRAJECTORY);
   EXPECT_TRUE(this->planner_->getPath(path));
   EXPECT_TRUE(path.size() == NUM_DENSE_POINTS);
 }
