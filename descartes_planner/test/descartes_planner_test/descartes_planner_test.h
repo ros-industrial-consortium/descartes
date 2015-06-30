@@ -43,7 +43,7 @@ class DescartesPlannerTest : public ::testing::Test
 public:
   DescartesPlannerTest() : planner_(CreateDescartesPlanner<T>())
   {
-    ROS_INFO("Instantiated DescartesPlannerTest fixture(base) (parameterized)");
+    ROS_INFO("Instantiating DescartesPlannerTest fixture(base) (parameterized)");
   }
 
   virtual void SetUp()
@@ -59,7 +59,7 @@ public:
 
   virtual ~DescartesPlannerTest()
   {
-    ROS_INFO("Desctructing DescartesPlannerTest fixture(base) (parameterized)");
+    ROS_INFO("Destructing DescartesPlannerTest fixture(base) (parameterized)");
   }
 
   descartes_core::PathPlannerBase* planner_;
