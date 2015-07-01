@@ -64,6 +64,7 @@ struct TolerancedJointValue
  *
  * The get*Pose() methods of JointTrajectoryPt try to set joint positions of a robot such that @e tool_ is coincident with @e wobj_.
  */
+DESCARTES_CLASS_FORWARD(JointTrajectoryPt);
 class JointTrajectoryPt: public descartes_core::TrajectoryPt
 {
 public:

@@ -138,7 +138,7 @@ TEST(SparsePlanner, planPath)
 
 TEST(SparsePlanner, getPath)
 {
-  std::vector<descartes_core::TrajectoryPtPtr> path;
+  std::vector<descartes_trajectory::JointTrajectoryPtPtr> path;
   EXPECT_TRUE(Planner.getPath(path));
   EXPECT_TRUE(path.size() == NUM_DENSE_POINTS);
 }
