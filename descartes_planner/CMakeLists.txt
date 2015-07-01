@@ -75,15 +75,10 @@ install(
 
 if(CATKIN_ENABLE_TESTING)
 
-  set(UTEST_SPARSE_PLANER_SRC_FILES test/utest.cpp
-      test/sparse_planner.cpp)
-  catkin_add_gtest(${PROJECT_NAME}_sparse_planner_utest ${UTEST_SPARSE_PLANER_SRC_FILES})
-  target_link_libraries(${PROJECT_NAME}_sparse_planner_utest descartes_planner)
-
-
-  set(UTEST_DENSE_PLANER_SRC_FILES test/utest.cpp
-      test/dense_planner.cpp)
-  catkin_add_gtest(${PROJECT_NAME}_dense_planner_utest ${UTEST_DENSE_PLANER_SRC_FILES})
-  target_link_libraries(${PROJECT_NAME}_dense_planner_utest descartes_planner)
+  set(UTEST_SRC_FILES test/utest.cpp
+      test/planner_test.cpp
+      test/TestPoint.cpp)
+  catkin_add_gtest(${PROJECT_NAME}_utest ${UTEST_SRC_FILES})
+  target_link_libraries(${PROJECT_NAME}_utest descartes_planner)
 
 endif()
