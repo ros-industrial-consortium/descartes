@@ -50,18 +50,26 @@ static TolerancedFrame makeUnconstrainedRotation(const Eigen::Affine3d& pose,
 namespace descartes_trajectory
 {
 
+AxialSymmetricPt::AxialSymmetricPt(const descartes_core::TimingConstraint& timing)
+  : CartTrajectoryPt(timing)
+{}
+
 AxialSymmetricPt::AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
-                                   double orient_increment, FreeAxis axis) :
-  CartTrajectoryPt(makeUnconstrainedRotation(x, y, z, rx, ry, rz,axis),
+                                   double orient_increment, FreeAxis axis,
+                                   const descartes_core::TimingConstraint& timing) :
+  CartTrajectoryPt(makeUnconstrainedRotation(x, y, z, rx, ry, rz, axis),
                    0.0, // The position discretization
-                   orient_increment) // Orientation discretization (starting at -2Pi and marching to 2Pi)
+                   orient_increment, // Orientation discretization (starting at -2Pi and marching to 2Pi)
+                   timing)
 {
 }
 
-AxialSymmetricPt::AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis) :
+AxialSymmetricPt::AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis,
+                                   const descartes_core::TimingConstraint& timing) :
   CartTrajectoryPt(makeUnconstrainedRotation(pose,axis),
                    0.0, // The position discretization
-                   orient_increment) // Orientation discretization (starting at -2Pi and marching to 2Pi)
+                   orient_increment, // Orientation discretization (starting at -2Pi and marching to 2Pi)
+                   timing)
 {
 }
 

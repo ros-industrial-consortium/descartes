@@ -26,6 +26,39 @@
 
 const static int SAMPLE_ITERATIONS = 10;
 
+namespace
+{
+
+bool getJointVelocityLimits(const moveit::core::RobotState& state,
+                            const std::string& group_name,
+                            std::vector<double>& output)
+{
+  std::vector<double> result;
+
+  auto models = state.getJointModelGroup(group_name)->getActiveJointModels();
+  for (const moveit::core::JointModel* model : models)
+  {
+    const auto& bounds = model->getVariableBounds();
+    // Check to see if there is a single bounds constraint (more might indicate
+    // not revolute joint)
+    if (model->getType() != moveit::core::JointModel::REVOLUTE &&
+        model->getType() != moveit::core::JointModel::PRISMATIC)
+    {
+      ROS_ERROR_STREAM(__FUNCTION__ << " Unexpected joint type. Currently works only with single axis prismatic or revolute joints.");
+      return false;
+    }
+    else
+    {
+      result.push_back(bounds[0].max_velocity_);
+    }
+  }
+
+  output = result;
+  return true;
+}
+
+} // end anon namespace
+
 namespace descartes_moveit
 {
 
@@ -47,6 +80,12 @@ MoveitStateAdapter::MoveitStateAdapter(const moveit::core::RobotState & robot_st
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
   if (joint_model_group_ptr)
   {
+    // Find the velocity limits
+    if (!getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
+    {
+      logWarn("Could not determine velocity limits of RobotModel from MoveIt");
+    }
+
     joint_model_group_ptr->printGroupInfo();
 
     const std::vector<std::string>& link_names = joint_model_group_ptr->getLinkModelNames();
@@ -92,6 +131,12 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   {
     seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
     ROS_INFO_STREAM("Generated "<<seed_states_.size()<< " random seeds");
+  }
+
+  // Find the velocity limits
+  if (!getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
+  {
+    logWarn("Could not determine velocity limits of RobotModel from MoveIt");
   }
 
   const moveit::core::JointModelGroup* joint_model_group_ptr = robot_state_->getJointModelGroup(group_name);
@@ -318,6 +363,37 @@ int MoveitStateAdapter::getDOF() const
   const moveit::core::JointModelGroup* group;
   group = robot_state_->getJointModelGroup(group_name_);
   return group->getVariableCount();
+}
+
+bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose, 
+                                     const std::vector<double>& to_joint_pose,
+                                     double dt) const
+{
+  std::vector<double> max_joint_deltas;
+  max_joint_deltas.reserve(velocity_limits_.size());
+
+  // Check for equal sized arrays
+  if (from_joint_pose.size() != to_joint_pose.size())
+  {
+    ROS_ERROR_STREAM("To and From joint poses are of different sizes.");
+    return false;
+  }
+
+  // Build a vector of the maximum angle delta per joint 
+  for (std::vector<double>::const_iterator it = velocity_limits_.begin(); it != velocity_limits_.end(); ++it)
+  {
+    max_joint_deltas.push_back((*it) * dt);
+  }
+
+  for (std::vector<double>::size_type i = 0; i < from_joint_pose.size(); ++i)
+  {
+    if ( std::abs(from_joint_pose[i] - to_joint_pose[i]) > max_joint_deltas[i] )
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 } //descartes_moveit

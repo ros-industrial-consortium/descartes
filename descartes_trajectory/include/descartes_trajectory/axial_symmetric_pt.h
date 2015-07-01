@@ -47,7 +47,7 @@ public:
    * @brief This default constructor is exactly equivalent to CartTrajectoryPt's. Initializes all
    *        frames to identity.
    */
-  AxialSymmetricPt() {}
+  AxialSymmetricPt(const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   /**
    * @brief Constructs a cartesian trajectory point that places the robot tip at the position
@@ -65,13 +65,15 @@ public:
    * @param axis The free-axis of the nominal pose of the tool
    */
   AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
-                   double orient_increment, FreeAxis axis);
+                   double orient_increment, FreeAxis axis,
+                   const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   /**
    * @brief Similar to other constructor except that it takes an affine pose instead of
    *        individual translation and rotation arguments.
    */
-  AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis);
+  AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis,
+                   const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   virtual descartes_core::TrajectoryPtPtr copy() const
   {

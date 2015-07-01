@@ -40,8 +40,6 @@ using namespace descartes_trajectory;
 namespace descartes_planner
 {
 
-const double MAX_JOINT_DIFF = M_PI / 2;
-const double MAX_EXCEEDED_PENALTY = 10000.0f;
 
 PlanningGraph::PlanningGraph(RobotModelConstPtr model)
   : robot_model_(std::move(model))
@@ -255,7 +253,8 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
         joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt new_pt (*joint_pose_iter);
+      JointTrajectoryPt new_pt (*joint_pose_iter, point->getTiming());
+      //traj_solutions->push_back(new_pt->getID());
       (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt.getID());
 
       // insert new vertices into graph
@@ -403,7 +402,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
         joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       //get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt new_pt (*joint_pose_iter);
+      JointTrajectoryPt new_pt (*joint_pose_iter, point->getTiming());
       (*cartesian_point_link_)[modify_id].joints_.push_back(new_pt.getID());
 
       // insert new vertices into graph
@@ -582,6 +581,8 @@ bool PlanningGraph::findStartVertices(std::list<JointGraph::vertex_descriptor> &
   // Test for error case
   if (cart_id.is_nil())
   {
+    // Users can insert points with any given previous and next point using the addTrajectory
+    // function.
     ROS_ERROR("Could not locate TrajectoryPt with nil previous point. Graph may be cyclic.");
     return false;
   }
@@ -620,6 +621,8 @@ bool PlanningGraph::findEndVertices(std::list<JointGraph::vertex_descriptor> &en
   // Test for error case
   if (cart_id.is_nil())
   {
+    // Users can insert points with any given previous and next point using the addTrajectory
+    // function.
     ROS_ERROR("Could not locate TrajectoryPt with nil next point. Graph may be cyclic.");
     return false;
   }
@@ -672,7 +675,6 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
 
     for (std::list<JointGraph::vertex_descriptor>::iterator end = end_points.begin(); end != end_points.end(); end++)
     {
-      //ROS_INFO("Checking path: S[%d] -> E[%d]", *start, *end);
       // actual weight(cost) from start_id to end_id
       double weight = weights[*end];
 
@@ -697,13 +699,17 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt> &
           ss << " -> " << current;
           path.push_front(joint_solutions_map_[vertex_index_map[current]]);
         }
+
         ROS_INFO("With %lu - new best score: %f", path.size(), weight);
       }
     }
   }
 
+  ROS_INFO("Lowest cost: %f", cost);
+
   if (cost < std::numeric_limits<double>::max())
   {
+    ROS_INFO("FOUND A PATH");
     return true;
   }
   else
@@ -810,10 +816,9 @@ bool PlanningGraph::calculateJointSolutions()
   {
     // TODO: copy this block to a function that can be used by add and modify
     /*************************/
-    std::list<TrajectoryPt::ID> *traj_solutions = new std::list<TrajectoryPt::ID>();
+    std::list<TrajectoryPt::ID> traj_solutions;
     std::vector<std::vector<double> > joint_poses;
     trajectory_iter->second.source_trajectory_.get()->getJointPoses(*robot_model_, joint_poses);
-
     TrajectoryPt::ID tempID = trajectory_iter->first;
     ROS_INFO_STREAM("CartID: " << tempID << " JointPoses count: " << joint_poses.size());
 
@@ -827,12 +832,12 @@ bool PlanningGraph::calculateJointSolutions()
           joint_pose_iter != joint_poses.end(); joint_pose_iter++)
       {
         //get UUID from JointTrajPt (convert from std::vector<double>)
-        JointTrajectoryPt *new_pt = new JointTrajectoryPt(*joint_pose_iter);
-        traj_solutions->push_back(new_pt->getID());
-        joint_solutions_map_[new_pt->getID()] = *new_pt;
+        JointTrajectoryPt new_pt (*joint_pose_iter, trajectory_iter->second.source_trajectory_.get()->getTiming());
+        traj_solutions.push_back(new_pt.getID());
+        joint_solutions_map_[new_pt.getID()] = new_pt;
       }
     }
-    trajectory_iter->second.joints_ = *traj_solutions;
+    trajectory_iter->second.joints_ = traj_solutions;
     /*************************/
   }
 
@@ -892,6 +897,8 @@ bool PlanningGraph::calculateAllEdgeWeights(std::list<JointEdge> &edges)
 
 bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &start_joints,const std::list<TrajectoryPt::ID> &end_joints, std::list<JointEdge> &edge_results)
 {
+  typedef std::list<TrajectoryPt::ID>::const_iterator TrajIdConstIter;
+
   if(start_joints.empty() || end_joints.empty())
   {
     ROS_WARN_STREAM("One or more joints lists is empty, Start Joints: " << start_joints.size() << " End Joints: " << end_joints.size());
@@ -901,30 +908,34 @@ bool PlanningGraph::calculateEdgeWeights(const std::list<TrajectoryPt::ID> &star
   bool has_valid_transition = false;
 
   // calculate edges for previous vertices to this set of vertices
-  for (std::list<TrajectoryPt::ID>::const_iterator previous_joint_iter = start_joints.begin();
+  for (TrajIdConstIter previous_joint_iter = start_joints.begin();
       previous_joint_iter != start_joints.end(); previous_joint_iter++)
   {
-    for (std::list<TrajectoryPt::ID>::const_iterator next_joint_iter = end_joints.begin();
+    // Look up the start_joint once per iteration of this loop
+    const JointTrajectoryPt& start_joint = joint_solutions_map_[*previous_joint_iter];
+
+    // Loop over the ending points -> look at each combination of start/end points
+    for (TrajIdConstIter next_joint_iter = end_joints.begin();
         next_joint_iter != end_joints.end(); next_joint_iter++)
     {
-      double transition_cost;
-      const JointTrajectoryPt& start_joint = joint_solutions_map_[*previous_joint_iter];
       const JointTrajectoryPt& end_joint = joint_solutions_map_[*next_joint_iter];
 
-      transition_cost = linearWeight(start_joint, end_joint);
+      LinearWeightResult edge_result = linearWeight(start_joint, end_joint);
 
-      if (transition_cost >= MAX_EXCEEDED_PENALTY)
+      // If the edge weight calculation returns false, do not create an edge
+      if (!edge_result.first)
       {
         continue;
       }
 
+      // If one edge exists, there is a valid transition from the previous TrajectoryPt
+      // to the next
       has_valid_transition = true;
 
       JointEdge edge;
       edge.joint_start = *previous_joint_iter;
       edge.joint_end = *next_joint_iter;
-      edge.transition_cost = transition_cost;
-
+      edge.transition_cost = edge_result.second;
       edge_results.push_back(edge);
     }
   }
@@ -979,49 +990,42 @@ bool PlanningGraph::populateGraphEdges(const std::list<JointEdge> &edges)
   return true;
 }
 
-double PlanningGraph::linearWeight(const JointTrajectoryPt& start, const JointTrajectoryPt& end) const
+PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTrajectoryPt& start,
+                                                              const JointTrajectoryPt& end) const
 {
-  std::vector<std::vector<double> > joint_poses_start;
-  start.getJointPoses(*robot_model_, joint_poses_start);
+  LinearWeightResult result;
+  result.first = false;
 
-  std::vector<std::vector<double> > joint_poses_end;
-  end.getJointPoses(*robot_model_, joint_poses_end);
-
-  // each should only return one
-  if (joint_poses_start.size() == 1 && joint_poses_end.size() == 1)
+  const std::vector<double>& start_vector = start.nominal();
+  const std::vector<double>& end_vector = end.nominal();
+  if (start_vector.size() == end_vector.size())
   {
-    const std::vector<double>& start_vector = joint_poses_start[0];
-    const std::vector<double>& end_vector = joint_poses_end[0];
-    
-    if (start_vector.size() == end_vector.size())
+    // Check to see if time is specified and if so, check to see if the
+    // joint motion is possible in the window provided
+    if (end.getTiming().isSpecified() &&
+        !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper))
     {
-      double vector_diff = 0;
-      double joint_diff = 0;
-      for (int i = 0; i < start_vector.size(); i++)
-      {
-        joint_diff = std::abs(end_vector[i] - start_vector[i]);
-        if(joint_diff > MAX_JOINT_DIFF)
-        {
-          return MAX_EXCEEDED_PENALTY;
-        }
-        else
-        {
-          vector_diff += joint_diff ;
-        }
-      }
-      return vector_diff;
+      return result;
     }
-    else
-    {
-      ROS_WARN_STREAM("unequal joint pose vector lengths: " << start_vector.size() << "!=" << end_vector.size());
 
-      return std::numeric_limits<double>::max();
+    double vector_diff = 0;
+    for (unsigned i = 0; i < start_vector.size(); i++)
+    {
+      double joint_diff = std::abs(end_vector[i] - start_vector[i]);
+      vector_diff += joint_diff ;
     }
+
+    result.first = true;
+    result.second = vector_diff;
+    return result;
   }
   else
   {
-    ROS_WARN_STREAM("invalid joint pose(s) found");
-    return std::numeric_limits<double>::max();
+    ROS_WARN_STREAM("unequal joint pose vector lengths: "
+                    << start_vector.size() << " != " << end_vector.size());
   }
+
+  return result;
 }
+
 } /* namespace descartes_planner */

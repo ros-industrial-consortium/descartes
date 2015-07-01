@@ -6,7 +6,6 @@
  */
 
 #include <descartes_planner/dense_planner.h>
-#include <boost/uuid/uuid_io.hpp> // streaming operators
 
 namespace descartes_planner
 {
@@ -121,6 +120,7 @@ bool DensePlanner::updatePath()
   double cost;
   if(planning_graph_->getShortestPath(cost,list) )
   {
+    ROS_INFO_STREAM("Traj size: " << traj.size() << " List size: " << list.size());
     if(traj.size() == list.size())
     {
       error_code_ = descartes_core::PlannerError::OK;

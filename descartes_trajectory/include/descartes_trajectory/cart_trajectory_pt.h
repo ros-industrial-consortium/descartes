@@ -209,7 +209,7 @@ public:
   /**
     @brief Default cartesian trajectory point constructor.  All frames initialized to Identity
     */
-  CartTrajectoryPt();
+  CartTrajectoryPt(const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   /**
     @brief Full constructor of cartesian trajectory point
@@ -221,7 +221,8 @@ public:
     @param pos_increment Orientation increment used for sampling
     */
   CartTrajectoryPt(const descartes_core::Frame &wobj_base, const TolerancedFrame &wobj_pt, const descartes_core::Frame &tool_base,
-                   const TolerancedFrame &tool_pt, double pos_increment, double orient_increment);
+                   const TolerancedFrame &tool_pt, double pos_increment, double orient_increment, 
+                   const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   /**
     @brief Partial constructor of cartesian trajectory point (all frames not specified by parameters
@@ -231,7 +232,8 @@ public:
     @param pos_increment Position increment used for sampling
     @param pos_increment Orientation increment used for sampling
     */
-  CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_increment, double orient_increment);
+  CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_increment, double orient_increment,
+                   const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
 
   /**
@@ -240,7 +242,8 @@ public:
     point relative to the robot base.
     @param wobj_pt Underconstrained transform from object base to goal point on object.
     */
-  CartTrajectoryPt(const descartes_core::Frame &wobj_pt);
+  CartTrajectoryPt(const descartes_core::Frame &wobj_pt, 
+                   const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
 
   virtual ~CartTrajectoryPt() {};
