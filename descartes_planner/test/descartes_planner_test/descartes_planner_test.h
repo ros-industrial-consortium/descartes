@@ -72,13 +72,10 @@ using namespace descartes_core;
 using namespace descartes_planner;
 using namespace descartes_trajectory;
 typedef std::vector<descartes_core::TrajectoryPtPtr> Trajectory;
-const int NUM_DENSE_POINTS = 100;
+const int NUM_DENSE_POINTS = 1000;
 const int NUM_SPARSE_POINTS = 1000; 
 std::string dense = "dense";
 std::string sparse = "sparse";
-// Trajectory createTestTrajectory();
-// Trajectory TEST_TRAJECTORY_SPARSE = createTestTrajectory("sparse");
-// Trajectory TEST_TRAJECTORY_SPARSE = createTestTrajectory("dense");
 
 Trajectory createTestTrajectory(std::string const& planner_type)
 { 
