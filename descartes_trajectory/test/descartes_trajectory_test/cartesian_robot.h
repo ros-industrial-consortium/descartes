@@ -34,7 +34,8 @@ public:
 
   CartesianRobot();
 
-  CartesianRobot(double pos_range, double orient_range, int dof = 6)  ;
+  CartesianRobot(double pos_range, double orient_range, 
+                 const std::vector<double>& joint_velocities = std::vector<double>(6, 1.0));
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -54,10 +55,17 @@ public:
 
   virtual bool isValidMove(const std::vector<double>& from_joint_pose, const std::vector<double>& to_joint_pose,
                            double dt) const;
+
+  bool setJointVelocities(const std::vector<double>& new_joint_vels)
+  {
+    if (new_joint_vels.size() != joint_velocities_.size()) return false;
+    joint_velocities_ = new_joint_vels;
+    return true;
+  }
   
   double pos_range_;
   double orient_range_;
-  int dof_;
+  std::vector<double> joint_velocities_;
 
 };
 

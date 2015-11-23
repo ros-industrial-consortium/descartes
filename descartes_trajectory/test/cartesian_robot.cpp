@@ -20,27 +20,42 @@
 #include "descartes_core/pretty_print.hpp"
 #include "eigen_conversions/eigen_kdl.h"
 #include "ros/console.h"
+#include "ros/assert.h"
 
 namespace descartes_trajectory_test
 {
+  const static int DOF = 6;
 
-  CartesianRobot::CartesianRobot() : pos_range_(2.0), orient_range_(M_PI_2), dof_(6)
+  static void displayRange(double pos_range, double orient_range)
   {
-    ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
-                     << ", orientation: " << orient_range_);
+    double pos_limit = pos_range / 2.0;
+    double orient_limit = orient_range / 2.0;
+    ROS_INFO_STREAM("Creating Cartesian Robot with valid linear ranges from " 
+                      << -pos_limit << " to " << pos_limit << ", and orientation from "
+                      << -orient_limit << " to " << orient_limit);
+  }
+
+  CartesianRobot::CartesianRobot() 
+    : pos_range_(2.0)
+    , orient_range_(M_PI_2)
+    , joint_velocities_(DOF, 1.0)
+  {
+    displayRange(pos_range_, orient_range_);
+  }
+
+  CartesianRobot::CartesianRobot(double pos_range, double orient_range, const std::vector<double>& joint_velocities) 
+    : pos_range_(pos_range)
+    , orient_range_(orient_range)
+    , joint_velocities_(joint_velocities)
+  {
+    ROS_ASSERT(joint_velocities_.size() == DOF);
+    displayRange(pos_range_, orient_range_);
   }
 
   bool CartesianRobot::initialize(const std::string& robot_description, const std::string& group_name,
-                                  const std::string& world_frame,const std::string& tcp_frame)
+                                  const std::string& world_frame, const std::string& tcp_frame)
   {
     return true;
-  }
-
-  CartesianRobot::CartesianRobot(double pos_range, double orient_range, int dof) :
-    pos_range_(pos_range), orient_range_(orient_range), dof_(dof)
-  {
-    ROS_DEBUG_STREAM("Creating cartesian robot with range, position: " << pos_range_
-                     << ", orientation: " << orient_range_);
   }
 
   bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
@@ -50,7 +65,7 @@ namespace descartes_trajectory_test
     KDL::Frame kdl_frame;
     tf::transformEigenToKDL(pose, kdl_frame);
 
-    joint_pose.resize(6, 0.0);
+    joint_pose.resize(DOF, 0.0);
     joint_pose[0] = kdl_frame.p.x();
     joint_pose[1] = kdl_frame.p.y();
     joint_pose[2] = kdl_frame.p.z();
@@ -98,7 +113,7 @@ namespace descartes_trajectory_test
 
   int CartesianRobot::getDOF() const
   {
-    return dof_;
+    return DOF;
   }
 
   bool CartesianRobot::isValid(const std::vector<double> &joint_pose) const
@@ -108,7 +123,7 @@ namespace descartes_trajectory_test
     double pos_limit = pos_range_/2.0;
     double orient_limit = orient_range_/2.0;
 
-    if(dof_ == joint_pose.size())
+    if(DOF == joint_pose.size())
     {
 
       rtn = ( fabs(joint_pose[0]) <= pos_limit &&
@@ -120,7 +135,8 @@ namespace descartes_trajectory_test
     }
     else
     {
-      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() << "exceeds "<<dof_);
+      ROS_DEBUG_STREAM("Joint pose size: " << joint_pose.size() 
+        << "exceeds " << DOF);
     }
 
     return rtn;
@@ -151,6 +167,11 @@ namespace descartes_trajectory_test
                                    const std::vector<double>& to_joint_pose,
                                    double dt) const
   {
+    for (size_t i = 0; i < from_joint_pose.size(); ++i)
+    {
+      if ( std::abs(from_joint_pose[i] - to_joint_pose[i]) / dt > joint_velocities_[i] )
+        return false;
+    }
     return true;
   }
   
