@@ -25,6 +25,8 @@
 #include <descartes_core/pretty_print.hpp>
 #include <tuple>
 
+#include "utils/trajectory_maker.h"
+
 using namespace descartes_core;
 using namespace descartes_trajectory;
 typedef std::vector<descartes_core::TrajectoryPtPtr> Trajectory;
@@ -37,7 +39,7 @@ class ThreeDOFRobot: public descartes_trajectory_test::CartesianRobot
 {
 public:
   ThreeDOFRobot():
-    descartes_trajectory_test::CartesianRobot(0,0,3)
+    descartes_trajectory_test::CartesianRobot(0,0)
   {
 
   }
@@ -129,7 +131,6 @@ TEST(DensePlanner, configure)
   EXPECT_TRUE(Planner.setConfig(config));
 }
 
-
 TEST(DensePlanner, planPath)
 {
   ROS_INFO_STREAM("Testing planPath() with "<<NUM_DENSE_POINTS<<" points");
@@ -142,5 +143,3 @@ TEST(DensePlanner, getPath)
   EXPECT_TRUE(Planner.getPath(path));
   EXPECT_TRUE(path.size() == NUM_DENSE_POINTS);
 }
-
-
