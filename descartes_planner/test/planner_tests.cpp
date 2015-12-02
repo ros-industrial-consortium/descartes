@@ -14,22 +14,6 @@
 using namespace descartes_planner;
 using namespace descartes_core;
 
-// Factory methods for planner construction
-template <class T>
-PathPlannerBase* createPathPlanner();
-
-template <>
-PathPlannerBase* createPathPlanner<DensePlanner>()
-{
-  return new DensePlanner();
-}
-
-template <>
-PathPlannerBase* createPathPlanner<SparsePlanner>()
-{
-  return new SparsePlanner();
-}
-
 // Google Test Framework for Path Planners
 
 template <class T>
@@ -40,7 +24,7 @@ protected:
 
   PathPlannerBasePtr makePlanner()
   {
-    PathPlannerBasePtr planner = PathPlannerBasePtr(createPathPlanner<T>());
+    PathPlannerBasePtr planner = PathPlannerBasePtr(new T());
     EXPECT_TRUE( planner->initialize(robot_) ) << "Failed to initalize robot model";
     return planner;
   }
@@ -54,19 +38,19 @@ protected:
   RobotModelConstPtr robot_; 
 };
 
-using testing::Types;
+// using testing::Types;
 
 // Add types of trajectory points here:
-typedef Types<DensePlanner, SparsePlanner> Implementations;
+// typedef Types<DensePlanner, SparsePlanner> Implementations;
 
-TYPED_TEST_CASE(PathPlannerTest, Implementations);
+TYPED_TEST_CASE_P(PathPlannerTest);
 
-TYPED_TEST(PathPlannerTest, construction)
+TYPED_TEST_P(PathPlannerTest, construction)
 {
   PathPlannerBasePtr planner = this->makePlanner();
 }
 
-TYPED_TEST(PathPlannerTest, preservesTiming)
+TYPED_TEST_P(PathPlannerTest, preservesTiming)
 {
   using namespace descartes_tests;
 
@@ -100,7 +84,7 @@ TYPED_TEST(PathPlannerTest, preservesTiming)
   }
 }
 
-TYPED_TEST(PathPlannerTest, simpleVelocityCheck)
+TYPED_TEST_P(PathPlannerTest, simpleVelocityCheck)
 {
   PathPlannerBasePtr planner = this->makePlanner();
 
@@ -119,3 +103,9 @@ TYPED_TEST(PathPlannerTest, simpleVelocityCheck)
   input.back().get()->setTiming(descartes_core::TimingConstraint(0.001));
   EXPECT_FALSE(planner->planPath(input)) << "Trajectory pt has very small dt; planner should fail for velocity out of bounds";
 }
+
+REGISTER_TYPED_TEST_CASE_P(PathPlannerTest,
+                           construction, preservesTiming, simpleVelocityCheck);
+
+typedef ::testing::Types<DensePlanner, SparsePlanner> MyTypes;
+INSTANTIATE_TYPED_TEST_CASE_P(ReferencePlanners, PathPlannerTest, MyTypes);
