@@ -41,7 +41,7 @@ protected:
   PathPlannerBasePtr makePlanner()
   {
     PathPlannerBasePtr planner = PathPlannerBasePtr(createPathPlanner<T>());
-    EXPECT_TRUE(planner->initialize(robot_));
+    EXPECT_TRUE( planner->initialize(robot_) ) << "Failed to initalize robot model";
     return planner;
   }
 
@@ -86,17 +86,17 @@ TYPED_TEST(PathPlannerTest, preservesTiming)
     dt *= 2.0;
   }
   // // Solve
-  EXPECT_TRUE(planner->planPath(input));
+  ASSERT_TRUE(planner->planPath(input));
   // Get the result
-  EXPECT_TRUE(planner->getPath(output));
+  ASSERT_TRUE(planner->getPath(output));
   // Compare timing
-  EXPECT_TRUE(input.size() == output.size());
+  ASSERT_TRUE(input.size() == output.size());
   for (size_t i = 0; i < input.size(); ++i)
   {
     double t1 = input[i].get()->getTiming().upper;
     double t2 = output[i].get()->getTiming().upper;
-    EXPECT_TRUE( std::abs(t1 - t2) < 0.00001 ) <<
-      "Input/output timing should correspond for same index: " << t1 << " " << t2;
+    EXPECT_DOUBLE_EQ(t1, t2) << "Input/output timing should correspond for same index: " 
+                             << t1 << " " << t2;
   }
 }
 
@@ -109,12 +109,13 @@ TYPED_TEST(PathPlannerTest, simpleVelocityCheck)
                                                           Eigen::Vector3d(1.0, 0, 0), // end position
                                                           0.9, // tool velocity (< 1.0 m/s limit)
                                                           10); // samples
+  ASSERT_TRUE(!input.empty());
   // The nominal trajectory (0.9 m/s) is less than max tool speed of 1.0 m/s
   EXPECT_TRUE(planner->planPath(input));
   // Unconstraining a point should still succeed
-  input[3].get()->setTiming(descartes_core::TimingConstraint());
+  input.back().get()->setTiming(descartes_core::TimingConstraint());
   EXPECT_TRUE(planner->planPath(input));
   // Making a dt for a segment very small should induce failure
-  input[3].get()->setTiming(descartes_core::TimingConstraint(0.001));
-  EXPECT_FALSE(planner->planPath(input)) << "Trajectory pt (index 3) has very small dt; planner should fail for velocity out of bounds";
+  input.back().get()->setTiming(descartes_core::TimingConstraint(0.001));
+  EXPECT_FALSE(planner->planPath(input)) << "Trajectory pt has very small dt; planner should fail for velocity out of bounds";
 }
