@@ -31,11 +31,6 @@ protected:
   descartes_core::RobotModelConstPtr robot_; 
 };
 
-// using testing::Types;
-
-// Add types of trajectory points here:
-// typedef Types<DensePlanner, SparsePlanner> Implementations;
-
 TYPED_TEST_CASE_P(PathPlannerTest);
 
 TYPED_TEST_P(PathPlannerTest, construction)
@@ -45,10 +40,17 @@ TYPED_TEST_P(PathPlannerTest, construction)
   PathPlannerBasePtr planner = this->makePlanner();
 }
 
+TYPED_TEST_P(PathPlannerTest, basicConfigure)
+{
+  descartes_core::PathPlannerBasePtr planner = this->makePlanner();
+  descartes_core::PlannerConfig config;
+  planner->getConfig(config);
+  EXPECT_TRUE(planner->setConfig(config));
+}
+
 TYPED_TEST_P(PathPlannerTest, preservesTiming)
 {
   using namespace descartes_tests;
-  using namespace descartes_planner;
   using namespace descartes_core;
 
   PathPlannerBasePtr planner = this->makePlanner();
@@ -83,7 +85,6 @@ TYPED_TEST_P(PathPlannerTest, preservesTiming)
 
 TYPED_TEST_P(PathPlannerTest, simpleVelocityCheck)
 {
-  using namespace descartes_planner;
   using namespace descartes_core;
 
   PathPlannerBasePtr planner = this->makePlanner();
@@ -105,4 +106,4 @@ TYPED_TEST_P(PathPlannerTest, simpleVelocityCheck)
 }
 
 REGISTER_TYPED_TEST_CASE_P(PathPlannerTest,
-                           construction, preservesTiming, simpleVelocityCheck);
+                           construction, basicConfigure, preservesTiming, simpleVelocityCheck);

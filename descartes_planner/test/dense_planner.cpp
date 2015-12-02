@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include <descartes_planner/dense_planner.h>
 #include "planner_tests.h"
+#include <descartes_planner/dense_planner.h>
 
 INSTANTIATE_TYPED_TEST_CASE_P(DensePlannerTest, PathPlannerTest, descartes_planner::DensePlanner);
