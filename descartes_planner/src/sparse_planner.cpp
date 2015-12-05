@@ -635,7 +635,6 @@ bool SparsePlanner::plan()
   // solving coarse trajectory
   bool replan = true;
   bool succeeded = false;
-  int max_replanning_attempts = cart_points_.size();
   int replanning_attempts = 0;
   while(replan && getSparseSolutionArray(sparse_solution_array_))
   {
@@ -683,15 +682,6 @@ bool SparsePlanner::plan()
           succeeded = false;
           break;
     }
-
-    if(replanning_attempts++ > max_replanning_attempts)
-    {
-      ROS_ERROR_STREAM("Maximum number of replanning attempts exceeded, aborting");
-      replan = false;
-      succeeded = false;
-      break;
-    }
-
   }
 
   return succeeded;
