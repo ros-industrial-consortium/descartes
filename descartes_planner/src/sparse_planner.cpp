@@ -635,7 +635,7 @@ bool SparsePlanner::plan()
   // solving coarse trajectory
   bool replan = true;
   bool succeeded = false;
-  int max_replanning_attempts = cart_points_.size()/2;
+  int max_replanning_attempts = cart_points_.size();
   int replanning_attempts = 0;
   while(replan && getSparseSolutionArray(sparse_solution_array_))
   {

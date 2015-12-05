@@ -105,5 +105,24 @@ TYPED_TEST_P(PathPlannerTest, simpleVelocityCheck)
   EXPECT_FALSE(planner->planPath(input)) << "Trajectory pt has very small dt; planner should fail for velocity out of bounds";
 }
 
+TYPED_TEST_P(PathPlannerTest, zigzagTrajectory)
+{
+  using namespace descartes_core;
+
+  PathPlannerBasePtr planner = this->makePlanner();
+
+  std::vector<descartes_core::TrajectoryPtPtr> input;
+  input = descartes_tests::makeZigZagTrajectory(-1.0, // start position
+                                                1.0, // end position
+                                                0.5,
+                                                0.1, // tool velocity (< 1.0 m/s limit)
+                                                10); // samples
+  ASSERT_TRUE(!input.empty());
+  // The nominal trajectory (0.9 m/s) is less than max tool speed of 1.0 m/s
+  EXPECT_TRUE(planner->planPath(input));
+}
+
+
 REGISTER_TYPED_TEST_CASE_P(PathPlannerTest,
-                           construction, basicConfigure, preservesTiming, simpleVelocityCheck);
+                           construction, basicConfigure, preservesTiming, 
+                           simpleVelocityCheck, zigzagTrajectory);
