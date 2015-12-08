@@ -60,13 +60,13 @@ TYPED_TEST_P(PathPlannerTest, preservesTiming)
   input = makeConstantVelocityTrajectory(Eigen::Vector3d(-1.0, 0, 0), // start position
                                          Eigen::Vector3d(1.0, 0, 0), // end position
                                          0.9, // tool velocity
-                                         10); // samples
+                                         20); // samples
   // Double the dt of every pt to provide some variety
   double dt = input.front().get()->getTiming().upper;
   for (auto& pt : input)
   {
     pt.get()->setTiming(TimingConstraint(dt));
-    dt *= 2.0;
+    dt *= 1.5;
   }
   // // Solve
   ASSERT_TRUE(planner->planPath(input));
