@@ -181,6 +181,19 @@ public:
   virtual TrajectoryPtPtr copy() const = 0;
 
   /**
+   * @brief Makes a copy of the underlying trajectory point, mutates the timing, and returns a
+   *        polymorphic handle to it.
+   * @param tm The new timing value for the copied point
+   * @return A copy, with the same ID and new timing, of the underlying point type
+   */
+  virtual TrajectoryPtPtr copyAndSetTiming(const TimingConstraint& tm) const
+  {
+    TrajectoryPtPtr cp = copy();
+    cp->setTiming(tm);
+    return cp;
+  }
+
+  /**
    * @brief Makes a clone of the underlying trajectory point and returns a polymorphic handle to it
    * @return A clone, with the same data but a unique ID, of the underlying point type
    */
@@ -188,6 +201,18 @@ public:
   {
     TrajectoryPtPtr cp = copy();
     cp->setID(TrajectoryID::make_id());
+    return cp;
+  }
+
+  /**
+   * @brief Makes a clone of the underlying trajectory point and returns a polymorphic handle to it with new timing
+   * @param tm The new timing value for the copied point
+   * @return A clone, with the same data but a unique ID, of the underlying point type with new timing
+   */
+  virtual TrajectoryPtPtr cloneAndSetTiming(const TimingConstraint& tm) const
+  {
+    TrajectoryPtPtr cp = clone();
+    cp->setTiming(tm);
     return cp;
   }
 

@@ -54,15 +54,6 @@ namespace
     }
     return tm;
   }
-
-  descartes_core::TrajectoryPtPtr
-  copyAndSetTiming(const descartes_core::TrajectoryPtPtr& ptr, const descartes_core::TimingConstraint& tm)
-  {
-    descartes_core::TrajectoryPtPtr cloned = ptr->copy();
-    cloned->setTiming(tm);
-    return cloned;
-  }
-
 }
 
 
@@ -617,7 +608,7 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
                                                                   i - skip,
                                                                   i);
     // We don't want to modify the input trajectory pointers, so we clone and modify them here
-    descartes_core::TrajectoryPtPtr cloned = copyAndSetTiming(dense_trajectory_array[i], tm);
+    descartes_core::TrajectoryPtPtr cloned = dense_trajectory_array[i]->copyAndSetTiming(tm);
     // Write to the new array
     sparse_trajectory_array.push_back(cloned);
 
@@ -635,7 +626,7 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
                                                                   i - skip, 
                                                                   dense_trajectory_array.size() - 1);
     // We don't want to modify the input trajectory pointers, so we clone and modify them here
-    descartes_core::TrajectoryPtPtr cloned = copyAndSetTiming(dense_trajectory_array.back(), tm);
+    descartes_core::TrajectoryPtPtr cloned = dense_trajectory_array.back()->copyAndSetTiming(tm);
     // Write to solution
     sparse_trajectory_array.push_back(cloned);
   }
@@ -699,7 +690,7 @@ bool SparsePlanner::plan()
             int prev_dense_id = std::get<0>(sparse_solution_array_[sparse_index-1]);
             int next_dense_id = point_pos;
             descartes_core::TimingConstraint tm = cumulativeTimingBetween(cart_points_, prev_dense_id, next_dense_id);
-            descartes_core::TrajectoryPtPtr copy_pt = copyAndSetTiming(cart_point, tm);
+            descartes_core::TrajectoryPtPtr copy_pt = cart_point->copyAndSetTiming(tm);
             cart_point = copy_pt; // swap the point over
 
             prev_id = std::get<1>(sparse_solution_array_[sparse_index-1])->getID();
@@ -711,13 +702,16 @@ bool SparsePlanner::plan()
             int prev_dense_id = point_pos;
             int next_dense_id = std::get<0>(sparse_solution_array_[sparse_index]);
             descartes_core::TimingConstraint tm = cumulativeTimingBetween(cart_points_, prev_dense_id, next_dense_id);
-            descartes_core::TrajectoryPtPtr copy_pt = copyAndSetTiming(cart_points_[next_dense_id], tm);
+            descartes_core::TrajectoryPtPtr copy_pt = cart_points_[next_dense_id]->copyAndSetTiming(tm);
 
             if (!planning_graph_->modifyTrajectory(copy_pt))
             {
+              // Theoretically, this should never occur as we are merely modifying an existing point in the sparse
+              // graph.
               ROS_ERROR_STREAM("Could not modify trajectory point with id: " << copy_pt->getID());
               replan = false;
               succeeded = false;
+              break;
             }
 
             // Add into original trajectory
