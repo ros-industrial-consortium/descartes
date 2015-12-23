@@ -30,18 +30,30 @@ using namespace descartes_trajectory;
 
 namespace
 {
-    std::vector<descartes_core::TimingConstraint>
-    extractTiming(const std::vector<descartes_core::TrajectoryPtPtr>& points)
+  descartes_core::TimingConstraint
+  cumulativeTimingBetween(const std::vector<descartes_core::TrajectoryPtPtr>& dense_points,
+                          size_t start_index,
+                          size_t end_index)
+  {
+    descartes_core::TimingConstraint tm (0.0, 0.0);
+    for (size_t i = start_index + 1; i <= end_index; ++i)
     {
-      std::vector<descartes_core::TimingConstraint> result;
-      result.reserve(points.size());
-
-      for (const auto& ptr : points)
+      const descartes_core::TimingConstraint& pt_tm = dense_points[i]->getTiming();
+      if (pt_tm.isSpecified())
       {
-        result.push_back(ptr->getTiming());
+        // Add time as normal
+        tm.upper += pt_tm.upper;
+        tm.lower += pt_tm.lower;
       }
-      return result;
+      else
+      {
+        // A single unspecified timing makes the range unspecified
+        tm = descartes_core::TimingConstraint();
+        break;
+      }
     }
+    return tm;
+  }
 }
 
 
@@ -148,14 +160,6 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
   }
 
   ros::Time start_time = ros::Time::now();
-
-  // Save the timing information
-  timing_cache_ = extractTiming(traj);
-  // Unconstrain the times for the sparse sampling
-  for (std::size_t i = 0; i < traj.size(); ++i)
-  {
-    traj[i]->setTiming(descartes_core::TimingConstraint()); // default timing is (0,0)
-  }
 
   cart_points_.assign(traj.begin(),traj.end());
   std::vector<TrajectoryPtPtr> sparse_trajectory_array;
@@ -555,7 +559,6 @@ bool SparsePlanner::getPath(std::vector<TrajectoryPtPtr>& path) const
     TrajectoryPtPtr p = cart_points_[i];
     const JointTrajectoryPt& j = joint_points_map_.at(p->getID());
     TrajectoryPtPtr new_pt = TrajectoryPtPtr(new JointTrajectoryPt(j));
-    new_pt->setTiming(timing_cache_[i]);
     path[i] = new_pt;
   }
 
@@ -589,9 +592,26 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
   int skip = std::ceil(double(1.0f)/sampling);
   ROS_INFO_STREAM("Sampling skip val: "<<skip<< " from sampling val: "<<sampling);
   ss<<"[";
-  for(int i = 0; i < dense_trajectory_array.size();i+=skip)
+  
+  if (dense_trajectory_array.empty()) return;
+
+  // Add the first point
+  sparse_trajectory_array.push_back(dense_trajectory_array.front());
+  ss << "0 ";
+  // The first point requires no special timing adjustment
+  
+  int i; // We keep i outside of the loop so we can examine it on the last step
+  for (i = skip; i < dense_trajectory_array.size(); i+=skip)
   {
-    sparse_trajectory_array.push_back(dense_trajectory_array[i]);
+    // Add the cumulative time of the dense trajectory back in
+    descartes_core::TimingConstraint tm = cumulativeTimingBetween(dense_trajectory_array,
+                                                                  i - skip,
+                                                                  i);
+    // We don't want to modify the input trajectory pointers, so we clone and modify them here
+    descartes_core::TrajectoryPtPtr cloned = dense_trajectory_array[i]->copyAndSetTiming(tm);
+    // Write to the new array
+    sparse_trajectory_array.push_back(cloned);
+
     ss<<i<<" ";
   }
   ss<<"]";
@@ -600,7 +620,15 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
   // add the last one
   if(sparse_trajectory_array.back()->getID() != dense_trajectory_array.back()->getID())
   {
-    sparse_trajectory_array.push_back(dense_trajectory_array.back());
+    // The final point is index size() - 1
+    // The point before is index ( i - skip )
+    descartes_core::TimingConstraint tm = cumulativeTimingBetween(dense_trajectory_array,
+                                                                  i - skip, 
+                                                                  dense_trajectory_array.size() - 1);
+    // We don't want to modify the input trajectory pointers, so we clone and modify them here
+    descartes_core::TrajectoryPtPtr cloned = dense_trajectory_array.back()->copyAndSetTiming(tm);
+    // Write to solution
+    sparse_trajectory_array.push_back(cloned);
   }
 }
 
@@ -635,12 +663,13 @@ bool SparsePlanner::plan()
   // solving coarse trajectory
   bool replan = true;
   bool succeeded = false;
-  int max_replanning_attempts = cart_points_.size()/2;
   int replanning_attempts = 0;
   while(replan && getSparseSolutionArray(sparse_solution_array_))
   {
+    // sparse_index is the index in the sampled trajectory that a new point is to be added
+    // point_pos is the index into the dense trajectory that the new point is to be copied from 
     int sparse_index, point_pos;
-    int result = interpolateSparseTrajectory(sparse_solution_array_,sparse_index,point_pos);
+    int result = interpolateSparseTrajectory(sparse_solution_array_, sparse_index, point_pos);
     TrajectoryPt::ID prev_id, next_id;
     TrajectoryPtPtr cart_point;
     switch(result)
@@ -648,29 +677,56 @@ bool SparsePlanner::plan()
       case int(InterpolationResult::REPLAN):
           replan = true;
           cart_point = cart_points_[point_pos];
-
           if(sparse_index == 0)
           {
+            // If the point is being inserted at the beginning of the trajectory
+            // there is no need to tweak the timing that comes from the dense traj
             prev_id = descartes_core::TrajectoryID::make_nil();
             next_id = std::get<1>(sparse_solution_array_[sparse_index])->getID();
           }
           else
           {
+            // Here we want to calculate the time from the prev point to the new point
+            int prev_dense_id = std::get<0>(sparse_solution_array_[sparse_index-1]);
+            int next_dense_id = point_pos;
+            descartes_core::TimingConstraint tm = cumulativeTimingBetween(cart_points_, prev_dense_id, next_dense_id);
+            descartes_core::TrajectoryPtPtr copy_pt = cart_point->copyAndSetTiming(tm);
+            cart_point = copy_pt; // swap the point over
+
             prev_id = std::get<1>(sparse_solution_array_[sparse_index-1])->getID();
             next_id = std::get<1>(sparse_solution_array_[sparse_index])->getID();
           }
 
-          if(planning_graph_->addTrajectory(cart_point,prev_id,next_id))
+          // In either case, the sparse_index point will have to be recalculated
           {
-            sparse_solution_array_.clear();
-            ROS_INFO_STREAM("Added new point to sparse trajectory from dense trajectory at position "<<
-                            point_pos<<", re-planning entire trajectory");
-          }
-          else
-          {
-            ROS_ERROR_STREAM("Adding point "<<point_pos <<"to sparse trajectory failed, aborting");
-            replan = false;
-            succeeded = false;
+            int prev_dense_id = point_pos;
+            int next_dense_id = std::get<0>(sparse_solution_array_[sparse_index]);
+            descartes_core::TimingConstraint tm = cumulativeTimingBetween(cart_points_, prev_dense_id, next_dense_id);
+            descartes_core::TrajectoryPtPtr copy_pt = cart_points_[next_dense_id]->copyAndSetTiming(tm);
+
+            if (!planning_graph_->modifyTrajectory(copy_pt))
+            {
+              // Theoretically, this should never occur as we are merely modifying an existing point in the sparse
+              // graph.
+              ROS_ERROR_STREAM("Could not modify trajectory point with id: " << copy_pt->getID());
+              replan = false;
+              succeeded = false;
+              break;
+            }
+
+            // Add into original trajectory
+            if(planning_graph_->addTrajectory(cart_point,prev_id,next_id))
+            {
+              sparse_solution_array_.clear();
+              ROS_INFO_STREAM("Added new point to sparse trajectory from dense trajectory at position "<<
+                              point_pos<<", re-planning entire trajectory");
+            }
+            else
+            {
+              ROS_ERROR_STREAM("Adding point "<<point_pos <<"to sparse trajectory failed, aborting");
+              replan = false;
+              succeeded = false;
+            }
           }
 
           break;
@@ -683,15 +739,6 @@ bool SparsePlanner::plan()
           succeeded = false;
           break;
     }
-
-    if(replanning_attempts++ > max_replanning_attempts)
-    {
-      ROS_ERROR_STREAM("Maximum number of replanning attempts exceeded, aborting");
-      replan = false;
-      succeeded = false;
-      break;
-    }
-
   }
 
   return succeeded;
@@ -742,7 +789,7 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
     // interpolating
     int step = end_index - start_index;
     ROS_DEBUG_STREAM("Interpolation parameters: step : "<<step<<", start index "<<start_index<<", end index "<<end_index);
-    for(int j = 1; (j < step) && ( (start_index + j) < cart_points_.size()); j++)
+    for(int j = 1; (j <= step) && ( (start_index + j) < cart_points_.size()); j++)
     {
       int pos = start_index+j;
       double t = double(j)/double(step);
@@ -765,19 +812,22 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
           last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, last_joint_pose);
 
           // retreiving timing constraint
-          const descartes_core::TimingConstraint& tm = timing_cache_[pos];
+          // TODO, let's check the timing constraints
+          const descartes_core::TimingConstraint& tm = cart_points_[pos]->getTiming();
 
           // check validity of joint motion
           if (tm.isSpecified() && !robot_model->isValidMove(last_joint_pose, aprox_interp, tm.upper))
           {
             ROS_WARN_STREAM("Joint velocity checking failed for point " << pos << ". Replanning.");
+            // The last point in an interpolated segment will always succeed (as its from the solved graph)
+            // but the timing may not be valid. We check this last point here and if it fails, the second to
+            // last point is added to the graph so that this timing is thoroughly checked by planning graph.
+            point_pos = (j == step) ? (pos - 1) : pos;
             sparse_index = k;
-            point_pos = pos;
             return static_cast<int>(InterpolationResult::REPLAN);
           }
-
-          // otherwise add point
-          joint_points_map_.insert(std::make_pair(cart_point->getID(),JointTrajectoryPt(aprox_interp)));
+          
+          joint_points_map_.insert(std::make_pair(cart_point->getID(), JointTrajectoryPt(aprox_interp, tm)));
         }
         else
         {
@@ -790,16 +840,12 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
       }
       else
       {
-
           ROS_WARN_STREAM("Couldn't find a closest joint pose for point "<< cart_point->getID()<<", replanning");
           sparse_index = k;
           point_pos = pos;
           return (int)InterpolationResult::REPLAN;
       }
     }
-
-    // adding end joint point to solution
-    joint_points_map_.insert(std::make_pair(end_tpoint->getID(),end_jpoint));
   }
 
   return (int)InterpolationResult::SUCCESS;
