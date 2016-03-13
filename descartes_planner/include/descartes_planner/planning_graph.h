@@ -74,6 +74,7 @@ struct CartesianPointInformation
 };
 
 typedef std::map<descartes_core::TrajectoryPt::ID, CartesianPointInformation> CartesianMap;
+typedef std::map<descartes_core::TrajectoryPt::ID, descartes_trajectory::JointTrajectoryPt> JointMap;
 
 class PlanningGraph
 {
@@ -144,11 +145,11 @@ protected:
   //       and include an accessor to both formats
 
   // maintains the original (Cartesian) points list along with link information and associated joint trajectories per point
-  std::map<descartes_core::TrajectoryPt::ID, CartesianPointInformation> *cartesian_point_link_;
+  CartesianMap* cartesian_point_link_;
 
   // maintains a map of joint solutions with it's corresponding graph vertex_descriptor
   //   one or more of these will exist for each element in trajectory_point_map
-  std::map<descartes_core::TrajectoryPt::ID, descartes_trajectory::JointTrajectoryPt> joint_solutions_map_;
+  JointMap joint_solutions_map_;
 
   /** @brief simple function to iterate over all graph vertices to find ones that do not have an incoming edge */
   bool findStartVertices(std::list<JointGraph::vertex_descriptor> &start_points);
