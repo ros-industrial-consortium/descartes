@@ -369,9 +369,6 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
                                      const std::vector<double>& to_joint_pose,
                                      double dt) const
 {
-  std::vector<double> max_joint_deltas;
-  max_joint_deltas.reserve(velocity_limits_.size());
-
   // Check for equal sized arrays
   if (from_joint_pose.size() != to_joint_pose.size())
   {
@@ -379,18 +376,11 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
     return false;
   }
 
-  // Build a vector of the maximum angle delta per joint 
-  for (std::vector<double>::const_iterator it = velocity_limits_.begin(); it != velocity_limits_.end(); ++it)
+  for (std::size_t i = 0; i < from_joint_pose.size(); ++i)
   {
-    max_joint_deltas.push_back((*it) * dt);
-  }
-
-  for (std::vector<double>::size_type i = 0; i < from_joint_pose.size(); ++i)
-  {
-    if ( std::abs(from_joint_pose[i] - to_joint_pose[i]) > max_joint_deltas[i] )
-    {
-      return false;
-    }
+    double dtheta = std::abs(from_joint_pose[i] - to_joint_pose[i]);
+    double max_dtheta = dt * velocity_limits_[i];
+    if (dtheta > max_dtheta) return false;
   }
 
   return true;
