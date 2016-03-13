@@ -70,11 +70,12 @@ struct CartesianPointInformation
 {
   CartesianPointRelationship links_;
   descartes_core::TrajectoryPtPtr source_trajectory_;
-  std::list<descartes_core::TrajectoryPt::ID> joints_;
+  std::vector<descartes_core::TrajectoryPt::ID> joints_;
 };
 
 typedef std::map<descartes_core::TrajectoryPt::ID, CartesianPointInformation> CartesianMap;
 typedef std::map<descartes_core::TrajectoryPt::ID, descartes_trajectory::JointTrajectoryPt> JointMap;
+typedef std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> VertexMap;
 
 class PlanningGraph
 {
@@ -100,7 +101,7 @@ public:
 
   bool removeTrajectory(descartes_core::TrajectoryPtPtr point);
 
-  CartesianMap getCartesianMap();
+  CartesianMap getCartesianMap() const;
 
   bool getCartesianTrajectory(std::vector<descartes_core::TrajectoryPtPtr>& traj);
 
@@ -152,10 +153,10 @@ protected:
   JointMap joint_solutions_map_;
 
   /** @brief simple function to iterate over all graph vertices to find ones that do not have an incoming edge */
-  bool findStartVertices(std::list<JointGraph::vertex_descriptor> &start_points);
+  bool findStartVertices(std::vector<JointGraph::vertex_descriptor> &start_points);
 
   /** @brief simple function to iterate over all graph vertices to find ones that do not have an outgoing edge */
-  bool findEndVertices(std::list<JointGraph::vertex_descriptor> &end_points);
+  bool findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given descartes_core::TrajectoryPt list */
   bool calculateJointSolutions();
@@ -164,14 +165,15 @@ protected:
   bool populateGraphVertices();
 
   /** @brief calculate weights fro each start point to each end point */
-  bool calculateEdgeWeights(const std::list<descartes_core::TrajectoryPt::ID> &start_joints,
-                            const std::list<descartes_core::TrajectoryPt::ID> &end_joints, std::list<JointEdge> &edge_results);
+  bool calculateEdgeWeights(const std::vector<descartes_core::TrajectoryPt::ID> &start_joints,
+                            const std::vector<descartes_core::TrajectoryPt::ID> &end_joints,
+                            std::vector<JointEdge> &edge_results);
 
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
-  bool calculateAllEdgeWeights(std::list<JointEdge> &edges);
+  bool calculateAllEdgeWeights(std::vector<JointEdge> &edges);
 
   /** @brief (Re)create the actual graph structure from the list of transition costs (edges) */
-  bool populateGraphEdges(const std::list<JointEdge> &edges);
+  bool populateGraphEdges(const std::vector<JointEdge> &edges);
 };
 
 } /* namespace descartes_planner */
