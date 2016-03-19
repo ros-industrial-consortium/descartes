@@ -800,53 +800,69 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
       }
 
       TrajectoryPtPtr cart_point = cart_points_[pos];
-      if(cart_point->getClosestJointPose(rough_interp,*robot_model,aprox_interp) )
+      if (j != step)
       {
-        if(checkJointChanges(rough_interp,aprox_interp,MAX_JOINT_CHANGE))
+        if(cart_point->getClosestJointPose(rough_interp,*robot_model,aprox_interp) )
         {
-          ROS_DEBUG_STREAM("Interpolated point at position "<<pos);
-
-          // look up previous points joint solution
-          const JointTrajectoryPt& last_joint_pt = joint_points_map_.at(cart_points_[pos-1]->getID());
-          std::vector<double> last_joint_pose;
-          last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, last_joint_pose);
-
-          // retreiving timing constraint
-          // TODO, let's check the timing constraints
-          const descartes_core::TimingConstraint& tm = cart_points_[pos]->getTiming();
-
-          // check validity of joint motion
-          if (tm.isSpecified() && !robot_model->isValidMove(last_joint_pose, aprox_interp, tm.upper))
+          if(checkJointChanges(rough_interp,aprox_interp,MAX_JOINT_CHANGE))
           {
-            ROS_WARN_STREAM("Joint velocity checking failed for point " << pos << ". Replanning.");
-            // The last point in an interpolated segment will always succeed (as its from the solved graph)
-            // but the timing may not be valid. We check this last point here and if it fails, the second to
-            // last point is added to the graph so that this timing is thoroughly checked by planning graph.
-            point_pos = (j == step) ? (pos - 1) : pos;
-            sparse_index = k;
-            return static_cast<int>(InterpolationResult::REPLAN);
+            ROS_DEBUG_STREAM("Interpolated point at position "<<pos);
+
+            // look up previous points joint solution
+            const JointTrajectoryPt& last_joint_pt = joint_points_map_.at(cart_points_[pos-1]->getID());
+            std::vector<double> last_joint_pose;
+            last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, last_joint_pose);
+
+            // retreiving timing constraint
+            // TODO, let's check the timing constraints
+            const descartes_core::TimingConstraint& tm = cart_points_[pos]->getTiming();
+
+            // check validity of joint motion
+            if (tm.isSpecified() && !robot_model->isValidMove(last_joint_pose, aprox_interp, tm.upper))
+            {
+              ROS_WARN_STREAM("Joint velocity checking failed for point " << pos << ". Replanning.");
+              point_pos = pos;
+              sparse_index = k;
+              return static_cast<int>(InterpolationResult::REPLAN);
+            }
+            
+            joint_points_map_.insert(std::make_pair(cart_point->getID(), JointTrajectoryPt(aprox_interp, tm)));
           }
-          
-          joint_points_map_.insert(std::make_pair(cart_point->getID(), JointTrajectoryPt(aprox_interp, tm)));
+          else
+          {
+            ROS_WARN_STREAM("Joint changes greater that "<<MAX_JOINT_CHANGE<<" detected for point "<<pos<<
+                            ", replanning");
+            sparse_index = k;
+            point_pos = pos;
+            return (int)InterpolationResult::REPLAN;
+          }
         }
         else
         {
-          ROS_WARN_STREAM("Joint changes greater that "<<MAX_JOINT_CHANGE<<" detected for point "<<pos<<
-                          ", replanning");
-          sparse_index = k;
-          point_pos = pos;
-          return (int)InterpolationResult::REPLAN;
-        }
-      }
-      else
-      {
           ROS_WARN_STREAM("Couldn't find a closest joint pose for point "<< cart_point->getID()<<", replanning");
           sparse_index = k;
           point_pos = pos;
           return (int)InterpolationResult::REPLAN;
+        }
       }
-    }
-  }
+      else // j == step
+      {
+        const JointTrajectoryPt& last_joint_pt = joint_points_map_.at(cart_points_[pos-1]->getID());
+        std::vector<double> last_joint_pose;
+        last_joint_pt.getNominalJointPose(std::vector<double>(), *robot_model, last_joint_pose);
+        const descartes_core::TimingConstraint& tm = cart_points_[pos]->getTiming();
+
+        if (tm.isSpecified() && !robot_model->isValidMove(last_joint_pose, rough_interp, tm.upper))
+        {
+          ROS_WARN_STREAM("Joint velocity checking failed for last-point " << pos << ". Adding previous point.");
+          point_pos = (pos - 1);
+          sparse_index = k;
+          return static_cast<int>(InterpolationResult::REPLAN);
+        }
+        joint_points_map_.insert(std::make_pair(cart_point->getID(), JointTrajectoryPt(rough_interp, tm)));
+      }
+    } // end of interpolation steps between sparse points
+  } // end of sparse point loop
 
   return (int)InterpolationResult::SUCCESS;
 }
