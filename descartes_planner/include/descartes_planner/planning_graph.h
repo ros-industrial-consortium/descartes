@@ -173,7 +173,7 @@ protected:
 
   bool calculateEdgeWeights(const std::vector<descartes_trajectory::JointTrajectoryPt> &start_joints,
                             const std::vector<descartes_trajectory::JointTrajectoryPt> &end_joints,
-                            std::vector<JointEdge> &edge_results);
+                            std::vector<JointEdge> &edge_results) const;
 
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
   bool calculateAllEdgeWeights(const std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses,
