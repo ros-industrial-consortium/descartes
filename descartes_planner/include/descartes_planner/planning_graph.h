@@ -159,18 +159,25 @@ protected:
   bool findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given descartes_core::TrajectoryPt list */
-  bool calculateJointSolutions();
+  bool calculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr>& points,
+                               std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses);
 
   /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */
-  bool populateGraphVertices();
+  bool populateGraphVertices(const std::vector<descartes_core::TrajectoryPtPtr>& points,
+                             std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses);
 
   /** @brief calculate weights fro each start point to each end point */
   bool calculateEdgeWeights(const std::vector<descartes_core::TrajectoryPt::ID> &start_joints,
                             const std::vector<descartes_core::TrajectoryPt::ID> &end_joints,
                             std::vector<JointEdge> &edge_results);
 
+  bool calculateEdgeWeights(const std::vector<descartes_trajectory::JointTrajectoryPt> &start_joints,
+                            const std::vector<descartes_trajectory::JointTrajectoryPt> &end_joints,
+                            std::vector<JointEdge> &edge_results);
+
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
-  bool calculateAllEdgeWeights(std::vector<JointEdge> &edges);
+  bool calculateAllEdgeWeights(const std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses,
+                               std::vector<JointEdge> &edges);
 
   /** @brief (Re)create the actual graph structure from the list of transition costs (edges) */
   bool populateGraphEdges(const std::vector<JointEdge> &edges);
