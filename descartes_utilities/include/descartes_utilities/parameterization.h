@@ -16,34 +16,33 @@
  * limitations under the License.
  */
 /*
- *  ros_conversions.h
+ *  parameterization.h
  *
- *  Created on: Feb 28, 2016
+ *  Created on: March 28, 2016
  *  Author: Jonathan Meyer
  */
 
-#ifndef DESCARTES_ROS_CONVERSIONS_H
-#define DESCARTES_ROS_CONVERSIONS_H
+#ifndef DESCARTES_PARAMETERIZATION_H
+#define DESCARTES_PARAMETERIZATION_H
 
 #include <trajectory_msgs/JointTrajectory.h>
-#include <descartes_core/trajectory_pt.h>
+#include "descartes_utilities/spline_interpolator.h"
 
 namespace descartes_utilities
 {
+
 /**
- * @brief Converts a sequence of Descartes joint trajectory points to ROS trajectory points.
- *        Copies timing if specified, and sets vel/acc/effort fields to zeros.
- * @param model Descartes robot model associated with the Descartes joint trajectory
- * @param joint_traj Sequence of 'joint trajectory points' as returned by Dense/Sparse planner 
- * @param default_joint_vel If a point, does not have timing specified, this value (in rads/s)
- *                          is used to calculate a 'default' time. Must be > 0 & less than 100.
- * @param out Buffer in which to store the resulting ROS trajectory. Only overwritten on success.
- * @return True if the conversion succeeded. False otherwise.
+ * @brief Given an input trajectory with positions and time_from_start specified,
+ *        generates a set of cubic splines that describe the behavior of each 
+ *        joint.
+ *        
+ * @param traj Input trajectory with positions and times specified.  
+ * @param splines If successful, this field will be populated with splines for each
+ *                joint.
+ * @return True on success, false otherwise
  */
-bool toRosJointPoints(const descartes_core::RobotModel& model,
-                      const std::vector<descartes_core::TrajectoryPtPtr>& joint_traj,
-                      double default_joint_vel,
-                      std::vector<trajectory_msgs::JointTrajectoryPoint>& out);
+bool toCubicSplines(const std::vector<trajectory_msgs::JointTrajectoryPoint>& traj,
+                    std::vector<SplineInterpolator>& splines);
 
 /**
  * Calculates velocity and acceleration values for a joint trajectory based on natural cubic splines
@@ -52,8 +51,9 @@ bool toRosJointPoints(const descartes_core::RobotModel& model,
  * @param  traj The input trajectory on which to act; assumed to have 'positions' field filled out.
  *              This function will populate 'velocities' and 'accelerations'.
  * @return      True if the operation succeeded. False otherwise.
- */
-bool parameterizeVelocityAcceleration(std::vector<trajectory_msgs::JointTrajectoryPoint>& traj);
+ */ 
+bool setDerivatesFromSplines(std::vector<trajectory_msgs::JointTrajectoryPoint>& traj);
+
 }
 
 #endif
