@@ -23,8 +23,6 @@
  */
 
 #include "descartes_utilities/ros_conversions.h"
-#include <algorithm>
-#include <console_bridge/console.h>
 
 /**
  * @brief Given two sets of joint values representing two robot joint poses, this function computes the

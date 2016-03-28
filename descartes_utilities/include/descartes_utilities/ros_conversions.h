@@ -45,6 +45,16 @@ namespace descartes_utilities
                    const std::vector<descartes_core::TrajectoryPtPtr>& joint_traj,
                    double default_joint_vel,
                    std::vector<trajectory_msgs::JointTrajectoryPoint>& out);
+
+  /**
+   * Calculates velocity and acceleration values for a joint trajectory based on natural cubic splines
+   * fit to the input trajectory. This function assumes that the 'positions' field of the trajectory
+   * has been filled out for each point and that the degrees of freedom does not change.
+   * @param  traj The input trajectory on which to act; assumed to have 'positions' field filled out.
+   *              This function will populate 'velocities' and 'accelerations'.
+   * @return      True if the operation succeeded. False otherwise.
+   */
+  bool parameterizeVelocityAcceleration(std::vector<trajectory_msgs::JointTrajectoryPoint>& traj);
 }
 
 #endif
