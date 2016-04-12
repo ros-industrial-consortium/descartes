@@ -33,6 +33,13 @@ public:
   virtual int getErrorCode() const;
   virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
+  // Helper functions meant to access the underlying graph structure
+  
+  const PlanningGraph& getPlanningGraph() const
+  {
+    return *planning_graph_;
+  }
+
 protected:
 
   descartes_core::TrajectoryPt::ID getPrevious(const descartes_core::TrajectoryPt::ID& ref_id);
