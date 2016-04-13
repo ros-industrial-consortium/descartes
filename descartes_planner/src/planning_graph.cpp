@@ -84,10 +84,9 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     ROS_ERROR_STREAM("points == null. Cannot initialize graph with null list.");
     return false;
   }
-  if (points->size() == 0)
+  if (points->size() < 2)
   {
-    // one or both have 0 elements
-    ROS_ERROR_STREAM("points.size == 0. Cannot initialize graph with 0 elements.");
+    ROS_ERROR_STREAM(__FUNCTION__ << ": must provide at least 2 input trajectory points.");
     return false;
   }
 
@@ -126,33 +125,29 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
   }
 
   // after populating maps above (presumably from cartesian trajectory points), calculate (or query) for all joint trajectories
-  if (!calculateJointSolutions())
+  std::vector<std::vector<JointTrajectoryPt>> poses;
+  if (!calculateJointSolutions(*points, poses))
   {
-    // failed to get joint trajectories
     ROS_ERROR_STREAM("unable to calculate joint trajectories for input points");
     return false;
   }
 
-  if (!populateGraphVertices())
+  std::vector<JointEdge> edges;
+  if (!calculateAllEdgeWeights(poses, edges))
   {
-    ROS_ERROR_STREAM("unable to populate graph from input points");
+    ROS_ERROR_STREAM("unable to calculate edge weight of joint transitions for joint trajectories");
     return false;
   }
 
-  // after obtaining joint trajectories, calculate each edge weight between adjacent joint trajectories
-  // edge list can be local here, it needs to be passed to populate the graph but not maintained afterwards
-  std::vector<JointEdge> edges;
-  if (!calculateAllEdgeWeights(edges))
+  if (!populateGraphVertices(*points, poses))
   {
-    // failed to get edge weights
-    ROS_ERROR_STREAM("unable to calculate edge weight of joint transitions for joint trajectories");
+    ROS_ERROR_STREAM("unable to populate graph from input points");
     return false;
   }
 
   // from list of joint trajectories (vertices) and edges (edges), construct the actual graph
   if (!populateGraphEdges(edges))
   {
-    // failed to create graph
     ROS_ERROR_STREAM("unable to populate graph from calculated edges");
     return false;
   }
@@ -776,95 +771,53 @@ void PlanningGraph::printGraph()
   ROS_DEBUG_STREAM("\n\nEND PRINTING GRAPH\n\n");
 }
 
-bool PlanningGraph::calculateJointSolutions()
+bool PlanningGraph::calculateJointSolutions(const std::vector<TrajectoryPtPtr>& points,
+                                            std::vector<std::vector<JointTrajectoryPt>>& poses)
 {
-  if (joint_solutions_map_.size() > 0)
-  {
-    // existing joint solutions... clear the list?
-    ROS_WARN_STREAM("existing joint solutions found, clearing map");
-    joint_solutions_map_.clear();
-  }
+  poses.resize(points.size());
 
-  // for each TrajectoryPt, get the available joint solutions
-  for (auto trajectory_iter = cartesian_point_link_->begin();
-       trajectory_iter != cartesian_point_link_->end(); ++trajectory_iter)
+  for (std::size_t i = 0; i < points.size(); ++i)
   {
-    // TODO: copy this block to a function that can be used by add and modify
-    /*************************/
-    std::vector<TrajectoryPt::ID> traj_solutions;
-    std::vector<std::vector<double> > joint_poses;
-    trajectory_iter->second.source_trajectory_.get()->getJointPoses(*robot_model_, joint_poses);
-    TrajectoryPt::ID tempID = trajectory_iter->first;
-    ROS_DEBUG_STREAM("CartID: " << tempID << " JointPoses count: " << joint_poses.size());
+    std::vector<std::vector<double>> joint_poses;
+    points[i]->getJointPoses(*robot_model_, joint_poses);
 
-    if (joint_poses.size() == 0)
+    if (joint_poses.empty())
     {
-      ROS_WARN_STREAM("no joint solution for this point... potential discontinuity in the graph");
+      ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
+      return false;
     }
-    else
+
+    poses[i].reserve(joint_poses.size());
+    for (auto& sol : joint_poses)
     {
-      for (auto joint_pose_iter = joint_poses.begin(); joint_pose_iter != joint_poses.end(); ++joint_pose_iter)
-      {
-        //get UUID from JointTrajPt (convert from std::vector<double>)
-        JointTrajectoryPt new_pt (*joint_pose_iter, trajectory_iter->second.source_trajectory_.get()->getTiming());
-        traj_solutions.push_back(new_pt.getID());
-        joint_solutions_map_[new_pt.getID()] = new_pt;
-      }
+      poses[i].emplace_back(std::move(sol), points[i]->getTiming());
     }
-    trajectory_iter->second.joints_ = traj_solutions;
-    /*************************/
   }
 
   return true;
 }
 
-bool PlanningGraph::calculateAllEdgeWeights(std::vector<JointEdge> &edges)
+bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointTrajectoryPt>>& poses, std::vector<JointEdge> &edges)
 {
-  if (cartesian_point_link_->size() == 0)
+  // We check that the size of input traj is at least 2 at the start of insertGraph()
+  // iterate over each pair of points
+  for (std::size_t i = 1; i < poses.size(); ++i)
   {
-    // no linkings of cartesian points
-    ROS_ERROR_STREAM("no trajectory point links defined");
-    return false;
-  }
-  else
-  {
-    ROS_DEBUG_STREAM("Found %i " << cartesian_point_link_->size() << " trajectory point links");
-  }
+    const std::vector<JointTrajectoryPt>& from = poses[i - 1];
+    const std::vector<JointTrajectoryPt>& to = poses[i];
 
-  if (joint_solutions_map_.size() == 0)
-  {
-    // no joint solutions to calculate transitions for
-    ROS_ERROR_STREAM("no joint solutions available");
-    return false;
-  }
-  else
-  {
-    ROS_INFO_STREAM("Calculating edges for " << joint_solutions_map_.size() << " total joint solutions");
-  }
-
-  for (auto cart_link_iter = cartesian_point_link_->begin();
-      cart_link_iter != cartesian_point_link_->end(); ++cart_link_iter)
-  {
-    TrajectoryPt::ID start_cart_id = cart_link_iter->first; // should be equal to cart_link_iter->second.links_.id
-    TrajectoryPt::ID end_cart_id = cart_link_iter->second.links_.id_next;
-
-    if(!end_cart_id.is_nil())
+    if (!calculateEdgeWeights(from, to, edges))
     {
-      std::vector<TrajectoryPt::ID> start_joint_ids = cart_link_iter->second.joints_;
-      std::vector<TrajectoryPt::ID> end_joint_ids = (*cartesian_point_link_)[end_cart_id].joints_;
-
-      if(!calculateEdgeWeights(start_joint_ids, end_joint_ids, edges))
-      {
-        ROS_WARN_STREAM("One or more joints lists in the cartesian point link is empty ID:" << start_cart_id << 
-                        "[start ids:" << start_joint_ids.size() << "], ID:" << end_cart_id << "[end ids:" << end_joint_ids.size() << ']');
-      }
+      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i-1) << " and " << i); 
+      return false;
     }
   }
 
   return !edges.empty();
 }
 
-bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &start_joints,const std::vector<TrajectoryPt::ID> &end_joints, std::vector<JointEdge> &edge_results)
+bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &start_joints,
+                                         const std::vector<TrajectoryPt::ID> &end_joints, std::vector<JointEdge> &edge_results)
 {
   if(start_joints.empty() || end_joints.empty())
   {
@@ -910,20 +863,79 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &st
   return has_valid_transition;
 }
 
-bool PlanningGraph::populateGraphVertices()
+bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt> &start_joints,
+                                         const std::vector<JointTrajectoryPt> &end_joints, 
+                                         std::vector<JointEdge> &edge_results) const
 {
-  if (joint_solutions_map_.size() == 0)
+  if(start_joints.empty() || end_joints.empty())
   {
-    // no joints (vertices)
-    ROS_ERROR_STREAM("no joint solutions defined, thus no graph vertices");
+    ROS_WARN_STREAM("One or more joints lists is empty, Start Joints: " << start_joints.size() << " End Joints: " << end_joints.size());
     return false;
   }
 
-  for (auto joint_iter = joint_solutions_map_.begin();
-      joint_iter != joint_solutions_map_.end(); ++joint_iter)
+  auto start_size = edge_results.size();
+
+  // calculate edges for previous vertices to this set of vertices
+  for (const auto& start_joint : start_joints)
   {
-    JointGraph::vertex_descriptor v = boost::add_vertex(dg_);
-    dg_[v].id = joint_iter->second.getID();
+    // Loop over the ending points -> look at each combination of start/end points
+    for (const auto& end_joint : end_joints)
+    {
+      // Calculate edge cost
+      LinearWeightResult edge_result = linearWeight(start_joint, end_joint);
+
+      // If the edge weight calculation returns false, do not create an edge
+      if (!edge_result.first) continue;
+
+      JointEdge edge;
+      edge.joint_start = start_joint.getID();
+      edge.joint_end = end_joint.getID();
+      edge.transition_cost = edge_result.second;
+      edge_results.push_back(edge);
+    }
+  }
+
+  return edge_results.size() > start_size;
+}
+
+bool PlanningGraph::populateGraphVertices(const std::vector<TrajectoryPtPtr>& points, std::vector<std::vector<JointTrajectoryPt>>& poses)
+{
+  if (points.size() != poses.size())
+  {
+    ROS_ERROR_STREAM(__FUNCTION__ << ": user trajectory and joint solutions should have same length");
+    return false;
+  }
+
+  if (!joint_solutions_map_.empty())
+  {
+    ROS_WARN_STREAM(__FUNCTION__ << ": Clearing joint solutions map.");
+    joint_solutions_map_.clear();
+  }
+
+  // Need to update the boost graph, the joint solutions map, and the cartesian point links
+  for (std::size_t i = 0; i < points.size(); ++i)
+  {
+    // Copy joint solution IDs into cartesian_point_links
+    std::vector<TrajectoryPt::ID> ids;
+    ids.reserve(poses[i].size());
+
+    std::transform(poses[i].begin(), poses[i].end(), std::back_inserter(ids), [] (const JointTrajectoryPt& pt) {
+      return pt.getID();
+    });
+
+    auto& entry = cartesian_point_link_->at(points[i]->getID());
+    entry.joints_ = std::move(ids);
+
+    // For each joint solution, add it to joint sol map and the graph
+    for (std::size_t j = 0; j < poses[i].size(); ++j)
+    {
+      // insert into graph
+      auto id = poses[i][j].getID();
+      auto vertex = boost::add_vertex(dg_);
+      dg_[vertex].id = id;
+      // insert into sol map
+      joint_solutions_map_.emplace(id, std::move(poses[i][j]));
+    }
   }
 
   return true;
