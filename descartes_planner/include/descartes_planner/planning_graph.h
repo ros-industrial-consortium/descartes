@@ -101,8 +101,6 @@ public:
 
   bool removeTrajectory(descartes_core::TrajectoryPtPtr point);
 
-  CartesianMap getCartesianMap() const;
-
   bool getCartesianTrajectory(std::vector<descartes_core::TrajectoryPtPtr>& traj);
 
   /** @brief Calculate and return the shortest path from the given joint solution indices
@@ -124,6 +122,14 @@ public:
   void printMaps();
 
   descartes_core::RobotModelConstPtr getRobotModel();
+
+
+  CartesianMap getCartesianMap() const;
+
+  const JointMap& getJointMap() const;
+
+  const JointGraph& getGraph() const; 
+
 
 protected:
   descartes_core::RobotModelConstPtr robot_model_;

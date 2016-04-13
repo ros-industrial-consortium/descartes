@@ -53,8 +53,21 @@ PlanningGraph::~PlanningGraph()
 
 CartesianMap PlanningGraph::getCartesianMap() const
 {
-  if (!cartesian_point_link_) return CartesianMap();
+  if (!cartesian_point_link_)
+  {
+    return CartesianMap();
+  }
   else return *cartesian_point_link_;
+}
+
+const JointMap& PlanningGraph::getJointMap() const
+{
+  return joint_solutions_map_;
+}
+
+const JointGraph& PlanningGraph::getGraph() const
+{
+  return dg_;
 }
 
 descartes_core::RobotModelConstPtr PlanningGraph::getRobotModel()
