@@ -48,11 +48,38 @@ bool toCubicSplines(const std::vector<trajectory_msgs::JointTrajectoryPoint>& tr
  * Calculates velocity and acceleration values for a joint trajectory based on natural cubic splines
  * fit to the input trajectory. This function assumes that the 'positions' field of the trajectory
  * has been filled out for each point and that the degrees of freedom does not change.
- * @param  traj The input trajectory on which to act; assumed to have 'positions' field filled out.
- *              This function will populate 'velocities' and 'accelerations'.
+ * @param  traj The input trajectory on which to act; assumed to have 'positions' & 'time_from_start'
+ *              fields filled out. This function will populate 'velocities' and 'accelerations'.
  * @return      True if the operation succeeded. False otherwise.
  */ 
 bool setDerivatesFromSplines(std::vector<trajectory_msgs::JointTrajectoryPoint>& traj);
+
+/**
+ * Calculates velocity and acceleration values for a joint trajectory based on natural cubic splines
+ * provided by the caller. This function assumes that the 'positions' field of the trajectory
+ * has been filled out for each point and that the degrees of freedom does not change.
+ * @param  splines Set of splines describing the behaviour of each joint as it moves through the
+ *                 input trajectory.
+ * @param  traj The input trajectory on which to act; assumed to have 'positions' & 'time_from_start'
+ *              fields filled out. This function will populate 'velocities' and 'accelerations'.
+ * @return      True if the operation succeeded. False otherwise.
+ */
+bool setDerivatesFromSplines(const std::vector<SplineInterpolator>& splines,
+                             std::vector<trajectory_msgs::JointTrajectoryPoint>& traj);
+/**
+ * Given a set of splines describing the motion of each joint as it moves through a trajectory,
+ * sample this spline at regular intervals to generate a new trajectory.
+ * @param  splines  Sequence of splines describing the motion of each joint; 
+ *                  perhaps calculated by 'toCubicSplines'
+ * @param  start_tm The time value of the trajectory at which to start sampling
+ * @param  end_tm   The time value of the trajectory at which to end sampling
+ * @param  tm_step  The interval at which to sample times between start & end
+ * @param  traj     The new, resampled, output trajectory
+ * @return          True on success; If false, 'traj' is untouched.
+ */
+bool resampleTrajectory(const std::vector<SplineInterpolator>& splines,
+                        double start_tm, double end_tm, double tm_step,
+                        std::vector<trajectory_msgs::JointTrajectoryPoint>& traj);
 
 }
 
