@@ -622,13 +622,23 @@ bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor> &
 
 bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt>& path)
 {
+  // Enumerate the start & end vertice descriptors
   std::vector<JointGraph::vertex_descriptor> start_points;
   findStartVertices(start_points);
   std::vector<JointGraph::vertex_descriptor> end_points;
   findEndVertices(end_points);
 
-  size_t num_vert = boost::num_vertices(dg_);
+  // Insert 'virtual' root joint, so that we can search the entire graph
+  // even with multiple start vertices
+  JointGraph::vertex_descriptor virtual_vertex = boost::add_vertex(dg_);
+  for (const auto& pt : start_points)
+  {
+    auto e = boost::add_edge(virtual_vertex, pt, dg_);
+    dg_[e.first].transition_cost = 0.0;
+  }
 
+  // Generate mapping of vertex descriptors to Trajectory Point IDs
+  size_t num_vert = boost::num_vertices(dg_);
   std::vector<TrajectoryPt::ID> vertex_index_map(num_vert);
   std::pair<VertexIterator, VertexIterator> vi = boost::vertices(dg_);
   int i = 0;
@@ -638,44 +648,45 @@ bool PlanningGraph::getShortestPath(double &cost, std::list<JointTrajectoryPt>& 
     vertex_index_map[i++] = dg_[jv].id;
   }
 
+  // Default the case to a very large number incase there is no valid path
+  // through the graph
   cost = std::numeric_limits<double>::max();
 
-  for (auto start = start_points.begin(); start != start_points.end(); ++start)
+  // initialize vectors to be used by dijkstra
+  std::vector<JointGraph::vertex_descriptor> predecessors(num_vert);
+  std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
+
+  dijkstra_shortest_paths(
+      dg_,
+      virtual_vertex, // start from our fake point
+      weight_map(get(&JointEdge::transition_cost, dg_)).distance_map(
+        boost::make_iterator_property_map(weights.begin(), get(boost::vertex_index, dg_))).predecessor_map(
+        &predecessors[0]));
+
+  // Search the ending points for a minimum point
+  for (auto end = end_points.begin(); end != end_points.end(); ++end)
   {
-    // initialize vectors to be used by dijkstra
-    std::vector<JointGraph::vertex_descriptor> predecessors(num_vert);
-    std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
-
-    dijkstra_shortest_paths(
-        dg_,
-        *start,
-        weight_map(get(&JointEdge::transition_cost, dg_)).distance_map(
-          boost::make_iterator_property_map(weights.begin(), get(boost::vertex_index, dg_))).predecessor_map(
-          &predecessors[0]));
-
-    for (auto end = end_points.begin(); end != end_points.end(); ++end)
+    double weight = weights[*end];
+    // if the weight of this path is less than the previous best, replace the return path
+    if (weight < cost)
     {
-      // actual weight(cost) from start_id to end_id
-      double weight = weights[*end];
-
-      // if the weight of this path of less than a previous one, replace the return path
-      if (weight < cost)
+      cost = weight;
+      path.clear();
+      // Add the destination point.
+      auto current = *end;
+      // Starting from the destination point step through the predecessor map
+      // until the source point is reached.
+      while (current != virtual_vertex)
       {
-        cost = weight;
-        path.clear();
-        // Add the destination point.
-        int current = *end;
         path.push_front(joint_solutions_map_[vertex_index_map[current]]);
-        // Starting from the destination point step through the predecessor map
-        // until the source point is reached.
-        while (current != *start)
-        {
-          current = predecessors[current];
-          path.push_front(joint_solutions_map_[vertex_index_map[current]]);
-        }
+        current = predecessors[current];
       }
     }
   }
+
+  // Undo the virtual joint
+  boost::clear_vertex(virtual_vertex, dg_);
+  boost::remove_vertex(virtual_vertex, dg_);
 
   if (cost < std::numeric_limits<double>::max())
   {
