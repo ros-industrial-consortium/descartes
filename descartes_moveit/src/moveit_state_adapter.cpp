@@ -22,8 +22,8 @@
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_moveit/seed_search.h"
 
-#include "eigen_conversions/eigen_msg.h"
-#include "random_numbers/random_numbers.h"
+#include <eigen_conversions/eigen_msg.h>
+#include <random_numbers/random_numbers.h>
 #include <sstream>
 
 const static int SAMPLE_ITERATIONS = 10;
@@ -332,7 +332,7 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
   // Check for equal sized arrays
   if (from_joint_pose.size() != to_joint_pose.size())
   {
-    ROS_ERROR_STREAM("To and From joint poses are of different sizes.");
+    logError("To and From joint poses are of different sizes.");
     return false;
   }
 

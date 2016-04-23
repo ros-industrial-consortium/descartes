@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-#ifndef MOVEIT_STATE_ADPATER_H_
-#define MOVEIT_STATE_ADPATER_H_
+#ifndef MOVEIT_STATE_ADAPTER_H_
+#define MOVEIT_STATE_ADAPTER_H_
 
 #include "descartes_core/robot_model.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include "moveit/robot_model/robot_model.h"
 #include <moveit/planning_scene/planning_scene.h>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 #include <string>
 
 namespace descartes_moveit
@@ -143,4 +143,4 @@ protected:
 
 } //descartes_moveit
 
-#endif /* MOVEIT_STATE_ADPATER_H_ */
+#endif /* MOVEIT_STATE_ADAPTER_H_ */
