@@ -67,6 +67,21 @@ bool descartes_moveit::IkFastMoveitStateAdapter::initialize(const std::string& r
   std::string ikfast_base_frame, ikfast_tool_frame;
   nh.param<std::string>("ikfast_base_frame", ikfast_base_frame, default_base_frame);
   nh.param<std::string>("ikfast_tool_frame", ikfast_tool_frame, default_tool_frame);
+  
+  if (!robot_state_->knowsFrameTransform(ikfast_base_frame))
+  {
+    logError("IkFastMoveitStateAdapter: Cannot find transformation to frame '%s' in group '%s'.",
+             ikfast_base_frame.c_str(), group_name.c_str());
+    return false;
+  }
+
+  if (!robot_state_->knowsFrameTransform(ikfast_tool_frame))
+  {
+    logError("IkFastMoveitStateAdapter: Cannot find transformation to frame '%s' in group '%s'.",
+             ikfast_tool_frame.c_str(), group_name.c_str());
+    return false;
+  }
+
   // calculate frames
   tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform(tcp_frame).inverse() *
                                         robot_state_->getFrameTransform(ikfast_tool_frame));
