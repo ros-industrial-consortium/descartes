@@ -16,46 +16,30 @@
  * limitations under the License.
  */
 
-#ifndef MOVEIT_STATE_ADPATER_H_
-#define MOVEIT_STATE_ADPATER_H_
+#ifndef MOVEIT_STATE_ADAPTER_H_
+#define MOVEIT_STATE_ADAPTER_H_
 
 #include "descartes_core/robot_model.h"
-#include <descartes_trajectory/cart_trajectory_pt.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include "moveit/robot_model/robot_model.h"
-#include "moveit/kinematics_base/kinematics_base.h"
+#include "descartes_trajectory/cart_trajectory_pt.h"
 #include <moveit/planning_scene/planning_scene.h>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 #include <string>
 
 namespace descartes_moveit
 {
-
-/**@brief MoveitStateAdapter adapts the MoveIt RobotState to the Descartes RobotModel interface
- *
+/**
+ * @brief MoveitStateAdapter adapts the MoveIt RobotState to the Descartes RobotModel interface
  */
 class MoveitStateAdapter : public descartes_core::RobotModel
 {
-
-
 public:
   MoveitStateAdapter();
 
-  /**
-   * Constructor for Moveit state adapters (implements Descartes robot model interface)
-   * @param robot_state robot state object utilized for kinematic/dynamic state checking
-   * @param group_name planning group name
-   * @param tool_frame tool frame name
-   * @param world_frame work object frame name
-   */
-  MoveitStateAdapter(const moveit::core::RobotState & robot_state, const std::string & group_name,
-                     const std::string & tool_frame, const std::string & world_frame);
-
-  virtual ~MoveitStateAdapter()
-  {
-  }
+  virtual ~MoveitStateAdapter() {}
 
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
-                          const std::string& world_frame,const std::string& tcp_frame);
+                          const std::string& world_frame, const std::string& tcp_frame);
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -70,6 +54,9 @@ public:
 
   virtual int getDOF() const;
 
+  virtual bool isValidMove(const std::vector<double>& from_joint_pose, 
+                           const std::vector<double>& to_joint_pose,
+                           double dt) const;
   /**
    * @brief Set the initial states used for iterative inverse kineamtics
    * @param seeds Vector of vector of doubles representing joint positions.
@@ -96,12 +83,7 @@ public:
     return robot_state_;
   }
 
-  virtual bool isValidMove(const std::vector<double>& from_joint_pose, 
-                           const std::vector<double>& to_joint_pose,
-                           double dt) const;
-
 protected:
-
   /**
    * Gets IK solution (assumes robot state is pre-seeded)
    * @param pose Affine pose of TOOL in WOBJ frame
@@ -111,22 +93,27 @@ protected:
   bool getIK(const Eigen::Affine3d &pose, std::vector<double> &joint_pose) const;
 
   /**
-   * @brief Pointer to moveit robot state (mutable object state is reset with
-   * each function call
-   */
-
-  /**
    * TODO: Checks for collisions at this joint pose. The setCollisionCheck(true) must have been
    * called previously in order to enable collision checks, otherwise it will return false.
    * @param joint_pose the joint values at which check for collisions will be made
    */
   bool isInCollision(const std::vector<double> &joint_pose) const;
 
+  /**
+   * Maximum joint velocities (rad/s) for each joint in the chain. Used for checking in
+   * `isValidMove()`
+   */
   std::vector<double> velocity_limits_;
+  
   mutable moveit::core::RobotStatePtr robot_state_;
+  
   planning_scene::PlanningScenePtr planning_scene_;
-  robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
+  
   robot_model::RobotModelConstPtr robot_model_ptr_;
+
+  robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
+
+  const moveit::core::JointModelGroup* joint_group_;
 
   /**
    * @brief Vector of starting configurations for the numerical solver
@@ -152,9 +139,8 @@ protected:
    * @brief convenient transformation frame
    */
   descartes_core::Frame world_to_root_;
-
 };
 
 } //descartes_moveit
 
-#endif /* MOVEIT_STATE_ADPATER_H_ */
+#endif /* MOVEIT_STATE_ADAPTER_H_ */

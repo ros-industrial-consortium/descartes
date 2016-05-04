@@ -46,6 +46,7 @@ add_library(descartes_moveit
             src/moveit_state_adapter.cpp
             src/plugin_init.cpp
             src/seed_search.cpp
+            src/ikfast_moveit_state_adapter.cpp
 )
 target_link_libraries(descartes_moveit
                       ${catkin_LIBRARIES}
