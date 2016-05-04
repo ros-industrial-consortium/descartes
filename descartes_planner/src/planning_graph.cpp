@@ -110,7 +110,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
     {
       (*cartesian_point_link_)[previous_id].links_.id_next = point_link.id;
-      
+
       ROS_DEBUG_STREAM("PreviousID[" << previous_id << "].links_.id_next = " << point_link.id);
     }
 
@@ -543,7 +543,7 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
 bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor> &start_points)
 {
-  // Create local id->vertex map  
+  // Create local id->vertex map
   VertexMap joint_vertex_map;
   recalculateJointSolutionsVertexMap(joint_vertex_map);
 
@@ -573,7 +573,7 @@ bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>
 
   for (const auto& id : ids)
   {
-    JointGraph::vertex_descriptor v = joint_vertex_map.at(id); 
+    JointGraph::vertex_descriptor v = joint_vertex_map.at(id);
     start_points.push_back(v);
   }
 
@@ -582,7 +582,7 @@ bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>
 
 bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points)
 {
-  // Create local id->vertex map  
+  // Create local id->vertex map
   VertexMap joint_vertex_map;
   recalculateJointSolutionsVertexMap(joint_vertex_map);
 
@@ -612,7 +612,7 @@ bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor> &
 
   for (const auto& id : ids)
   {
-    JointGraph::vertex_descriptor v = joint_vertex_map.at(id); 
+    JointGraph::vertex_descriptor v = joint_vertex_map.at(id);
     end_points.push_back(v);
   }
 
@@ -819,7 +819,7 @@ bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointT
 
     if (!calculateEdgeWeights(from, to, edges))
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i-1) << " and " << i); 
+      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i-1) << " and " << i);
       return false;
     }
   }
@@ -875,7 +875,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &st
 }
 
 bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt> &start_joints,
-                                         const std::vector<JointTrajectoryPt> &end_joints, 
+                                         const std::vector<JointTrajectoryPt> &end_joints,
                                          std::vector<JointEdge> &edge_results) const
 {
   if(start_joints.empty() || end_joints.empty())

@@ -2,7 +2,7 @@
  * dense_planner.h
  *
  *  Created on: Feb 9, 2015
- *      Author: ros developer 
+ *      Author: ros developer
  */
 
 #ifndef DENSE_PLANNER_H_
@@ -34,7 +34,7 @@ public:
   virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
   // Helper functions meant to access the underlying graph structure
-  
+
   const PlanningGraph& getPlanningGraph() const
   {
     return *planning_graph_;

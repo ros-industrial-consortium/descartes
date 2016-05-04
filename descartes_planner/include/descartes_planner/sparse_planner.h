@@ -19,7 +19,7 @@
  * sparse_planner.h
  *
  *  Created on: Dec 17, 2014
- *      Author: ros developer 
+ *      Author: ros developer
  */
 
 #ifndef SPARSE_PLANNER_H_

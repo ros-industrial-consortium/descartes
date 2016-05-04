@@ -19,7 +19,7 @@
  * sparse_planner.cpp
  *
  *  Created on: Dec 17, 2014
- *      Author: Jorge Nicho 
+ *      Author: Jorge Nicho
  */
 
 #include <descartes_planner/sparse_planner.h>
@@ -592,14 +592,14 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
   int skip = std::ceil(double(1.0f)/sampling);
   ROS_INFO_STREAM("Sampling skip val: "<<skip<< " from sampling val: "<<sampling);
   ss<<"[";
-  
+
   if (dense_trajectory_array.empty()) return;
 
   // Add the first point
   sparse_trajectory_array.push_back(dense_trajectory_array.front());
   ss << "0 ";
   // The first point requires no special timing adjustment
-  
+
   int i; // We keep i outside of the loop so we can examine it on the last step
   for (i = skip; i < dense_trajectory_array.size(); i+=skip)
   {
@@ -623,7 +623,7 @@ void SparsePlanner::sampleTrajectory(double sampling,const std::vector<Trajector
     // The final point is index size() - 1
     // The point before is index ( i - skip )
     descartes_core::TimingConstraint tm = cumulativeTimingBetween(dense_trajectory_array,
-                                                                  i - skip, 
+                                                                  i - skip,
                                                                   dense_trajectory_array.size() - 1);
     // We don't want to modify the input trajectory pointers, so we clone and modify them here
     descartes_core::TrajectoryPtPtr cloned = dense_trajectory_array.back()->copyAndSetTiming(tm);
@@ -667,7 +667,7 @@ bool SparsePlanner::plan()
   while(replan && getSparseSolutionArray(sparse_solution_array_))
   {
     // sparse_index is the index in the sampled trajectory that a new point is to be added
-    // point_pos is the index into the dense trajectory that the new point is to be copied from 
+    // point_pos is the index into the dense trajectory that the new point is to be copied from
     int sparse_index, point_pos;
     int result = interpolateSparseTrajectory(sparse_solution_array_, sparse_index, point_pos);
     TrajectoryPt::ID prev_id, next_id;
@@ -826,7 +826,7 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
             sparse_index = k;
             return static_cast<int>(InterpolationResult::REPLAN);
           }
-          
+
           joint_points_map_.insert(std::make_pair(cart_point->getID(), JointTrajectoryPt(aprox_interp, tm)));
         }
         else

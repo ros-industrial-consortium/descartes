@@ -128,7 +128,7 @@ public:
 
   const JointMap& getJointMap() const;
 
-  const JointGraph& getGraph() const; 
+  const JointGraph& getGraph() const;
 
 
 protected:
