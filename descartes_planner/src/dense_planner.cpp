@@ -38,6 +38,15 @@ bool DensePlanner::initialize(descartes_core::RobotModelConstPtr model)
   return true;
 }
 
+bool DensePlanner::initialize(descartes_core::RobotModelConstPtr model,
+                              descartes_planner::CostFunction cost_function_callback)
+{
+  planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(
+      new descartes_planner::PlanningGraph(std::move(model), cost_function_callback));
+  error_code_ = descartes_core::PlannerErrors::EMPTY_PATH;
+  return true;
+}
+
 bool DensePlanner::setConfig(const descartes_core::PlannerConfig& config)
 {
   config_ = config;
