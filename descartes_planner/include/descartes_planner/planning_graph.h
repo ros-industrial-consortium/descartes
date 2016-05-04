@@ -26,6 +26,7 @@
 #define PLANNING_GRAPH_H_
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/function.hpp>
 #include "descartes_core/trajectory_pt.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
 #include "descartes_trajectory/joint_trajectory_pt.h"
@@ -66,6 +67,8 @@ typedef boost::graph_traits<JointGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<JointGraph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<JointGraph>::in_edge_iterator InEdgeIterator;
 
+typedef boost::function<double(const std::vector<double>&, const std::vector<double>&)> CostFunction;
+
 struct CartesianPointInformation
 {
   CartesianPointRelationship links_;
@@ -82,6 +85,8 @@ class PlanningGraph
 public:
   // TODO: add constructor that takes RobotState as param
   PlanningGraph(descartes_core::RobotModelConstPtr model);
+
+  PlanningGraph(descartes_core::RobotModelConstPtr model, CostFunction cost_function_callback);
 
   virtual ~PlanningGraph();
 
@@ -133,6 +138,8 @@ public:
 
 protected:
   descartes_core::RobotModelConstPtr robot_model_;
+
+  CostFunction custom_cost_function_;
 
   JointGraph dg_;
 

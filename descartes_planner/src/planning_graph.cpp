@@ -44,6 +44,13 @@ namespace descartes_planner
 PlanningGraph::PlanningGraph(RobotModelConstPtr model)
   : robot_model_(std::move(model))
   , cartesian_point_link_(NULL)
+  , custom_cost_function_(NULL)
+{}
+
+PlanningGraph::PlanningGraph(RobotModelConstPtr model, CostFunction cost_function_callback)
+  : robot_model_(std::move(model))
+  , cartesian_point_link_(NULL)
+  , custom_cost_function_(cost_function_callback)
 {}
 
 PlanningGraph::~PlanningGraph()
@@ -998,15 +1005,20 @@ PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTraject
       return result;
     }
 
-    double vector_diff = 0;
-    for (unsigned i = 0; i < start_vector.size(); i++)
+    if (custom_cost_function_)
     {
-      double joint_diff = std::abs(end_vector[i] - start_vector[i]);
-      vector_diff += joint_diff ;
+      result.second = custom_cost_function_(start_vector, end_vector);
+    }else{
+      double vector_diff = 0;
+      for (unsigned i = 0; i < start_vector.size(); i++)
+      {
+        double joint_diff = std::abs(end_vector[i] - start_vector[i]);
+        vector_diff += joint_diff ;
+      }
+      result.second = vector_diff;
     }
 
     result.first = true;
-    result.second = vector_diff;
     return result;
   }
   else
