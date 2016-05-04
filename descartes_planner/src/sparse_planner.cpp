@@ -105,6 +105,14 @@ bool SparsePlanner::initialize(RobotModelConstPtr model)
   return true;
 }
 
+bool SparsePlanner::initialize(RobotModelConstPtr model, descartes_planner::CostFunction cost_function_callback)
+{
+  planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(
+      new descartes_planner::PlanningGraph(std::move(model), cost_function_callback));
+  error_code_ = PlannerError::EMPTY_PATH;
+  return true;
+}
+
 bool SparsePlanner::setConfig(const descartes_core::PlannerConfig& config)
 {
   std::stringstream ss;
