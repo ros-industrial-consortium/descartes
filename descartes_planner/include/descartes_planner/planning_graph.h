@@ -149,10 +149,10 @@ protected:
    * @brief A pair indicating the validity of the edge, and if valid, the cost associated
    *        with that edge
    */
-  typedef std::pair<bool, double> LinearWeightResult;
+  typedef std::pair<bool, double> EdgeWeightResult;
 
-  /** @brief simple function for getting edge weights based on linear vector differences */
-  LinearWeightResult linearWeight(const descartes_trajectory::JointTrajectoryPt& start,
+  /** @brief function for computing edge weight based on specified cost function */
+  EdgeWeightResult edgeWeight(const descartes_trajectory::JointTrajectoryPt& start,
                                   const descartes_trajectory::JointTrajectoryPt& end) const;
 
   // NOTE: both Cartesian Points and Joint Points/solutions extend a base descartes_core::TrajectoryPt type

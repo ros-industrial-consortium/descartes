@@ -858,7 +858,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &st
     {
       const JointTrajectoryPt& end_joint = joint_solutions_map_[*next_joint_iter];
 
-      LinearWeightResult edge_result = linearWeight(start_joint, end_joint);
+      EdgeWeightResult edge_result = edgeWeight(start_joint, end_joint);
 
       // If the edge weight calculation returns false, do not create an edge
       if (!edge_result.first)
@@ -900,7 +900,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt> &s
     for (const auto& end_joint : end_joints)
     {
       // Calculate edge cost
-      LinearWeightResult edge_result = linearWeight(start_joint, end_joint);
+      EdgeWeightResult edge_result = edgeWeight(start_joint, end_joint);
 
       // If the edge weight calculation returns false, do not create an edge
       if (!edge_result.first) continue;
@@ -987,10 +987,10 @@ bool PlanningGraph::populateGraphEdges(const std::vector<JointEdge> &edges)
   return true;
 }
 
-PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTrajectoryPt& start,
+PlanningGraph::EdgeWeightResult PlanningGraph::edgeWeight(const JointTrajectoryPt& start,
                                                               const JointTrajectoryPt& end) const
 {
-  LinearWeightResult result;
+  EdgeWeightResult result;
   result.first = false;
 
   const std::vector<double>& start_vector = start.nominal();
