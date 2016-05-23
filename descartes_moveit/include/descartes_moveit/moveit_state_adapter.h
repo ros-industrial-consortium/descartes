@@ -88,11 +88,7 @@ public:
    *        value of joints that are not part of the active move group. Should be called after
    *        'initialize()'.
    */
-  void setState(const moveit::core::RobotState& state)
-  {
-    assert(static_cast<bool>(robot_state_));
-    *robot_state_ = state;
-  }
+  void setState(const moveit::core::RobotState& state);
 
 protected:
   /**

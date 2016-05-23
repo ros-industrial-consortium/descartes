@@ -24,6 +24,7 @@
 
 #include <eigen_conversions/eigen_msg.h>
 #include <random_numbers/random_numbers.h>
+#include <ros/assert.h>
 #include <sstream>
 
 const static int SAMPLE_ITERATIONS = 10;
@@ -77,6 +78,7 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description,
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
   robot_model_ptr_ = robot_model_loader_->getModel();
   robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
+  robot_state_->setToDefaultValues();
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_loader_->getModel()));
   joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
   
@@ -325,6 +327,12 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
   }
 
   return true;
+}
+
+void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
+{
+  ROS_ASSERT_MSG(static_cast<bool>(robot_state_), "'robot_state_' member pointer is null. Have you called initialize()?");
+  *robot_state_ = state;
 }
 
 } //descartes_moveit

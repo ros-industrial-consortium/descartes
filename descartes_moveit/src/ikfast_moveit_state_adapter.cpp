@@ -18,7 +18,6 @@
 
 #include "descartes_moveit/ikfast_moveit_state_adapter.h"
 
-#include <cassert>
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/node_handle.h>
 
@@ -126,7 +125,7 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getFK(const std::vector<double>
 
 void descartes_moveit::IkFastMoveitStateAdapter::setState(const moveit::core::RobotState& state)
 {
-  assert(static_cast<bool>(robot_state_));
+  ROS_ASSERT_MSG(static_cast<bool>(robot_state_), "'robot_state_' member pointer is null. Have you called initialize()?");
   *robot_state_ = state;
   computeIKFastTransforms();
 }
