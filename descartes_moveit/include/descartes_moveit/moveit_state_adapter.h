@@ -83,6 +83,17 @@ public:
     return robot_state_;
   }
 
+  /**
+   * @brief Copies the internal state of 'state' into this model. Useful for initializing the
+   *        value of joints that are not part of the active move group. Should be called after
+   *        'initialize()'.
+   */
+  void setState(const moveit::core::RobotState& state)
+  {
+    assert(static_cast<bool>(robot_state_));
+    *robot_state_ = state;
+  }
+
 protected:
   /**
    * Gets IK solution (assumes robot state is pre-seeded)

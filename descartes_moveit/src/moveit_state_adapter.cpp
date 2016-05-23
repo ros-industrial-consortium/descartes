@@ -276,41 +276,22 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
 
 bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
 {
-  bool rtn = false;
-
-  if (joint_group_->getActiveJointModels().size() == joint_pose.size())
-  {
-    robot_state_->setJointGroupPositions(group_name_, joint_pose);
-    //TODO: At some point velocities and accelerations should be set for the group as
-    //well.
-    robot_state_->setVariableVelocities(std::vector<double>(joint_pose.size(), 0.));
-    robot_state_->setVariableAccelerations(std::vector<double>(joint_pose.size(), 0.));
-    if (robot_state_->satisfiesBounds())
-    {
-      rtn = true;
-    }
-    else
-    {
-      std::stringstream msg;
-      msg << "Joint pose: " << joint_pose << ", outside joint boundaries";
-      logDebug(msg.str().c_str());
-    }
-
-    if(isInCollision(joint_pose))
-    {
-      ROS_DEBUG_STREAM("Robot is in collision at this joint pose");
-      rtn = false;
-    }
-
-  }
-  else
+  // Logical check on input sizes
+  if (joint_group_->getActiveJointModels().size() != joint_pose.size())
   {
     logError("Size of joint pose: %lu doesn't match robot state variable size: %lu",
              static_cast<unsigned long>(joint_pose.size()),
              static_cast<unsigned long>(joint_group_->getActiveJointModels().size()));
-    rtn = false;
+    return false;
   }
-  return rtn;
+
+  // Satisfies joint positional bounds?
+  if (!joint_group_->satisfiesPositionBounds(joint_pose.data()))
+  {
+    return false;
+  }
+  // Is in collision (if collision is active)
+  return !isInCollision(joint_pose);
 }
 
 bool MoveitStateAdapter::isValid(const Eigen::Affine3d &pose) const
