@@ -24,6 +24,7 @@
 
 #include <eigen_conversions/eigen_msg.h>
 #include <random_numbers/random_numbers.h>
+#include <ros/assert.h>
 #include <sstream>
 
 const static int SAMPLE_ITERATIONS = 10;
@@ -77,6 +78,7 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description,
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
   robot_model_ptr_ = robot_model_loader_->getModel();
   robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
+  robot_state_->setToDefaultValues();
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_loader_->getModel()));
   joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
   
@@ -276,41 +278,22 @@ bool MoveitStateAdapter::getFK(const std::vector<double> &joint_pose, Eigen::Aff
 
 bool MoveitStateAdapter::isValid(const std::vector<double> &joint_pose) const
 {
-  bool rtn = false;
-
-  if (joint_group_->getActiveJointModels().size() == joint_pose.size())
-  {
-    robot_state_->setJointGroupPositions(group_name_, joint_pose);
-    //TODO: At some point velocities and accelerations should be set for the group as
-    //well.
-    robot_state_->setVariableVelocities(std::vector<double>(joint_pose.size(), 0.));
-    robot_state_->setVariableAccelerations(std::vector<double>(joint_pose.size(), 0.));
-    if (robot_state_->satisfiesBounds())
-    {
-      rtn = true;
-    }
-    else
-    {
-      std::stringstream msg;
-      msg << "Joint pose: " << joint_pose << ", outside joint boundaries";
-      logDebug(msg.str().c_str());
-    }
-
-    if(isInCollision(joint_pose))
-    {
-      ROS_DEBUG_STREAM("Robot is in collision at this joint pose");
-      rtn = false;
-    }
-
-  }
-  else
+  // Logical check on input sizes
+  if (joint_group_->getActiveJointModels().size() != joint_pose.size())
   {
     logError("Size of joint pose: %lu doesn't match robot state variable size: %lu",
              static_cast<unsigned long>(joint_pose.size()),
              static_cast<unsigned long>(joint_group_->getActiveJointModels().size()));
-    rtn = false;
+    return false;
   }
-  return rtn;
+
+  // Satisfies joint positional bounds?
+  if (!joint_group_->satisfiesPositionBounds(joint_pose.data()))
+  {
+    return false;
+  }
+  // Is in collision (if collision is active)
+  return !isInCollision(joint_pose);
 }
 
 bool MoveitStateAdapter::isValid(const Eigen::Affine3d &pose) const
@@ -344,6 +327,13 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
   }
 
   return true;
+}
+
+void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
+{
+  ROS_ASSERT_MSG(static_cast<bool>(robot_state_), "'robot_state_' member pointer is null. Have you called initialize()?");
+  *robot_state_ = state;
+  planning_scene_->setCurrentState(state);
 }
 
 } //descartes_moveit

@@ -18,7 +18,6 @@
 
 #include "descartes_moveit/ikfast_moveit_state_adapter.h"
 
-#include <cassert>
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/node_handle.h>
 
@@ -60,38 +59,8 @@ bool descartes_moveit::IkFastMoveitStateAdapter::initialize(const std::string& r
   {
     return false;
   }
-  // move group tip frame that we want to solve in
-  const auto& tip_frame = joint_group_->getSolverInstance()->getTipFrame();
-  // look up the IKFast base and tool frame
-  ros::NodeHandle nh;
-  std::string ikfast_base_frame, ikfast_tool_frame;
-  nh.param<std::string>("ikfast_base_frame", ikfast_base_frame, default_base_frame);
-  nh.param<std::string>("ikfast_tool_frame", ikfast_tool_frame, default_tool_frame);
-  
-  if (!robot_state_->knowsFrameTransform(ikfast_base_frame))
-  {
-    logError("IkFastMoveitStateAdapter: Cannot find transformation to frame '%s' in group '%s'.",
-             ikfast_base_frame.c_str(), group_name.c_str());
-    return false;
-  }
 
-  if (!robot_state_->knowsFrameTransform(ikfast_tool_frame))
-  {
-    logError("IkFastMoveitStateAdapter: Cannot find transformation to frame '%s' in group '%s'.",
-             ikfast_tool_frame.c_str(), group_name.c_str());
-    return false;
-  }
-
-  // calculate frames
-  tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform(tcp_frame).inverse() *
-                                        robot_state_->getFrameTransform(ikfast_tool_frame));
-
-  world_to_base_ = descartes_core::Frame(world_to_root_.frame *
-                                         robot_state_->getFrameTransform(ikfast_base_frame));
-
-  logInform("IkFastMoveitStateAdapter: initialized with IKFast tool frame '%s' and base frame '%s'.", 
-            ikfast_tool_frame.c_str(), ikfast_base_frame.c_str());
-  return true;
+  return computeIKFastTransforms();
 }
 
 bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d &pose, 
@@ -152,4 +121,43 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getFK(const std::vector<double>
   tf::poseMsgToEigen(output[0], pose); // pose in frame of IkFast base
   pose = world_to_base_.frame * pose * tool0_to_tip_.frame_inv;
   return true;
+}
+
+void descartes_moveit::IkFastMoveitStateAdapter::setState(const moveit::core::RobotState& state)
+{
+  descartes_moveit::MoveitStateAdapter::setState(state);
+  computeIKFastTransforms();
+}
+
+bool descartes_moveit::IkFastMoveitStateAdapter::computeIKFastTransforms()
+{
+  // look up the IKFast base and tool frame
+  ros::NodeHandle nh;
+  std::string ikfast_base_frame, ikfast_tool_frame;
+  nh.param<std::string>("ikfast_base_frame", ikfast_base_frame, default_base_frame);
+  nh.param<std::string>("ikfast_tool_frame", ikfast_tool_frame, default_tool_frame);
+
+  if (!robot_state_->knowsFrameTransform(ikfast_base_frame))
+  {
+    logError("IkFastMoveitStateAdapter: Cannot find transformation to frame '%s' in group '%s'.",
+             ikfast_base_frame.c_str(), group_name_.c_str());
+    return false;
+  }
+
+  if (!robot_state_->knowsFrameTransform(ikfast_tool_frame))
+  {
+    logError("IkFastMoveitStateAdapter: Cannot find transformation to frame '%s' in group '%s'.",
+             ikfast_tool_frame.c_str(), group_name_.c_str());
+    return false;
+  }
+
+  // calculate frames
+  tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform(tool_frame_).inverse() *
+                                        robot_state_->getFrameTransform(ikfast_tool_frame));
+
+  world_to_base_ = descartes_core::Frame(world_to_root_.frame *
+                                         robot_state_->getFrameTransform(ikfast_base_frame));
+
+  logInform("IkFastMoveitStateAdapter: initialized with IKFast tool frame '%s' and base frame '%s'.",
+            ikfast_tool_frame.c_str(), ikfast_base_frame.c_str());
 }
