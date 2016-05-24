@@ -333,6 +333,7 @@ void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
 {
   ROS_ASSERT_MSG(static_cast<bool>(robot_state_), "'robot_state_' member pointer is null. Have you called initialize()?");
   *robot_state_ = state;
+  planning_scene_->setCurrentState(state);
 }
 
 } //descartes_moveit
