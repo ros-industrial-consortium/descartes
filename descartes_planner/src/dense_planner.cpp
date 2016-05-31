@@ -2,7 +2,7 @@
  * dense_planner.cpp
  *
  *  Created on: Feb 9, 2015
- *      Author: ros developer 
+ *      Author: ros developer
  */
 
 #include <descartes_planner/dense_planner.h>
@@ -34,6 +34,15 @@ bool DensePlanner::initialize(descartes_core::RobotModelConstPtr model)
 {
   planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(
       new descartes_planner::PlanningGraph(std::move(model)));
+  error_code_ = descartes_core::PlannerErrors::EMPTY_PATH;
+  return true;
+}
+
+bool DensePlanner::initialize(descartes_core::RobotModelConstPtr model,
+                              descartes_planner::CostFunction cost_function_callback)
+{
+  planning_graph_ = boost::shared_ptr<descartes_planner::PlanningGraph>(
+      new descartes_planner::PlanningGraph(std::move(model), cost_function_callback));
   error_code_ = descartes_core::PlannerErrors::EMPTY_PATH;
   return true;
 }
@@ -216,7 +225,7 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
 bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
 {
   if (path_.empty()) return false;
-  
+
   path.assign(path_.begin(),path_.end());
   return error_code_ == descartes_core::PlannerError::OK;
 }

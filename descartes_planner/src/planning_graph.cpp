@@ -44,6 +44,13 @@ namespace descartes_planner
 PlanningGraph::PlanningGraph(RobotModelConstPtr model)
   : robot_model_(std::move(model))
   , cartesian_point_link_(NULL)
+  , custom_cost_function_(NULL)
+{}
+
+PlanningGraph::PlanningGraph(RobotModelConstPtr model, CostFunction cost_function_callback)
+  : robot_model_(std::move(model))
+  , cartesian_point_link_(NULL)
+  , custom_cost_function_(cost_function_callback)
 {}
 
 PlanningGraph::~PlanningGraph()
@@ -110,7 +117,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr> *points)
     if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
     {
       (*cartesian_point_link_)[previous_id].links_.id_next = point_link.id;
-      
+
       ROS_DEBUG_STREAM("PreviousID[" << previous_id << "].links_.id_next = " << point_link.id);
     }
 
@@ -543,7 +550,7 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
 bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor> &start_points)
 {
-  // Create local id->vertex map  
+  // Create local id->vertex map
   VertexMap joint_vertex_map;
   recalculateJointSolutionsVertexMap(joint_vertex_map);
 
@@ -573,7 +580,7 @@ bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>
 
   for (const auto& id : ids)
   {
-    JointGraph::vertex_descriptor v = joint_vertex_map.at(id); 
+    JointGraph::vertex_descriptor v = joint_vertex_map.at(id);
     start_points.push_back(v);
   }
 
@@ -582,7 +589,7 @@ bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>
 
 bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points)
 {
-  // Create local id->vertex map  
+  // Create local id->vertex map
   VertexMap joint_vertex_map;
   recalculateJointSolutionsVertexMap(joint_vertex_map);
 
@@ -612,7 +619,7 @@ bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor> &
 
   for (const auto& id : ids)
   {
-    JointGraph::vertex_descriptor v = joint_vertex_map.at(id); 
+    JointGraph::vertex_descriptor v = joint_vertex_map.at(id);
     end_points.push_back(v);
   }
 
@@ -819,7 +826,7 @@ bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointT
 
     if (!calculateEdgeWeights(from, to, edges))
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i-1) << " and " << i); 
+      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i-1) << " and " << i);
       return false;
     }
   }
@@ -851,7 +858,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &st
     {
       const JointTrajectoryPt& end_joint = joint_solutions_map_[*next_joint_iter];
 
-      LinearWeightResult edge_result = linearWeight(start_joint, end_joint);
+      EdgeWeightResult edge_result = edgeWeight(start_joint, end_joint);
 
       // If the edge weight calculation returns false, do not create an edge
       if (!edge_result.first)
@@ -875,7 +882,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID> &st
 }
 
 bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt> &start_joints,
-                                         const std::vector<JointTrajectoryPt> &end_joints, 
+                                         const std::vector<JointTrajectoryPt> &end_joints,
                                          std::vector<JointEdge> &edge_results) const
 {
   if(start_joints.empty() || end_joints.empty())
@@ -893,7 +900,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt> &s
     for (const auto& end_joint : end_joints)
     {
       // Calculate edge cost
-      LinearWeightResult edge_result = linearWeight(start_joint, end_joint);
+      EdgeWeightResult edge_result = edgeWeight(start_joint, end_joint);
 
       // If the edge weight calculation returns false, do not create an edge
       if (!edge_result.first) continue;
@@ -980,10 +987,10 @@ bool PlanningGraph::populateGraphEdges(const std::vector<JointEdge> &edges)
   return true;
 }
 
-PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTrajectoryPt& start,
+PlanningGraph::EdgeWeightResult PlanningGraph::edgeWeight(const JointTrajectoryPt& start,
                                                               const JointTrajectoryPt& end) const
 {
-  LinearWeightResult result;
+  EdgeWeightResult result;
   result.first = false;
 
   const std::vector<double>& start_vector = start.nominal();
@@ -998,15 +1005,22 @@ PlanningGraph::LinearWeightResult PlanningGraph::linearWeight(const JointTraject
       return result;
     }
 
-    double vector_diff = 0;
-    for (unsigned i = 0; i < start_vector.size(); i++)
+    if (custom_cost_function_)
     {
-      double joint_diff = std::abs(end_vector[i] - start_vector[i]);
-      vector_diff += joint_diff ;
+      result.second = custom_cost_function_(start_vector, end_vector);
+    }
+    else
+    {
+      double vector_diff = 0;
+      for (unsigned i = 0; i < start_vector.size(); i++)
+      {
+        double joint_diff = std::abs(end_vector[i] - start_vector[i]);
+        vector_diff += joint_diff ;
+      }
+      result.second = vector_diff;
     }
 
     result.first = true;
-    result.second = vector_diff;
     return result;
   }
   else

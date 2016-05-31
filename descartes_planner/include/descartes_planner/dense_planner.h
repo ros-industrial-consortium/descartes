@@ -2,7 +2,7 @@
  * dense_planner.h
  *
  *  Created on: Feb 9, 2015
- *      Author: ros developer 
+ *      Author: ros developer
  */
 
 #ifndef DENSE_PLANNER_H_
@@ -22,6 +22,8 @@ public:
   virtual ~DensePlanner();
 
   virtual bool initialize(descartes_core::RobotModelConstPtr model);
+  virtual bool initialize(descartes_core::RobotModelConstPtr model,
+                          descartes_planner::CostFunction cost_function_callback);
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
@@ -34,7 +36,7 @@ public:
   virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
   // Helper functions meant to access the underlying graph structure
-  
+
   const PlanningGraph& getPlanningGraph() const
   {
     return *planning_graph_;
