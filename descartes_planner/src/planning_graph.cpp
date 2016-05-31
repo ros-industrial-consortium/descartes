@@ -1008,7 +1008,9 @@ PlanningGraph::EdgeWeightResult PlanningGraph::edgeWeight(const JointTrajectoryP
     if (custom_cost_function_)
     {
       result.second = custom_cost_function_(start_vector, end_vector);
-    }else{
+    }
+    else
+    {
       double vector_diff = 0;
       for (unsigned i = 0; i < start_vector.size(); i++)
       {
