@@ -55,8 +55,12 @@ namespace EulerConventions
 
 typedef EulerConventions::EulerConvention EulerConvention;
 
+// Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
 static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
-                               int convention = int(EulerConventions::ZYX))
+                               int convention = int(EulerConventions::ZYX)) __attribute__ ((unused));
+
+static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
+                               int convention)
 {
   Eigen::Affine3d rtn;
 
@@ -99,6 +103,11 @@ static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, doubl
   * @param rhs
   * @param tol +/- tolerance for floating point equality
   */
+
+// Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
+static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
+                  const double tol) __attribute__ ((unused));
+
 static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
                                       const double tol)
 {
