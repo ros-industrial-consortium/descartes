@@ -23,7 +23,6 @@
 
 namespace descartes_trajectory
 {
-
 /**
  * @brief Specialization of cartesian trajectory point.
  *        Represents a cartesian point whose rotation
@@ -32,7 +31,6 @@ namespace descartes_trajectory
 class AxialSymmetricPt : public descartes_trajectory::CartTrajectoryPt
 {
 public:
-
   /**
    * @brief Enum used to select the free axis of rotation for this point
    */
@@ -64,9 +62,8 @@ public:
    * @param orient_increment (in radians, discretization of space [-Pi, Pi])
    * @param axis The free-axis of the nominal pose of the tool
    */
-  AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
-                   double orient_increment, FreeAxis axis,
-                   const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
+  AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz, double orient_increment,
+                   FreeAxis axis, const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   /**
    * @brief Similar to other constructor except that it takes an affine pose instead of
@@ -79,10 +76,8 @@ public:
   {
     return descartes_core::TrajectoryPtPtr(new AxialSymmetricPt(*this));
   }
-
 };
 
+}  // descartes trajectory
 
-} // descartes trajectory
-
-#endif // AXIAL_SYMMETRIC_PT_H
+#endif  // AXIAL_SYMMETRIC_PT_H

@@ -2,7 +2,7 @@
  * path_planner_base.h
  *
  *  Created on: Jan 19, 2015
- *      Author: ros developer 
+ *      Author: ros developer
  */
 
 #ifndef DESCARTES_CORE_PATH_PLANNER_BASE_H_
@@ -19,15 +19,15 @@ namespace PlannerErrors
 enum PlannerError
 {
   OK = 1,
-  IK_NOT_AVAILABLE= -1,
+  IK_NOT_AVAILABLE = -1,
   FX_NOT_AVAILABLE = -2,
-  SELF_COLLISION_FOUND = -3 ,
-  ENVIRONMENT_COLLISION_FOUND = -4  ,
+  SELF_COLLISION_FOUND = -3,
+  ENVIRONMENT_COLLISION_FOUND = -4,
   PLANNING_TIMEOUT = -5,
   EMPTY_PATH = -6,
   SPEED_LIMIT_EXCEEDED = -7,
   ACCELERATION_LIMIT_EXCEEDED = -8,
-  MAX_TRAJECTORY_SIZE_EXCEEDED = -9 ,
+  MAX_TRAJECTORY_SIZE_EXCEEDED = -9,
   UNINITIALIZED = -10,
   INVALID_ID = -11,
   INCOMPLETE_PATH = -12,
@@ -37,14 +37,15 @@ enum PlannerError
 }
 typedef PlannerErrors::PlannerError PlannerError;
 
-typedef std::map<std::string,std::string> PlannerConfig;
-
+typedef std::map<std::string, std::string> PlannerConfig;
 
 DESCARTES_CLASS_FORWARD(PathPlannerBase);
 class PathPlannerBase
 {
 public:
-  virtual ~PathPlannerBase(){}
+  virtual ~PathPlannerBase()
+  {
+  }
 
   /**
    * @brief Plans a path for the given robot model and configuration parameters.
@@ -57,7 +58,7 @@ public:
    * @brief Configure the planner's parameters. Should return 'true' when all the entries were properly parsed.
    * @param config A map containing the parameter/value pairs.
    */
-  virtual bool setConfig( const PlannerConfig& config) = 0;
+  virtual bool setConfig(const PlannerConfig& config) = 0;
 
   /**
    * @brief Get the current configuration parameters used by the planner
@@ -82,13 +83,13 @@ public:
    * @brief Add a point to the current path after the point with 'ref_id'.
    * @param ref_id ID of the reference point
    */
-  virtual bool addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+  virtual bool addAfter(const TrajectoryPt::ID& ref_id, TrajectoryPtPtr tp) = 0;
 
   /**
    * @brief Add a point to the current path before the point with 'ref_id'.
    * @param ref_id ID of the reference point
    */
-  virtual bool addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+  virtual bool addBefore(const TrajectoryPt::ID& ref_id, TrajectoryPtPtr tp) = 0;
 
   /**
    * @brief Removes the point with 'ref_id' from the path.
@@ -100,7 +101,7 @@ public:
    * @brief Modifies the point with 'ref_id'.
    * @param ref_id ID of the reference point
    */
-  virtual bool modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr tp) = 0;
+  virtual bool modify(const TrajectoryPt::ID& ref_id, TrajectoryPtPtr tp) = 0;
 
   /**
    * @brief Returns the last error code.
@@ -114,9 +115,10 @@ public:
   virtual bool getErrorMessage(int error_code, std::string& msg) const = 0;
 
 protected:
-  PathPlannerBase(){}
+  PathPlannerBase()
+  {
+  }
 };
-
 }
 
 #endif /* DESCARTES_CORE_PATH_PLANNER_BASE_H_ */

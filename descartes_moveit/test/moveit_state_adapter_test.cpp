@@ -42,11 +42,10 @@ robot_model_loader::RobotModelLoaderPtr robot_;
 template <>
 RobotModelPtr CreateRobotModel<descartes_moveit::MoveitStateAdapter>()
 {
-
   ROS_INFO_STREAM("Construction descartes robot model");
   descartes_core::RobotModelPtr descartes_model_;
   descartes_model_ = descartes_core::RobotModelPtr(new descartes_moveit::MoveitStateAdapter());
-  EXPECT_TRUE(descartes_model_->initialize("robot_description","manipulator","base_link","tool0"));
+  EXPECT_TRUE(descartes_model_->initialize("robot_description", "manipulator", "base_link", "tool0"));
   ROS_INFO_STREAM("Descartes robot model constructed");
 
   descartes_model_->setCheckCollisions(true);
@@ -56,9 +55,11 @@ RobotModelPtr CreateRobotModel<descartes_moveit::MoveitStateAdapter>()
   return descartes_model_;
 }
 
-template<class T>
-class MoveitRobotModelTest : public descartes_trajectory_test::RobotModelTest<T>{};
+template <class T>
+class MoveitRobotModelTest : public descartes_trajectory_test::RobotModelTest<T>
+{
+};
 
 INSTANTIATE_TYPED_TEST_CASE_P(MoveitRobotModelTest, RobotModelTest, MoveitStateAdapter);
 
-} //descartes_moveit_test
+}  // descartes_moveit_test

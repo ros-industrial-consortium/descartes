@@ -39,18 +39,18 @@ static double minTime(const std::vector<double>& pose_a, const std::vector<doubl
 
   // compute joint-wise minimum time required based on relative distance between joint positions
   // and the maximum allowable joint velocity
-  std::transform(pose_a.begin(), pose_a.end(), pose_b.begin(), std::back_inserter(diff), [max_vel] (double a, double b) {
-    return std::abs(a - b) / max_vel;
-  });
+  std::transform(pose_a.begin(), pose_a.end(), pose_b.begin(), std::back_inserter(diff), [max_vel](double a, double b)
+                 {
+                   return std::abs(a - b) / max_vel;
+                 });
   // The biggest time across all of the joints is the min time
   return *std::max_element(diff.begin(), diff.end());
 }
 
-bool
-descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& model,
-                                      const std::vector<descartes_core::TrajectoryPtPtr>& joint_traj,
-                                      double default_joint_vel,
-                                      std::vector<trajectory_msgs::JointTrajectoryPoint>& out)
+bool descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& model,
+                                           const std::vector<descartes_core::TrajectoryPtPtr>& joint_traj,
+                                           double default_joint_vel,
+                                           std::vector<trajectory_msgs::JointTrajectoryPoint>& out)
 {
   if (default_joint_vel <= 0.0)
   {
@@ -58,14 +58,15 @@ descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& model,
     return false;
   }
 
-  const static double max_default_joint_velocity = 100.0; // (radians / s); approx 1000 rpm
+  const static double max_default_joint_velocity = 100.0;  // (radians / s); approx 1000 rpm
   if (default_joint_vel > max_default_joint_velocity)
   {
-    logError("%s: Default joint velocity of %f exceeds assumed limit of %f.", __FUNCTION__, default_joint_vel, max_default_joint_velocity);
+    logError("%s: Default joint velocity of %f exceeds assumed limit of %f.", __FUNCTION__, default_joint_vel,
+             max_default_joint_velocity);
     return false;
   }
 
-  ros::Duration from_start (0.0);
+  ros::Duration from_start(0.0);
   std::vector<trajectory_msgs::JointTrajectoryPoint> ros_trajectory;
   ros_trajectory.reserve(joint_traj.size());
 
@@ -84,7 +85,8 @@ descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& model,
 
     if (!pt.getNominalJointPose(dummy, model, joint_point))
     {
-      logError("%s: Failed to extract joint positions from input trajectory at index %lu", __FUNCTION__, static_cast<unsigned long>(i));
+      logError("%s: Failed to extract joint positions from input trajectory at index %lu", __FUNCTION__,
+               static_cast<unsigned long>(i));
       return false;
     }
 

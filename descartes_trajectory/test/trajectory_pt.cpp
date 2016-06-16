@@ -27,8 +27,7 @@ using namespace descartes_core;
 using namespace descartes_trajectory;
 
 // Helper function for testing timing data
-bool equal(const descartes_core::TimingConstraint& a,
-           const descartes_core::TimingConstraint& b)
+bool equal(const descartes_core::TimingConstraint& a, const descartes_core::TimingConstraint& b)
 {
   return std::abs(a.upper - b.upper) < 0.001;
 }
@@ -56,17 +55,17 @@ TrajectoryPt* CreateTrajectoryPt<AxialSymmetricPt>()
 }
 
 template <class T>
-class TrajectoryPtTest : public testing::Test {
- protected:
-
-  TrajectoryPtTest() 
-    : lhs_(CreateTrajectoryPt<T>()) 
+class TrajectoryPtTest : public testing::Test
+{
+protected:
+  TrajectoryPtTest()
+    : lhs_(CreateTrajectoryPt<T>())
     , rhs_(CreateTrajectoryPt<T>())
     , lhs_copy_(CreateTrajectoryPt<T>())
     , lhs_clone_(CreateTrajectoryPt<T>())
   {
     lhs_->setTiming(descartes_core::TimingConstraint(10.0));
-    
+
     lhs_copy_ = lhs_->copy();
     lhs_clone_ = lhs_->clone();
     lhs_same_ = lhs_;
@@ -86,32 +85,32 @@ typedef Types<CartTrajectoryPt, JointTrajectoryPt, AxialSymmetricPt> Implementat
 
 TYPED_TEST_CASE(TrajectoryPtTest, Implementations);
 
-TYPED_TEST(TrajectoryPtTest, construction) {
-
+TYPED_TEST(TrajectoryPtTest, construction)
+{
   EXPECT_FALSE(this->lhs_->getID().is_nil());
   EXPECT_FALSE(this->lhs_copy_->getID().is_nil());
   EXPECT_FALSE(this->lhs_clone_->getID().is_nil());
   EXPECT_FALSE(this->rhs_->getID().is_nil());
 
-  //Depending on construction method (declaration, copy, clone, same pointer), the
-  //objects and specifically IDs equality should be defined as follow
+  // Depending on construction method (declaration, copy, clone, same pointer), the
+  // objects and specifically IDs equality should be defined as follow
 
-  //TODO: Implement equality checks
+  // TODO: Implement equality checks
 
-  //Declared objects should always be different
-  //EXPECT_NE(*(this->lhs_), *(this->rhs_));
+  // Declared objects should always be different
+  // EXPECT_NE(*(this->lhs_), *(this->rhs_));
   EXPECT_NE(this->lhs_->getID(), this->rhs_->getID());
 
-  //Copied objects should always be the same
-  //EXPECT_EQ(*(this->lhs_), *(this->lhs_copy_));
+  // Copied objects should always be the same
+  // EXPECT_EQ(*(this->lhs_), *(this->lhs_copy_));
   EXPECT_EQ(this->lhs_->getID(), this->lhs_copy_->getID());
 
-  //Cloned objects should have the same data (we can't test, but different ids)
-  //EXPECT_NE(*(this->lhs_), *(this->lhs_clone_));
+  // Cloned objects should have the same data (we can't test, but different ids)
+  // EXPECT_NE(*(this->lhs_), *(this->lhs_clone_));
   EXPECT_NE(this->lhs_->getID(), this->lhs_clone_->getID());
 
-  //Pointers to the same objects should be identical (like a copy, but no ambiguity)
-  //EXPECT_EQ(*(this->lhs_), *(this->lhs_same_));
+  // Pointers to the same objects should be identical (like a copy, but no ambiguity)
+  // EXPECT_EQ(*(this->lhs_), *(this->lhs_same_));
   EXPECT_EQ(this->lhs_->getID(), this->lhs_same_->getID());
 
   // Copied and cloned points should have the same timing information

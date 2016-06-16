@@ -23,7 +23,6 @@
 
 namespace descartes_trajectory_test
 {
-
 /**@brief Cartesian Robot used for test purposes.  This is a simple robot with simple kinematics.  Each
  * joint corresponds to a cartesian direction (i.e. x, y, R, P, Y) (don't ask me how this is built, it
  * just works).
@@ -31,11 +30,10 @@ namespace descartes_trajectory_test
 class CartesianRobot : public descartes_core::RobotModel
 {
 public:
-
   CartesianRobot();
 
-  CartesianRobot(double pos_range, double orient_range, 
-                 const std::vector<double>& joint_velocities = std::vector<double>(6, 1.0));
+  CartesianRobot(double pos_range, double orient_range,
+                 const std::vector<double> &joint_velocities = std::vector<double>(6, 1.0));
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -50,26 +48,24 @@ public:
 
   virtual int getDOF() const;
 
-  virtual bool initialize(const std::string& robot_description, const std::string& group_name,
-                          const std::string& world_frame,const std::string& tcp_frame);
+  virtual bool initialize(const std::string &robot_description, const std::string &group_name,
+                          const std::string &world_frame, const std::string &tcp_frame);
 
-  virtual bool isValidMove(const std::vector<double>& from_joint_pose, const std::vector<double>& to_joint_pose,
+  virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
                            double dt) const;
 
-  bool setJointVelocities(const std::vector<double>& new_joint_vels)
+  bool setJointVelocities(const std::vector<double> &new_joint_vels)
   {
-    if (new_joint_vels.size() != joint_velocities_.size()) return false;
+    if (new_joint_vels.size() != joint_velocities_.size())
+      return false;
     joint_velocities_ = new_joint_vels;
     return true;
   }
-  
+
   double pos_range_;
   double orient_range_;
   std::vector<double> joint_velocities_;
-
 };
-
-
 }
 
-#endif // CARTESIAN_ROBOT_H
+#endif  // CARTESIAN_ROBOT_H

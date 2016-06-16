@@ -25,16 +25,15 @@
 /** \def DESCARTES_CLASS_FORWARD
     Macro that forward declares a class XXX, and also defines two shared ptrs with named XXXPtr and XXXConstPtr  */
 
-#define DESCARTES_CLASS_FORWARD(C)                \
-    class C;                        \
-    typedef boost::shared_ptr<C> C##Ptr;        \
-    typedef boost::shared_ptr<const C> C##ConstPtr;    \
+#define DESCARTES_CLASS_FORWARD(C)                                                                                     \
+  class C;                                                                                                             \
+  typedef boost::shared_ptr<C> C##Ptr;                                                                                 \
+  typedef boost::shared_ptr<const C> C##ConstPtr;
 
 namespace descartes_core
 {
 namespace utils
 {
-
 /**
   @brief Converts scalar translations and rotations to an Eigen Frame.  This is achieved by chaining a
   translation with individual euler rotations in ZYX order (this is equivalent to fixed rotatins XYZ)
@@ -45,54 +44,45 @@ namespace utils
   */
 namespace EulerConventions
 {
-  enum EulerConvention
-  {
-    XYZ = 0,
-    ZYX,
-    ZXZ
-  };
+enum EulerConvention
+{
+  XYZ = 0,
+  ZYX,
+  ZXZ
+};
 }
 
 typedef EulerConventions::EulerConvention EulerConvention;
 
 // Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
 static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
-                               int convention = int(EulerConventions::ZYX)) __attribute__ ((unused));
+                               int convention = int(EulerConventions::ZYX)) __attribute__((unused));
 
-static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
-                               int convention)
+static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz, int convention)
 {
   Eigen::Affine3d rtn;
 
-  switch(convention)
+  switch (convention)
   {
     case EulerConventions::XYZ:
-      rtn = Eigen::Translation3d(tx,ty,tz) *
-          Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) *
-          Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
-          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
+      rtn = Eigen::Translation3d(tx, ty, tz) * Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) *
+            Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
       break;
 
     case EulerConventions::ZYX:
-      rtn = Eigen::Translation3d(tx,ty,tz) *
-          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
-          Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) *
-          Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+      rtn = Eigen::Translation3d(tx, ty, tz) * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
       break;
 
     case EulerConventions::ZXZ:
-      rtn = Eigen::Translation3d(tx,ty,tz) *
-          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
-          Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) *
-          Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
+      rtn = Eigen::Translation3d(tx, ty, tz) * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
       break;
 
     default:
-      logError("Invalid euler convention entry %i",convention);
+      logError("Invalid euler convention entry %i", convention);
       break;
-
   }
-
 
   return rtn;
 }
@@ -105,25 +95,23 @@ static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, doubl
   */
 
 // Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
-static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                  const double tol) __attribute__ ((unused));
+static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs, const double tol)
+    __attribute__((unused));
 
-static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs,
-                                      const double tol)
+static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs, const double tol)
 {
   bool rtn = false;
-  if( lhs.size() == rhs.size() )
+  if (lhs.size() == rhs.size())
   {
     rtn = true;
-    for(size_t ii = 0; ii < lhs.size(); ++ii)
+    for (size_t ii = 0; ii < lhs.size(); ++ii)
     {
-      if(std::fabs(lhs[ii]-rhs[ii]) > tol)
+      if (std::fabs(lhs[ii] - rhs[ii]) > tol)
       {
         rtn = false;
         break;
       }
     }
-
   }
   else
   {
@@ -132,9 +120,8 @@ static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs
   return rtn;
 }
 
-} //utils
+}  // utils
 
-} //descartes_core
-
+}  // descartes_core
 
 #endif /* UTILS_H_ */

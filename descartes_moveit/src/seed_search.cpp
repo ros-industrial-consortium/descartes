@@ -13,11 +13,8 @@ typedef std::vector<JointConfig> JointConfigVec;
 /**
  * @brief Forward kinematics helper
  */
-bool doFK(moveit::core::RobotState& state,
-          const moveit::core::JointModelGroup* group,
-          const std::string& tool,
-          const JointConfig& joint_pose,
-          Eigen::Affine3d& result)
+bool doFK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* group, const std::string& tool,
+          const JointConfig& joint_pose, Eigen::Affine3d& result)
 {
   state.setJointGroupPositions(group, joint_pose);
   if (!state.knowsFrameTransform(tool))
@@ -40,13 +37,8 @@ bool doFK(moveit::core::RobotState& state,
  * @brief Inverse kinematics helper. Returns the solution in the result parameter.
  *        May return false if IK failed.
  */
-bool doIK(moveit::core::RobotState& state,
-          const moveit::core::JointModelGroup* group,
-          const std::string& group_name,
-          const std::string& tool,
-          const Eigen::Affine3d& pose,
-          const JointConfig& seed,
-          JointConfig& result)
+bool doIK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* group, const std::string& group_name,
+          const std::string& tool, const Eigen::Affine3d& pose, const JointConfig& seed, JointConfig& result)
 {
   const static int N_ATTEMPTS = 1;
   const static double IK_TIMEOUT = 0.01;
@@ -63,16 +55,14 @@ bool doIK(moveit::core::RobotState& state,
 /**
  * @brief Returns true if the determinant of the jacobian is near zero.
  */
-bool isSingularity(moveit::core::RobotState& state,
-                   const moveit::core::JointModelGroup* group)
+bool isSingularity(moveit::core::RobotState& state, const moveit::core::JointModelGroup* group)
 {
- const static double MIN_DETERMINANT_VALUE = 0.0001;
- Eigen::Vector3d reference_point_position(0.0, 0.0, 0.0);
- Eigen::MatrixXd jacobian;
- state.getJacobian(group, state.getLinkModel(group->getLinkModelNames().back()),
-                   reference_point_position, jacobian);
+  const static double MIN_DETERMINANT_VALUE = 0.0001;
+  Eigen::Vector3d reference_point_position(0.0, 0.0, 0.0);
+  Eigen::MatrixXd jacobian;
+  state.getJacobian(group, state.getLinkModel(group->getLinkModelNames().back()), reference_point_position, jacobian);
 
- return std::abs(jacobian.determinant()) < MIN_DETERMINANT_VALUE;
+  return std::abs(jacobian.determinant()) < MIN_DETERMINANT_VALUE;
 }
 
 // Compares the first n_compare bijection joint values from a and b and tests
@@ -80,8 +70,7 @@ bool isSingularity(moveit::core::RobotState& state,
 inline bool isSameJointConfig(const JointConfig& a, const JointConfig& b, const JointPair& pair)
 {
   const static double MIN_DIFF = M_PI_4;
-  return std::abs(a[pair.first] - b[pair.first]) < MIN_DIFF &&
-         std::abs(a[pair.second] - b[pair.second]) < MIN_DIFF;
+  return std::abs(a[pair.first] - b[pair.first]) < MIN_DIFF && std::abs(a[pair.second] - b[pair.second]) < MIN_DIFF;
 }
 
 // Tests whether a given joint configuration, c, is similar to any joint set already
@@ -90,13 +79,13 @@ inline bool isInJointSet(const JointConfig& c, const JointConfigVec& set, const 
 {
   for (std::size_t i = 0; i < set.size(); ++i)
   {
-    if (isSameJointConfig(c, set[i], pair)) return true;
+    if (isSameJointConfig(c, set[i], pair))
+      return true;
   }
   return false;
 }
 
-std::vector<double> createValidJointPositions(const moveit::core::JointModel& model,
-                                              double increment)
+std::vector<double> createValidJointPositions(const moveit::core::JointModel& model, double increment)
 {
   // Should never be called with fixed joint
   const moveit::core::JointModel::Bounds& bounds = model.getVariableBounds();
@@ -106,18 +95,15 @@ std::vector<double> createValidJointPositions(const moveit::core::JointModel& mo
   std::vector<double> result;
   while (min <= max)
   {
-      result.push_back(min);
-      min += increment;
+    result.push_back(min);
+    min += increment;
   }
 
   return result;
 }
 
-std::vector<double> createSeedFromPerms(const std::vector<double>& initial,
-                                        const std::vector<double>& a_perms,
-                                        unsigned a_joint_idx,
-                                        const std::vector<double>& b_perms,
-                                        unsigned b_joint_idx,
+std::vector<double> createSeedFromPerms(const std::vector<double>& initial, const std::vector<double>& a_perms,
+                                        unsigned a_joint_idx, const std::vector<double>& b_perms, unsigned b_joint_idx,
                                         unsigned n)
 {
   std::vector<double> seed = initial;
@@ -128,13 +114,11 @@ std::vector<double> createSeedFromPerms(const std::vector<double>& initial,
   return seed;
 }
 
-JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state,
-                                     const std::string& group_name,
-                                     const std::string& tool_frame,
-                                     const JointPair& pair)
+JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state, const std::string& group_name,
+                                     const std::string& tool_frame, const JointPair& pair)
 {
   using namespace moveit::core;
-  
+
   const JointModelGroup* group = state.getJointModelGroup(group_name);
   const std::vector<const JointModel*> active_joints = group->getActiveJointModels();
 
@@ -161,8 +145,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state,
   for (std::size_t i = 0; i < iterations; ++i)
   {
     // Make the seed state for this index from permutations
-    JointConfig round_ik = createSeedFromPerms(init_state, joint1_perms, pair.first,
-                                               joint2_perms, pair.second, i);
+    JointConfig round_ik = createSeedFromPerms(init_state, joint1_perms, pair.first, joint2_perms, pair.second, i);
     // Containers for the valid seeds and ik solutions for THIS round
     std::vector<size_t> this_round_seeds;
     JointConfigVec this_round_iks;
@@ -190,8 +173,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state,
     for (size_t idx : final_seed_states)
     {
       // create joint config fom handle
-      JointConfig seed = createSeedFromPerms(init_state, joint1_perms, pair.first,
-                                             joint2_perms, pair.second, idx);
+      JointConfig seed = createSeedFromPerms(init_state, joint1_perms, pair.first, joint2_perms, pair.second, idx);
       JointConfig ik;
       // perform ik
       if (!doIK(state, group, group_name, tool_frame, target_pose, seed, ik))
@@ -210,13 +192,14 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state,
     for (std::size_t j = 0; j < iterations; ++j)
     {
       // skip the situation where pose is generated from current seed we already have that ik
-      if (i == j) continue;
+      if (i == j)
+        continue;
 
       unsigned count = final_seed_states.count(j);
-      if (count != 0) continue;
+      if (count != 0)
+        continue;
 
-      JointConfig seed = createSeedFromPerms(init_state, joint1_perms, pair.first,
-                                             joint2_perms, pair.second, j);
+      JointConfig seed = createSeedFromPerms(init_state, joint1_perms, pair.first, joint2_perms, pair.second, j);
       JointConfig ik;
       if (!doIK(state, group, group_name, tool_frame, target_pose, seed, ik))
       {
@@ -235,24 +218,20 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state,
     }
 
     ROS_DEBUG_STREAM("Calculated " << this_round_iks.size() << " unique IK states this round");
-  } // outer loop end
+  }  // outer loop end
 
   // Consolidate set into vector for the result
   JointConfigVec result;
   result.reserve(final_seed_states.size());
   for (size_t idx : final_seed_states)
   {
-    result.push_back(createSeedFromPerms(init_state, joint1_perms,
-                                         pair.first, joint2_perms,
-                                         pair.second, idx));
+    result.push_back(createSeedFromPerms(init_state, joint1_perms, pair.first, joint2_perms, pair.second, idx));
   }
   return result;
 }
 
-JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotState& state,
-                                           const std::string& group_name,
-                                           const std::string& tool_frame,
-                                           const JointPairVec& pairs)
+JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotState& state, const std::string& group_name,
+                                           const std::string& tool_frame, const JointPairVec& pairs)
 {
   JointConfigVec result;
   for (const auto& pair : pairs)
@@ -263,21 +242,19 @@ JointConfigVec seed::findSeedStatesByPairs(moveit::core::RobotState& state,
   return result;
 }
 
-JointConfigVec seed::findRandomSeeds(moveit::core::RobotState& state,
-                                     const std::string& group_name,
-                                     unsigned n)
+JointConfigVec seed::findRandomSeeds(moveit::core::RobotState& state, const std::string& group_name, unsigned n)
 {
   auto group = state.getJointModelGroup(group_name);
 
   JointConfigVec result;
-  
+
   for (unsigned i = 0; i < n; ++i)
   {
     state.setToRandomPositions();
 
     JointConfig c;
     state.copyJointGroupPositions(group, c);
-    
+
     result.push_back(c);
   }
   return result;

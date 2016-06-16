@@ -30,20 +30,18 @@
 
 namespace descartes_trajectory
 {
-
 typedef std::vector<descartes_core::TrajectoryPt> TrajectoryPtVector;
 
 class TrajectoryPath
 {
 public:
-  TrajectoryPath() {};
-  virtual ~TrajectoryPath() {};
+  TrajectoryPath(){};
+  virtual ~TrajectoryPath(){};
 
 protected:
   TrajectoryPtVector pts_;
 };
 
 } /* namespace descartes_trajectory */
-
 
 #endif /* TRAJECTORY_PATH_H_ */

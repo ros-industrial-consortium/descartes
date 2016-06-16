@@ -13,8 +13,7 @@
 
 namespace descartes_planner
 {
-
-class DensePlanner: public descartes_core::PathPlannerBase
+class DensePlanner : public descartes_core::PathPlannerBase
 {
 public:
   DensePlanner();
@@ -43,20 +42,17 @@ public:
   }
 
 protected:
-
   descartes_core::TrajectoryPt::ID getPrevious(const descartes_core::TrajectoryPt::ID& ref_id);
   descartes_core::TrajectoryPt::ID getNext(const descartes_core::TrajectoryPt::ID& ref_id);
   descartes_core::TrajectoryPtPtr get(const descartes_core::TrajectoryPt::ID& ref_id);
   bool updatePath();
-
 
 protected:
   boost::shared_ptr<descartes_planner::PlanningGraph> planning_graph_;
   int error_code_;
   descartes_core::PlannerConfig config_;
   std::vector<descartes_core::TrajectoryPtPtr> path_;
-  std::map<int,std::string> error_map_;
-
+  std::map<int, std::string> error_map_;
 };
 
 } /* namespace descartes_core */
