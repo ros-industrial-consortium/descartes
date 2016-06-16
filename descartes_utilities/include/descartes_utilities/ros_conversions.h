@@ -30,22 +30,19 @@
 
 namespace descartes_utilities
 {
-  /**
-   * @brief Converts a sequence of Descartes joint trajectory points to ROS trajectory points.
-   *        Copies timing if specified, and sets vel/acc/effort fields to zeros.
-   * @param model Descartes robot model associated with the Descartes joint trajectory
-   * @param joint_traj Sequence of 'joint trajectory points' as returned by Dense/Sparse planner 
-   * @param default_joint_vel If a point, does not have timing specified, this value (in rads/s)
-   *                          is used to calculate a 'default' time. Must be > 0 & less than 100.
-   * @param out Buffer in which to store the resulting ROS trajectory. Only overwritten on success.
-   * @return True if the conversion succeeded. False otherwise.
-   */
-  bool
-  toRosJointPoints(const descartes_core::RobotModel& model,
-                   const std::vector<descartes_core::TrajectoryPtPtr>& joint_traj,
-                   double default_joint_vel,
-                   std::vector<trajectory_msgs::JointTrajectoryPoint>& out);
+/**
+ * @brief Converts a sequence of Descartes joint trajectory points to ROS trajectory points.
+ *        Copies timing if specified, and sets vel/acc/effort fields to zeros.
+ * @param model Descartes robot model associated with the Descartes joint trajectory
+ * @param joint_traj Sequence of 'joint trajectory points' as returned by Dense/Sparse planner
+ * @param default_joint_vel If a point, does not have timing specified, this value (in rads/s)
+ *                          is used to calculate a 'default' time. Must be > 0 & less than 100.
+ * @param out Buffer in which to store the resulting ROS trajectory. Only overwritten on success.
+ * @return True if the conversion succeeded. False otherwise.
+ */
+bool toRosJointPoints(const descartes_core::RobotModel& model,
+                      const std::vector<descartes_core::TrajectoryPtPtr>& joint_traj, double default_joint_vel,
+                      std::vector<trajectory_msgs::JointTrajectoryPoint>& out);
 }
 
 #endif
-

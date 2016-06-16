@@ -35,7 +35,6 @@
 
 namespace descartes_trajectory_test
 {
-
 template <class T>
 descartes_core::RobotModelPtr CreateRobotModel();
 
@@ -74,27 +73,28 @@ TYPED_TEST_CASE_P(RobotModelTest);
 const double TF_EQ_TOL = 0.001;
 const double JOINT_EQ_TOL = 0.001;
 
-
-TYPED_TEST_P(RobotModelTest, construction) {
+TYPED_TEST_P(RobotModelTest, construction)
+{
   ROS_INFO_STREAM("Robot model test construction");
 }
 
-
-TYPED_TEST_P(RobotModelTest, getIK) {
+TYPED_TEST_P(RobotModelTest, getIK)
+{
   ROS_INFO_STREAM("Testing getIK");
   std::vector<double> fk_joint(6, 0.0);
   std::vector<double> ik_joint;
   Eigen::Affine3d ik_pose, fk_pose;
   EXPECT_TRUE(this->model_->getFK(fk_joint, ik_pose));
   EXPECT_TRUE(this->model_->getIK(ik_pose, fk_joint, ik_joint));
-  //This doesn't always work, but it should.  The IKFast solution doesn't
-  //return the "closets" solution.  Numeric IK does appear to do this.
+  // This doesn't always work, but it should.  The IKFast solution doesn't
+  // return the "closets" solution.  Numeric IK does appear to do this.
   EXPECT_TRUE(this->model_->getFK(ik_joint, fk_pose));
   EXPECT_TRUE(ik_pose.matrix().isApprox(fk_pose.matrix(), TF_EQ_TOL));
   ROS_INFO_STREAM("getIK Test completed");
 }
 
-TYPED_TEST_P(RobotModelTest, getAllIK) {
+TYPED_TEST_P(RobotModelTest, getAllIK)
+{
   ROS_INFO_STREAM("Testing getAllIK");
   std::vector<double> fk_joint(6, 0.5);
   std::vector<std::vector<double> > joint_poses;
@@ -112,9 +112,8 @@ TYPED_TEST_P(RobotModelTest, getAllIK) {
   }
 }
 
-
 REGISTER_TYPED_TEST_CASE_P(RobotModelTest, construction, getIK, getAllIK);
 
-} //descartes_trajectory_test
+}  // descartes_trajectory_test
 
-#endif // ROBOT_MODEL_TEST_HPP_
+#endif  // ROBOT_MODEL_TEST_HPP_

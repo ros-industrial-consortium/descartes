@@ -36,10 +36,12 @@ class MoveitStateAdapter : public descartes_core::RobotModel
 public:
   MoveitStateAdapter();
 
-  virtual ~MoveitStateAdapter() {}
+  virtual ~MoveitStateAdapter()
+  {
+  }
 
-  virtual bool initialize(const std::string& robot_description, const std::string& group_name,
-                          const std::string& world_frame, const std::string& tcp_frame);
+  virtual bool initialize(const std::string &robot_description, const std::string &group_name,
+                          const std::string &world_frame, const std::string &tcp_frame);
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -54,15 +56,14 @@ public:
 
   virtual int getDOF() const;
 
-  virtual bool isValidMove(const std::vector<double>& from_joint_pose, 
-                           const std::vector<double>& to_joint_pose,
+  virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
                            double dt) const;
   /**
    * @brief Set the initial states used for iterative inverse kineamtics
    * @param seeds Vector of vector of doubles representing joint positions.
    *              Be sure that it's sized correctly for the DOF.
    */
-  void setSeedStates(const std::vector<std::vector<double> >& seeds)
+  void setSeedStates(const std::vector<std::vector<double> > &seeds)
   {
     seed_states_ = seeds;
   }
@@ -70,7 +71,7 @@ public:
   /**
    * @brief Retrieves the initial seed states used by iterative inverse kinematic solvers
    */
-  const std::vector<std::vector<double> >& getSeedStates() const
+  const std::vector<std::vector<double> > &getSeedStates() const
   {
     return seed_states_;
   }
@@ -88,7 +89,7 @@ public:
    *        value of joints that are not part of the active move group. Should be called after
    *        'initialize()'.
    */
-  void setState(const moveit::core::RobotState& state);
+  void setState(const moveit::core::RobotState &state);
 
 protected:
   /**
@@ -111,16 +112,16 @@ protected:
    * `isValidMove()`
    */
   std::vector<double> velocity_limits_;
-  
+
   mutable moveit::core::RobotStatePtr robot_state_;
-  
+
   planning_scene::PlanningScenePtr planning_scene_;
-  
+
   robot_model::RobotModelConstPtr robot_model_ptr_;
 
-  robot_model_loader::RobotModelLoaderPtr  robot_model_loader_;
+  robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
 
-  const moveit::core::JointModelGroup* joint_group_;
+  const moveit::core::JointModelGroup *joint_group_;
 
   /**
    * @brief Vector of starting configurations for the numerical solver
@@ -148,6 +149,6 @@ protected:
   descartes_core::Frame world_to_root_;
 };
 
-} //descartes_moveit
+}  // descartes_moveit
 
 #endif /* MOVEIT_STATE_ADAPTER_H_ */

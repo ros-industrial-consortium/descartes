@@ -19,13 +19,10 @@
 #include "descartes_trajectory/joint_trajectory_pt.h"
 #include <gtest/gtest.h>
 
-
 using namespace descartes_core;
 using namespace descartes_trajectory;
 
-
 TEST(JointTrajPt, construction)
 {
-JointTrajectoryPt def();
+  JointTrajectoryPt def();
 }
-

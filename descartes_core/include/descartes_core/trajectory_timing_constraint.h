@@ -29,73 +29,71 @@
 
 namespace descartes_core
 {
+/**
+ * @brief A window of time for this point to be achieved relative to a previous point or
+ *        the starting position.
+ *
+ * This struct defines a 'lower' and 'upper' bound for the desired time. If the upper bound
+ * is zero or negative, it is considered unspecified and the behavior of your planner
+ * or filter is considered undefined.
+ *
+ * All time-value units are in seconds.
+ */
+struct TimingConstraint
+{
   /**
-   * @brief A window of time for this point to be achieved relative to a previous point or 
-   *        the starting position.
-   *
-   * This struct defines a 'lower' and 'upper' bound for the desired time. If the upper bound
-   * is zero or negative, it is considered unspecified and the behavior of your planner
-   * or filter is considered undefined.
-   *
-   * All time-value units are in seconds.
+   * @brief The default constructor creates an unspecified point
    */
-  struct TimingConstraint
+  TimingConstraint() : lower(0.0), upper(0.0)
   {
-    /**
-     * @brief The default constructor creates an unspecified point
-     */
-    TimingConstraint()
-      : lower(0.0)
-      , upper(0.0)
-    {}
+  }
 
-    /**
-     * @brief Constructs a timing constraint with a nominal time value (window width of zero)
-     * @param nominal The desired time in seconds to achieve this point from the previous
-     */
-    explicit TimingConstraint(double nominal)
-      : lower(nominal)
-      , upper(nominal)
+  /**
+   * @brief Constructs a timing constraint with a nominal time value (window width of zero)
+   * @param nominal The desired time in seconds to achieve this point from the previous
+   */
+  explicit TimingConstraint(double nominal) : lower(nominal), upper(nominal)
+  {
+    if (nominal < 0.0)
     {
-      if (nominal < 0.0)
-      {
-        ROS_WARN_STREAM("Nominal time value must be greater than or equal to 0.0");
-        lower = 0.0;
-        upper = 0.0;
-      }
+      ROS_WARN_STREAM("Nominal time value must be greater than or equal to 0.0");
+      lower = 0.0;
+      upper = 0.0;
+    }
+  }
+
+  /**
+   * @brief Constructs a timing constraint using the provided time window
+   * @param lower The lower bound of the acceptable time window in seconds.
+   * @param upper The upper bound of the acceptable time window in seconds.
+   */
+  TimingConstraint(double lower, double upper) : lower(lower), upper(upper)
+  {
+    if (lower < 0.0)
+    {
+      ROS_WARN_STREAM("Lower time value must be greater than or equal to 0.0");
+      lower = 0.0;
     }
 
-    /**
-     * @brief Constructs a timing constraint using the provided time window
-     * @param lower The lower bound of the acceptable time window in seconds.
-     * @param upper The upper bound of the acceptable time window in seconds.
-     */
-    TimingConstraint(double lower, double upper)
-      : lower(lower)
-      , upper(upper)
+    if (upper < 0.0)
     {
-      if (lower < 0.0)
-      {
-        ROS_WARN_STREAM("Lower time value must be greater than or equal to 0.0");
-        lower = 0.0;
-      }
-
-      if (upper < 0.0)
-      {
-        ROS_WARN_STREAM("Upper time value must be greater than or equal to 0.0");
-        upper = 0.0;
-      }
+      ROS_WARN_STREAM("Upper time value must be greater than or equal to 0.0");
+      upper = 0.0;
     }
+  }
 
-    /**
-     * @brief Checks if the given timing constraint has been specified
-     * @return true if the point is specified
-     */
-    bool isSpecified() const { return upper > 0.0; }
+  /**
+   * @brief Checks if the given timing constraint has been specified
+   * @return true if the point is specified
+   */
+  bool isSpecified() const
+  {
+    return upper > 0.0;
+  }
 
-    double lower, upper;
-  };
+  double lower, upper;
+};
 
-} // end namespace descartes core
+}  // end namespace descartes core
 
 #endif /* TRAJECTORY_TIMING_CONSTRAINT_H */

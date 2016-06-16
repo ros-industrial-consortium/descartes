@@ -36,7 +36,6 @@
 
 namespace descartes_planner
 {
-
 struct JointVertex
 {
   descartes_core::TrajectoryPt::ID id;
@@ -55,19 +54,19 @@ struct CartesianPointRelationship
   descartes_core::TrajectoryPt::ID id_next;
 };
 
-typedef boost::adjacency_list<boost::listS, /*edge container*/
-  boost::vecS, /*vertex_container*/
-  boost::bidirectionalS, /*allows in_edge and out_edge*/
-  JointVertex, /*vertex structure*/
-  JointEdge /*edge structure*/
-> JointGraph;
+typedef boost::adjacency_list<boost::listS,          /*edge container*/
+                              boost::vecS,           /*vertex_container*/
+                              boost::bidirectionalS, /*allows in_edge and out_edge*/
+                              JointVertex,           /*vertex structure*/
+                              JointEdge              /*edge structure*/
+                              > JointGraph;
 
 typedef boost::graph_traits<JointGraph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<JointGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<JointGraph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<JointGraph>::in_edge_iterator InEdgeIterator;
 
-typedef boost::function<double(const std::vector<double>&, const std::vector<double>&)> CostFunction;
+typedef boost::function<double(const std::vector<double> &, const std::vector<double> &)> CostFunction;
 
 struct CartesianPointInformation
 {
@@ -100,13 +99,14 @@ public:
    * @param point The new point to add to the graph
    * @return True if the point was successfully added
    */
-  bool addTrajectory(descartes_core::TrajectoryPtPtr point, descartes_core::TrajectoryPt::ID previous_id, descartes_core::TrajectoryPt::ID next_id);
+  bool addTrajectory(descartes_core::TrajectoryPtPtr point, descartes_core::TrajectoryPt::ID previous_id,
+                     descartes_core::TrajectoryPt::ID next_id);
 
   bool modifyTrajectory(descartes_core::TrajectoryPtPtr point);
 
   bool removeTrajectory(descartes_core::TrajectoryPtPtr point);
 
-  bool getCartesianTrajectory(std::vector<descartes_core::TrajectoryPtPtr>& traj);
+  bool getCartesianTrajectory(std::vector<descartes_core::TrajectoryPtPtr> &traj);
 
   /** @brief Calculate and return the shortest path from the given joint solution indices
    * @param startIndex The index of the joint solution at which to start
@@ -117,8 +117,10 @@ public:
    */
   bool getShortestPath(double &cost, std::list<descartes_trajectory::JointTrajectoryPt> &path);
   // TODO: 'overloaded' requests depending on source and destination
-  //bool GetShortestPathJointToCartesian(int startIndex, int endIndex, double &cost, std::vector<descartes_core::TrajectoryPt> &path);
-  //bool GetShortestPathCartesianToCartesian(int startIndex, int endIndex, double &cost, std::vector<descartes_core::TrajectoryPt> &path);
+  // bool GetShortestPathJointToCartesian(int startIndex, int endIndex, double &cost,
+  // std::vector<descartes_core::TrajectoryPt> &path);
+  // bool GetShortestPathCartesianToCartesian(int startIndex, int endIndex, double &cost,
+  // std::vector<descartes_core::TrajectoryPt> &path);
 
   /**@brief Utility function for printing the graph to the console
    * NOTE: should add other formats for output
@@ -128,13 +130,11 @@ public:
 
   descartes_core::RobotModelConstPtr getRobotModel();
 
-
   CartesianMap getCartesianMap() const;
 
-  const JointMap& getJointMap() const;
+  const JointMap &getJointMap() const;
 
-  const JointGraph& getGraph() const;
-
+  const JointGraph &getGraph() const;
 
 protected:
   descartes_core::RobotModelConstPtr robot_model_;
@@ -143,7 +143,8 @@ protected:
 
   JointGraph dg_;
 
-  int recalculateJointSolutionsVertexMap(std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
+  int recalculateJointSolutionsVertexMap(
+      std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
 
   /**
    * @brief A pair indicating the validity of the edge, and if valid, the cost associated
@@ -152,14 +153,15 @@ protected:
   typedef std::pair<bool, double> EdgeWeightResult;
 
   /** @brief function for computing edge weight based on specified cost function */
-  EdgeWeightResult edgeWeight(const descartes_trajectory::JointTrajectoryPt& start,
-                                  const descartes_trajectory::JointTrajectoryPt& end) const;
+  EdgeWeightResult edgeWeight(const descartes_trajectory::JointTrajectoryPt &start,
+                              const descartes_trajectory::JointTrajectoryPt &end) const;
 
   // NOTE: both Cartesian Points and Joint Points/solutions extend a base descartes_core::TrajectoryPt type
   //       and include an accessor to both formats
 
-  // maintains the original (Cartesian) points list along with link information and associated joint trajectories per point
-  CartesianMap* cartesian_point_link_;
+  // maintains the original (Cartesian) points list along with link information and associated joint trajectories per
+  // point
+  CartesianMap *cartesian_point_link_;
 
   // maintains a map of joint solutions with it's corresponding graph vertex_descriptor
   //   one or more of these will exist for each element in trajectory_point_map
@@ -172,12 +174,12 @@ protected:
   bool findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given descartes_core::TrajectoryPt list */
-  bool calculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr>& points,
-                               std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses);
+  bool calculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr> &points,
+                               std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses);
 
   /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */
-  bool populateGraphVertices(const std::vector<descartes_core::TrajectoryPtPtr>& points,
-                             std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses);
+  bool populateGraphVertices(const std::vector<descartes_core::TrajectoryPtPtr> &points,
+                             std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses);
 
   /** @brief calculate weights fro each start point to each end point */
   bool calculateEdgeWeights(const std::vector<descartes_core::TrajectoryPt::ID> &start_joints,
@@ -189,7 +191,7 @@ protected:
                             std::vector<JointEdge> &edge_results) const;
 
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
-  bool calculateAllEdgeWeights(const std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>>& poses,
+  bool calculateAllEdgeWeights(const std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses,
                                std::vector<JointEdge> &edges);
 
   /** @brief (Re)create the actual graph structure from the list of transition costs (edges) */

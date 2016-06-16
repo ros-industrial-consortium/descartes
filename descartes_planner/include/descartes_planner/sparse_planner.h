@@ -31,14 +31,14 @@
 
 namespace descartes_planner
 {
-
-class SparsePlanner: public descartes_core::PathPlannerBase
+class SparsePlanner : public descartes_core::PathPlannerBase
 {
+public:
+  typedef std::vector<std::tuple<int, descartes_core::TrajectoryPtPtr, descartes_trajectory::JointTrajectoryPt> >
+      SolutionArray;
 
 public:
-  typedef std::vector<std::tuple<int,descartes_core::TrajectoryPtPtr,descartes_trajectory::JointTrajectoryPt> > SolutionArray;
-public:
-  SparsePlanner(descartes_core::RobotModelConstPtr model,double sampling = 0.1f);
+  SparsePlanner(descartes_core::RobotModelConstPtr model, double sampling = 0.1f);
   SparsePlanner();
   virtual ~SparsePlanner();
 
@@ -48,41 +48,38 @@ public:
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
-  virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
-  virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
-  virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id,descartes_core::TrajectoryPtPtr cp);
+  virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr cp);
+  virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr cp);
+  virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr cp);
   virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id);
   virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const;
   virtual int getErrorCode() const;
   virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
-
   void setSampling(double sampling);
-  const std::map<descartes_core::TrajectoryPt::ID,descartes_trajectory::JointTrajectoryPt>& getSolution();
-  bool getSolutionJointPoint(const descartes_trajectory::CartTrajectoryPt::ID& cart_id,descartes_trajectory::JointTrajectoryPt& j);
+  const std::map<descartes_core::TrajectoryPt::ID, descartes_trajectory::JointTrajectoryPt>& getSolution();
+  bool getSolutionJointPoint(const descartes_trajectory::CartTrajectoryPt::ID& cart_id,
+                             descartes_trajectory::JointTrajectoryPt& j);
 
 protected:
-
   bool plan();
-  bool interpolateJointPose(const std::vector<double>& start,const std::vector<double>& end,
-                   double t,std::vector<double>& interp);
-  int interpolateSparseTrajectory(const SolutionArray& sparse_solution,int &sparse_index, int &point_pos);
-  void sampleTrajectory(double sampling,const std::vector<descartes_core::TrajectoryPtPtr>& dense_trajectory_array,
+  bool interpolateJointPose(const std::vector<double>& start, const std::vector<double>& end, double t,
+                            std::vector<double>& interp);
+  int interpolateSparseTrajectory(const SolutionArray& sparse_solution, int& sparse_index, int& point_pos);
+  void sampleTrajectory(double sampling, const std::vector<descartes_core::TrajectoryPtPtr>& dense_trajectory_array,
                         std::vector<descartes_core::TrajectoryPtPtr>& sparse_trajectory_array);
 
   int getDensePointIndex(const descartes_core::TrajectoryPt::ID& ref_id);
   int getSparsePointIndex(const descartes_core::TrajectoryPt::ID& ref_id);
-  int findNearestSparsePointIndex(const descartes_core::TrajectoryPt::ID& ref_id,bool skip_equal = true);
+  int findNearestSparsePointIndex(const descartes_core::TrajectoryPt::ID& ref_id, bool skip_equal = true);
   bool isInSparseTrajectory(const descartes_core::TrajectoryPt::ID& ref_id);
-  bool checkJointChanges(const std::vector<double>& s1,
-                                        const std::vector<double>& s2, const double& max_change);
+  bool checkJointChanges(const std::vector<double>& s1, const std::vector<double>& s2, const double& max_change);
 
   bool getOrderedSparseArray(std::vector<descartes_core::TrajectoryPtPtr>& sparse_array);
   bool getSparseSolutionArray(SolutionArray& sparse_solution_array);
 
 protected:
-
-  enum class InterpolationResult: int
+  enum class InterpolationResult : int
   {
     ERROR = -1,
     REPLAN,
@@ -91,15 +88,13 @@ protected:
 
   double sampling_;
   int error_code_;
-  std::map<int,std::string> error_map_;
+  std::map<int, std::string> error_map_;
   descartes_core::PlannerConfig config_;
   boost::shared_ptr<PlanningGraph> planning_graph_;
   std::vector<descartes_core::TrajectoryPtPtr> cart_points_;
   SolutionArray sparse_solution_array_;
-  std::map<descartes_core::TrajectoryPt::ID,descartes_trajectory::JointTrajectoryPt> joint_points_map_;
+  std::map<descartes_core::TrajectoryPt::ID, descartes_trajectory::JointTrajectoryPt> joint_points_map_;
   std::vector<descartes_core::TimingConstraint> timing_cache_;
-
-
 };
 
 } /* namespace descartes_planner */

@@ -36,15 +36,13 @@
 
 namespace descartes_core
 {
-
 /**@brief Frame is a wrapper for an affine frame transform.
  * Frame inverse can also be stored for increased speed in downstream calculations.
  */
 struct Frame
 {
   Frame(){};
-  Frame(const Eigen::Affine3d &a):
-    frame(a), frame_inv(a.inverse()) {};
+  Frame(const Eigen::Affine3d &a) : frame(a), frame_inv(a.inverse()){};
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   Eigen::Affine3d frame;
@@ -55,7 +53,6 @@ struct Frame
     return Frame(Eigen::Affine3d::Identity());
   }
 };
-
 
 /**@brief A TrajectoryPt is the basis for a Trajectory describing the desired path a robot should execute.
  * The desired robot motion spans both Cartesian and Joint space, and so the TrajectoryPt must have capability
@@ -72,12 +69,13 @@ class TrajectoryPt
 public:
   typedef TrajectoryID ID;
 
-  TrajectoryPt(const TimingConstraint& timing) 
-    : id_(TrajectoryID::make_id())
-    , timing_(timing)
-  {}
-  
-  virtual ~TrajectoryPt() {}
+  TrajectoryPt(const TimingConstraint &timing) : id_(TrajectoryID::make_id()), timing_(timing)
+  {
+  }
+
+  virtual ~TrajectoryPt()
+  {
+  }
 
   /**@name Getters for Cartesian pose(s)
    * References to "closest" position are decided by norm of joint-space distance.
@@ -91,8 +89,8 @@ public:
    * @param pose If successful, affine pose of this state.
    * @return True if calculation successful. pose untouched if return false.
    */
-  virtual bool getClosestCartPose(const std::vector<double> &seed_state,
-                                  const RobotModel &kinematics, Eigen::Affine3d &pose) const = 0;
+  virtual bool getClosestCartPose(const std::vector<double> &seed_state, const RobotModel &kinematics,
+                                  Eigen::Affine3d &pose) const = 0;
 
   /**@brief Get single Cartesian pose associated with nominal of this point.
     * (Pose of TOOL point expressed in WOBJ frame).
@@ -101,8 +99,8 @@ public:
    * @param pose If successful, affine pose of this state.
     * @return True if calculation successful. pose untouched if return false.
     */
-  virtual bool getNominalCartPose(const std::vector<double> &seed_state,
-                                  const RobotModel &kinematics, Eigen::Affine3d &pose) const = 0;
+  virtual bool getNominalCartPose(const std::vector<double> &seed_state, const RobotModel &kinematics,
+                                  Eigen::Affine3d &pose) const = 0;
 
   /**@brief Get "all" Cartesian poses that satisfy this point.
    * @param kinematics Kinematics object used to calculate pose
@@ -122,8 +120,7 @@ public:
    * @param joint_pose Solution (if function successful).
    * @return True if calculation successful. joint_pose untouched if return is false.
    */
-  virtual bool getClosestJointPose(const std::vector<double> &seed_state,
-                                   const RobotModel &model,
+  virtual bool getClosestJointPose(const std::vector<double> &seed_state, const RobotModel &model,
                                    std::vector<double> &joint_pose) const = 0;
 
   /**@brief Get single Joint pose closest to seed_state.
@@ -132,16 +129,15 @@ public:
    * @param seed_state RobotState used kinematic calculations and joint position seed.
    * @return True if calculation successful. joint_pose untouched if return is false.
    */
-  virtual bool getNominalJointPose(const std::vector<double> &seed_state,
-                                   const RobotModel &model,
+  virtual bool getNominalJointPose(const std::vector<double> &seed_state, const RobotModel &model,
                                    std::vector<double> &joint_pose) const = 0;
 
   /**@brief Get "all" joint poses that satisfy this point.
    * @param model Robot model  object used to calculate pose
-   * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to discretization used.
+   * @param joint_poses vector of solutions (if function successful). Note: # of solutions may be subject to
+   * discretization used.
    */
-  virtual void getJointPoses(const RobotModel &model,
-                             std::vector<std::vector<double> > &joint_poses) const = 0;
+  virtual void getJointPoses(const RobotModel &model, std::vector<std::vector<double> > &joint_poses) const = 0;
   /** @} (end section) */
 
   /**@brief Check if state satisfies trajectory point requirements.
@@ -159,8 +155,7 @@ public:
    * @{ */
 
   /**@brief Get ID associated with this point */
-  inline
-  ID getID() const
+  inline ID getID() const
   {
     return id_;
   }
@@ -186,7 +181,7 @@ public:
    * @param tm The new timing value for the copied point
    * @return A copy, with the same ID and new timing, of the underlying point type
    */
-  virtual TrajectoryPtPtr copyAndSetTiming(const TimingConstraint& tm) const
+  virtual TrajectoryPtPtr copyAndSetTiming(const TimingConstraint &tm) const
   {
     TrajectoryPtPtr cp = copy();
     cp->setTiming(tm);
@@ -209,30 +204,28 @@ public:
    * @param tm The new timing value for the copied point
    * @return A clone, with the same data but a unique ID, of the underlying point type with new timing
    */
-  virtual TrajectoryPtPtr cloneAndSetTiming(const TimingConstraint& tm) const
+  virtual TrajectoryPtPtr cloneAndSetTiming(const TimingConstraint &tm) const
   {
     TrajectoryPtPtr cp = clone();
     cp->setTiming(tm);
     return cp;
   }
 
-  const TimingConstraint& getTiming() const
+  const TimingConstraint &getTiming() const
   {
     return timing_;
   }
 
-  void setTiming(const TimingConstraint& timing)
+  void setTiming(const TimingConstraint &timing)
   {
     timing_ = timing;
   }
 
 protected:
-  ID                    id_;      /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
-  TimingConstraint      timing_;  /**<@brief Information specifying acceptable timing from this point to the next. */
-
+  ID id_; /**<@brief ID associated with this pt. Generally refers back to a process path defined elsewhere. */
+  TimingConstraint timing_; /**<@brief Information specifying acceptable timing from this point to the next. */
 };
 
 } /* namespace descartes_core */
-
 
 #endif /* TRAJECTORY_PT_H_ */

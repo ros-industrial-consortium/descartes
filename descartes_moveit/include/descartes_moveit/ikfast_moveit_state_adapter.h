@@ -23,17 +23,17 @@
 
 namespace descartes_moveit
 {
-
 class IkFastMoveitStateAdapter : public descartes_moveit::MoveitStateAdapter
 {
 public:
-  virtual ~IkFastMoveitStateAdapter() {}
+  virtual ~IkFastMoveitStateAdapter()
+  {
+  }
 
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
                           const std::string& world_frame, const std::string& tcp_frame);
-  
-  virtual bool getAllIK(const Eigen::Affine3d &pose, 
-                        std::vector<std::vector<double> >& joint_poses) const;
+
+  virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::vector<double> >& joint_poses) const;
 
   virtual bool getIK(const Eigen::Affine3d& pose, const std::vector<double>& seed_state,
                      std::vector<double>& joint_pose) const;
@@ -47,7 +47,6 @@ public:
   void setState(const moveit::core::RobotState& state);
 
 protected:
-
   bool computeIKFastTransforms();
 
   /**
@@ -66,5 +65,5 @@ protected:
   descartes_core::Frame world_to_base_;
 };
 
-} // end namespace 'descartes_moveit'
+}  // end namespace 'descartes_moveit'
 #endif

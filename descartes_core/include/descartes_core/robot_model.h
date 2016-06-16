@@ -19,13 +19,12 @@
 #ifndef ROBOT_KINEMATICS_H_
 #define ROBOT_KINEMATICS_H_
 
-//TODO: The include below picks up Eigen::Affine3d, but there is probably a better way
+// TODO: The include below picks up Eigen::Affine3d, but there is probably a better way
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/utils.h"
 
 namespace descartes_core
 {
-
 DESCARTES_CLASS_FORWARD(RobotModel);
 
 /**@brief RobotModel defines the interface to a kinematics/dynamics functions.  Implementations
@@ -40,8 +39,9 @@ DESCARTES_CLASS_FORWARD(RobotModel);
 class RobotModel
 {
 public:
-
-  virtual ~RobotModel(){}
+  virtual ~RobotModel()
+  {
+  }
 
   /**
    * @brief Returns the joint pose closest to the seed pose for a desired affine pose
@@ -99,8 +99,8 @@ public:
    * @param tcp_frame tool link attached to the robot. When it's not in 'group_name' then it should have
    * a fixed location relative to the last link in 'group_name'.
    */
-  virtual bool initialize(const std::string& robot_description, const std::string& group_name,
-                          const std::string& world_frame, const std::string& tcp_frame) = 0;
+  virtual bool initialize(const std::string &robot_description, const std::string &group_name,
+                          const std::string &world_frame, const std::string &tcp_frame) = 0;
 
   /**
    * @brief Enables collision checks
@@ -128,20 +128,17 @@ public:
    * @param  dt              [description]
    * @return                 [description]
    */
-  virtual bool isValidMove(const std::vector<double>& from_joint_pose, const std::vector<double>& to_joint_pose,
+  virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
                            double dt) const = 0;
 
 protected:
-
-  RobotModel(): check_collisions_(false){}
+  RobotModel() : check_collisions_(false)
+  {
+  }
 
   bool check_collisions_;
-
 };
 
-}//descartes_core
-
-
-
+}  // descartes_core
 
 #endif /* ROBOT_KINEMATICS_H_ */
