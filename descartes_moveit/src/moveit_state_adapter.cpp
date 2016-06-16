@@ -72,10 +72,17 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
 {
   // Initialize MoveIt state objects
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
-  robot_model_ptr_ = robot_model_loader_->getModel();
+
+  return initialize(robot_model_loader_->getModel(), group_name, world_frame, tcp_frame);
+}
+
+bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
+                                    const std::string &world_frame, const std::string &tcp_frame)
+{
+  robot_model_ptr_ = robot_model;
   robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
   robot_state_->setToDefaultValues();
-  planning_scene_.reset(new planning_scene::PlanningScene(robot_model_loader_->getModel()));
+  planning_scene_.reset(new planning_scene::PlanningScene(robot_model));
   joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
 
   // Assign robot frames

@@ -43,6 +43,9 @@ public:
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
                           const std::string &world_frame, const std::string &tcp_frame);
 
+  virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
+                          const std::string &world_frame, const std::string &tcp_frame);
+
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
 
