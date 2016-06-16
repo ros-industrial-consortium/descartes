@@ -50,7 +50,6 @@ public:
   /**
    * @brief Plans a path for the given robot model and configuration parameters.
    * @param model robot model implementation for which to plan a path
-   * @param config A map containing the parameter/value pairs.
    */
   virtual bool initialize(RobotModelConstPtr model) = 0;
 
