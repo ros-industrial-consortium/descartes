@@ -554,7 +554,7 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   return true;
 }
 
-bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>& start_points)
+bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>& start_points) const
 {
   // Create local id->vertex map
   VertexMap joint_vertex_map;
@@ -593,7 +593,7 @@ bool PlanningGraph::findStartVertices(std::vector<JointGraph::vertex_descriptor>
   return !start_points.empty();
 }
 
-bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor>& end_points)
+bool PlanningGraph::findEndVertices(std::vector<JointGraph::vertex_descriptor>& end_points) const
 {
   // Create local id->vertex map
   VertexMap joint_vertex_map;
@@ -724,7 +724,7 @@ void PlanningGraph::printMaps()
   }
 }
 
-int PlanningGraph::recalculateJointSolutionsVertexMap(VertexMap& joint_map)
+int PlanningGraph::recalculateJointSolutionsVertexMap(VertexMap& joint_map) const
 {
   std::pair<VertexIterator, VertexIterator> vi = vertices(dg_);
 
