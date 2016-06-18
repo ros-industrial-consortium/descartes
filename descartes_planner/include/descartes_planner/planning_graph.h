@@ -56,7 +56,7 @@ struct CartesianPointRelationship
 
 typedef boost::adjacency_list<boost::listS,          /*edge container*/
                               boost::vecS,           /*vertex_container*/
-                              boost::bidirectionalS, /*allows in_edge and out_edge*/
+                              boost::directedS, /*allows in_edge and out_edge*/
                               JointVertex,           /*vertex structure*/
                               JointEdge              /*edge structure*/
                               > JointGraph;
