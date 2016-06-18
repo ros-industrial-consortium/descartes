@@ -664,6 +664,9 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
   // through the graph
   cost = std::numeric_limits<double>::max();
 
+  // Remember which lowest cost end point should be used to create the solution path
+  JointGraph::vertex_descriptor cheapest_end_point;
+
   // initialize vectors to be used by dijkstra
   std::vector<JointGraph::vertex_descriptor> predecessors(num_vert);
   std::vector<double> weights(num_vert, std::numeric_limits<double>::max());
@@ -683,17 +686,18 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
     if (weight < cost)
     {
       cost = weight;
-      path.clear();
-      // Add the destination point.
-      auto current = *end;
-      // Starting from the destination point step through the predecessor map
-      // until the source point is reached.
-      while (current != virtual_vertex)
-      {
-        path.push_front(joint_solutions_map_[vertex_index_map[current]]);
-        current = predecessors[current];
-      }
+      cheapest_end_point = *end;
     }
+  }
+
+  // Create the solution path with the lowest-cost endpoint
+  path.clear();
+  auto current = cheapest_end_point;
+  // Starting from the destination point step through the predecessor map until the source point is reached.
+  while (current != virtual_vertex)
+  {
+    path.push_front(joint_solutions_map_[vertex_index_map[current]]);
+    current = predecessors[current];
   }
 
   // Undo the virtual joint
