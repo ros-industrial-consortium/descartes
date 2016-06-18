@@ -139,6 +139,12 @@ public:
 
   const JointGraph &getGraph() const;
 
+  /** @brief simple function to iterate over all graph vertices to find ones that do not have an incoming edge */
+  bool findStartVertices(std::vector<JointGraph::vertex_descriptor> &start_points) const;
+
+  /** @brief simple function to iterate over all graph vertices to find ones that do not have an outgoing edge */
+  bool findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points) const;
+
 protected:
   descartes_core::RobotModelConstPtr robot_model_;
 
@@ -147,7 +153,7 @@ protected:
   JointGraph dg_;
 
   int recalculateJointSolutionsVertexMap(
-      std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map);
+      std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> &joint_vertex_map) const;
 
   /**
    * @brief A pair indicating the validity of the edge, and if valid, the cost associated
@@ -169,12 +175,6 @@ protected:
   // maintains a map of joint solutions with it's corresponding graph vertex_descriptor
   //   one or more of these will exist for each element in trajectory_point_map
   JointMap joint_solutions_map_;
-
-  /** @brief simple function to iterate over all graph vertices to find ones that do not have an incoming edge */
-  bool findStartVertices(std::vector<JointGraph::vertex_descriptor> &start_points);
-
-  /** @brief simple function to iterate over all graph vertices to find ones that do not have an outgoing edge */
-  bool findEndVertices(std::vector<JointGraph::vertex_descriptor> &end_points);
 
   /** @brief (Re)create the list of joint solutions from the given descartes_core::TrajectoryPt list */
   bool calculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr> &points,
