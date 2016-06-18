@@ -89,6 +89,9 @@ public:
 
   virtual ~PlanningGraph();
 
+  /** \brief Clear all previous graph data */
+  void clear();
+
   /** @brief initial population of graph trajectory elements
    * @param points list of trajectory points to be used to construct the graph
    * @return True if the graph was successfully created

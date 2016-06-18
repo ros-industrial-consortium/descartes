@@ -51,7 +51,14 @@ PlanningGraph::PlanningGraph(RobotModelConstPtr model, CostFunction cost_functio
 
 PlanningGraph::~PlanningGraph()
 {
+  clear();
+}
+
+void PlanningGraph::clear()
+{
   delete cartesian_point_link_;
+  dg_.clear();
+  joint_solutions_map_.clear();
 }
 
 CartesianMap PlanningGraph::getCartesianMap() const
@@ -94,7 +101,10 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
     return false;
   }
 
-  delete cartesian_point_link_;  // remove the previous map before we start on a new one
+  // Reset any previous graph data
+  clear();
+
+  // Start new map
   cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointInformation>();
 
   // DEBUG
