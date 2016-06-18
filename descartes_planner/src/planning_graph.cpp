@@ -107,35 +107,18 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
   // Start new map
   cartesian_point_link_ = new std::map<TrajectoryPt::ID, CartesianPointInformation>();
 
-  // DEBUG
-  // printMaps();
-  TrajectoryPt::ID previous_id = descartes_core::TrajectoryID::make_nil();
-
-  // input is valid, copy to local maps that will be maintained by the planning graph
-  for (auto point_iter = points->begin(); point_iter != points->end(); ++point_iter)
+  // The input points have an ordered sequence to them
+  for (std::size_t i = 0; i < points->size(); ++i)
   {
-    (*cartesian_point_link_)[point_iter->get()->getID()].source_trajectory_ = (*point_iter);
-    CartesianPointRelationship point_link = CartesianPointRelationship();
-    point_link.id = point_iter->get()->getID();
-    point_link.id_next = descartes_core::TrajectoryID::make_nil();      // default to nil UUID
-    point_link.id_previous = descartes_core::TrajectoryID::make_nil();  // default to nil UUID
+    auto id = (*points)[i].get()->getID();
 
-    // if the previous_id exists, set it's next_id to the new id
-    if (cartesian_point_link_->find(previous_id) != cartesian_point_link_->end())
-    {
-      (*cartesian_point_link_)[previous_id].links_.id_next = point_link.id;
+    CartesianPointInformation info;
+    info.source_trajectory_ = (*points)[i]; // local point
+    info.links_.id = id;
+    info.links_.id_previous = (i == 0) ? TrajectoryID::make_nil() : (*points)[i-1].get()->getID();
+    info.links_.id_next = (i == points->size() - 1) ? TrajectoryID::make_nil() : (*points)[i+1].get()->getID();
 
-      ROS_DEBUG_STREAM("PreviousID[" << previous_id << "].links_.id_next = " << point_link.id);
-    }
-
-    // set the new current point link
-    point_link.id_previous = previous_id;
-
-    // the new one becomes the previous_id
-    previous_id = point_link.id;
-
-    // save the point_link structure to the map
-    (*cartesian_point_link_)[point_link.id].links_ = point_link;
+    cartesian_point_link_->emplace(id, std::move(info));
   }
 
   // after populating maps above (presumably from cartesian trajectory points), calculate (or query) for all joint
