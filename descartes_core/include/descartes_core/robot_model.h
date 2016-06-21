@@ -129,7 +129,12 @@ public:
    * @return                 [description]
    */
   virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
-                           double dt) const = 0;
+                           double dt) const
+  {
+    return isValidMove(from_joint_pose.data(), to_joint_pose.data(), dt);
+  }
+
+  virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
 protected:
   RobotModel() : check_collisions_(false)
