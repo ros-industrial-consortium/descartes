@@ -54,6 +54,7 @@ add_library(descartes_planner
             src/sparse_planner.cpp
             src/dense_planner.cpp
             src/plugin_init.cpp
+            src/ladder_graph_dijkstras.cpp
 )
 
 target_link_libraries(descartes_planner
@@ -64,7 +65,6 @@ target_link_libraries(descartes_planner
 #############
 ## Install ##
 #############
-
 install(
     TARGETS ${PROJECT_NAME} 
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
@@ -74,18 +74,15 @@ install(
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 
-
 #############
 ## Testing ##
 #############
-
-
 if(CATKIN_ENABLE_TESTING)
 
   set(UTEST_PLANNER_SRC_FILES 
       test/utest.cpp
       test/dense_planner.cpp
-      test/sparse_planner.cpp
+       test/sparse_planner.cpp
       test/utils/trajectory_maker.cpp)
   catkin_add_gtest(${PROJECT_NAME}_planner_utest ${UTEST_PLANNER_SRC_FILES})
   target_link_libraries(${PROJECT_NAME}_planner_utest descartes_planner)

@@ -53,6 +53,16 @@ bool CartesianRobot::initialize(const std::string &robot_description, const std:
   return true;
 }
 
+bool CartesianRobot::isValidMove(const double *s, const double *f, double dt) const
+{
+  for (size_t i = 0; i < getDOF(); ++i)
+  {
+    if (std::abs(s[i] - f[i]) / dt > joint_velocities_[i])
+      return false;
+  }
+  return true;
+}
+
 bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                            std::vector<double> &joint_pose) const
 {
@@ -149,15 +159,5 @@ bool CartesianRobot::isValid(const Eigen::Affine3d &pose) const
   return rtn;
 }
 
-bool CartesianRobot::isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
-                                 double dt) const
-{
-  for (size_t i = 0; i < from_joint_pose.size(); ++i)
-  {
-    if (std::abs(from_joint_pose[i] - to_joint_pose[i]) / dt > joint_velocities_[i])
-      return false;
-  }
-  return true;
-}
 
 }  // descartes_trajectory_test
