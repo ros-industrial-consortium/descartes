@@ -140,7 +140,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
 
   // after populating maps above (presumably from cartesian trajectory points), calculate (or query) for all joint
   // trajectories
-  std::vector<std::vector<JointTrajectoryPt>> poses;
+  std::vector<std::vector<InternalJointPt>> poses;
   if (!calculateJointSolutions(*points, poses))
   {
     ROS_ERROR_STREAM("unable to calculate joint trajectories for input points");
@@ -250,7 +250,7 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
          joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       // get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt new_pt(*joint_pose_iter, point->getTiming());
+      InternalJointPt new_pt(*joint_pose_iter, point->getTiming());
       // traj_solutions->push_back(new_pt->getID());
       (*cartesian_point_link_)[point->getID()].joints_.push_back(new_pt.getID());
 
@@ -402,7 +402,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
          joint_pose_iter != joint_poses.end(); joint_pose_iter++)
     {
       // get UUID from JointTrajPt (convert from std::vector<double>)
-      JointTrajectoryPt new_pt(*joint_pose_iter, point->getTiming());
+      InternalJointPt new_pt(*joint_pose_iter, point->getTiming());
       (*cartesian_point_link_)[modify_id].joints_.push_back(new_pt.getID());
 
       // insert new vertices into graph
@@ -706,7 +706,9 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
   // Starting from the destination point step through the predecessor map until the source point is reached.
   while (current != virtual_vertex)
   {
-    path.push_front(joint_solutions_map_[vertex_index_map[current]]);
+    const auto& pt = joint_solutions_map_[vertex_index_map[current]];
+    auto joint_pt = descartes_trajectory::JointTrajectoryPt(pt.nominal(), pt.getTiming());
+    path.push_front(joint_pt);
     current = predecessors[current];
   }
 
@@ -810,7 +812,7 @@ void PlanningGraph::printGraph()
 }
 
 bool PlanningGraph::calculateJointSolutions(const std::vector<TrajectoryPtPtr>& points,
-                                            std::vector<std::vector<JointTrajectoryPt>>& poses)
+                                            std::vector<std::vector<InternalJointPt>>& poses)
 {
   poses.resize(points.size());
 
@@ -835,15 +837,15 @@ bool PlanningGraph::calculateJointSolutions(const std::vector<TrajectoryPtPtr>& 
   return true;
 }
 
-bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointTrajectoryPt>>& poses,
+bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<InternalJointPt> >& poses,
                                             std::vector<JointEdge>& edges)
 {
   // We check that the size of input traj is at least 2 at the start of insertGraph()
   // iterate over each pair of points
   for (std::size_t i = 1; i < poses.size(); ++i)
   {
-    const std::vector<JointTrajectoryPt>& from = poses[i - 1];
-    const std::vector<JointTrajectoryPt>& to = poses[i];
+    const std::vector<InternalJointPt>& from = poses[i - 1];
+    const std::vector<InternalJointPt>& to = poses[i];
 
     if (!calculateEdgeWeights(from, to, edges))
     {
@@ -874,12 +876,12 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID>& st
        ++previous_joint_iter)
   {
     // Look up the start_joint once per iteration of this loop
-    const JointTrajectoryPt& start_joint = joint_solutions_map_[*previous_joint_iter];
+    const InternalJointPt& start_joint = joint_solutions_map_[*previous_joint_iter];
 
     // Loop over the ending points -> look at each combination of start/end points
     for (auto next_joint_iter = end_joints.begin(); next_joint_iter != end_joints.end(); ++next_joint_iter)
     {
-      const JointTrajectoryPt& end_joint = joint_solutions_map_[*next_joint_iter];
+      const InternalJointPt& end_joint = joint_solutions_map_[*next_joint_iter];
 
       EdgeWeightResult edge_result = edgeWeight(start_joint, end_joint);
 
@@ -904,8 +906,8 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<TrajectoryPt::ID>& st
   return has_valid_transition;
 }
 
-bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt>& start_joints,
-                                         const std::vector<JointTrajectoryPt>& end_joints,
+bool PlanningGraph::calculateEdgeWeights(const std::vector<InternalJointPt>& start_joints,
+                                         const std::vector<InternalJointPt>& end_joints,
                                          std::vector<JointEdge>& edge_results) const
 {
   if (start_joints.empty() || end_joints.empty())
@@ -942,7 +944,7 @@ bool PlanningGraph::calculateEdgeWeights(const std::vector<JointTrajectoryPt>& s
 }
 
 bool PlanningGraph::populateGraphVertices(const std::vector<TrajectoryPtPtr>& points,
-                                          std::vector<std::vector<JointTrajectoryPt>>& poses)
+                                          std::vector<std::vector<InternalJointPt> >& poses)
 {
   if (points.size() != poses.size())
   {
@@ -963,7 +965,7 @@ bool PlanningGraph::populateGraphVertices(const std::vector<TrajectoryPtPtr>& po
     std::vector<TrajectoryPt::ID> ids;
     ids.reserve(poses[i].size());
 
-    std::transform(poses[i].begin(), poses[i].end(), std::back_inserter(ids), [](const JointTrajectoryPt& pt)
+    std::transform(poses[i].begin(), poses[i].end(), std::back_inserter(ids), [](const InternalJointPt& pt)
                    {
                      return pt.getID();
                    });
@@ -1014,8 +1016,8 @@ bool PlanningGraph::populateGraphEdges(const std::vector<JointEdge>& edges)
   return true;
 }
 
-PlanningGraph::EdgeWeightResult PlanningGraph::edgeWeight(const JointTrajectoryPt& start,
-                                                          const JointTrajectoryPt& end) const
+PlanningGraph::EdgeWeightResult PlanningGraph::edgeWeight(const InternalJointPt& start,
+                                                          const InternalJointPt& end) const
 {
   EdgeWeightResult result;
   result.first = false;

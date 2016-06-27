@@ -54,6 +54,32 @@ struct CartesianPointRelationship
   descartes_core::TrajectoryPt::ID id_next;
 };
 
+
+// A "joint-trajectory-point"-lite class. Behaves as if it was a joint point but does
+// not contain the structures for things not used by the planning such as discretization
+// and coordinate frames
+class InternalJointPt
+{
+public:
+  InternalJointPt() {} // map requires a default constructor
+  InternalJointPt(const std::vector<double>& joints,
+                  const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint())
+    : joints_(joints)
+    , timing_(timing)
+    , id_ (descartes_core::TrajectoryID::make_id())
+  {}
+
+  const std::vector<double>& nominal() const { return joints_; }
+  const descartes_core::TimingConstraint& getTiming() const { return timing_; }
+  const descartes_core::TrajectoryID getID() const { return id_; }
+
+private:
+  std::vector<double> joints_;
+  descartes_core::TimingConstraint timing_;
+  descartes_core::TrajectoryID id_;
+};
+
+
 typedef boost::adjacency_list<boost::listS,          /*edge container*/
                               boost::vecS,           /*vertex_container*/
                               boost::bidirectionalS, /*allows in_edge and out_edge*/
@@ -76,7 +102,7 @@ struct CartesianPointInformation
 };
 
 typedef std::map<descartes_core::TrajectoryPt::ID, CartesianPointInformation> CartesianMap;
-typedef std::map<descartes_core::TrajectoryPt::ID, descartes_trajectory::JointTrajectoryPt> JointMap;
+typedef std::map<descartes_core::TrajectoryPt::ID, InternalJointPt> JointMap;
 typedef std::map<descartes_core::TrajectoryPt::ID, JointGraph::vertex_descriptor> VertexMap;
 
 class PlanningGraph
@@ -162,8 +188,8 @@ protected:
   typedef std::pair<bool, double> EdgeWeightResult;
 
   /** @brief function for computing edge weight based on specified cost function */
-  EdgeWeightResult edgeWeight(const descartes_trajectory::JointTrajectoryPt &start,
-                              const descartes_trajectory::JointTrajectoryPt &end) const;
+  EdgeWeightResult edgeWeight(const InternalJointPt &start,
+                              const InternalJointPt &end) const;
 
   // NOTE: both Cartesian Points and Joint Points/solutions extend a base descartes_core::TrajectoryPt type
   //       and include an accessor to both formats
@@ -178,23 +204,23 @@ protected:
 
   /** @brief (Re)create the list of joint solutions from the given descartes_core::TrajectoryPt list */
   bool calculateJointSolutions(const std::vector<descartes_core::TrajectoryPtPtr> &points,
-                               std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses);
+                               std::vector<std::vector<InternalJointPt>> &poses);
 
   /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */
   bool populateGraphVertices(const std::vector<descartes_core::TrajectoryPtPtr> &points,
-                             std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses);
+                             std::vector<std::vector<InternalJointPt>> &poses);
 
   /** @brief calculate weights fro each start point to each end point */
   bool calculateEdgeWeights(const std::vector<descartes_core::TrajectoryPt::ID> &start_joints,
                             const std::vector<descartes_core::TrajectoryPt::ID> &end_joints,
                             std::vector<JointEdge> &edge_results);
 
-  bool calculateEdgeWeights(const std::vector<descartes_trajectory::JointTrajectoryPt> &start_joints,
-                            const std::vector<descartes_trajectory::JointTrajectoryPt> &end_joints,
+  bool calculateEdgeWeights(const std::vector<InternalJointPt> &start_joints,
+                            const std::vector<InternalJointPt> &end_joints,
                             std::vector<JointEdge> &edge_results) const;
 
   /** @brief (Re)populate the edge list for the graph from the list of joint solutions */
-  bool calculateAllEdgeWeights(const std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses,
+  bool calculateAllEdgeWeights(const std::vector<std::vector<InternalJointPt>> &poses,
                                std::vector<JointEdge> &edges);
 
   /** @brief (Re)create the actual graph structure from the list of transition costs (edges) */
