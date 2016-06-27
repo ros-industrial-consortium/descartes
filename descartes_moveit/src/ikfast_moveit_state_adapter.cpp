@@ -165,4 +165,5 @@ bool descartes_moveit::IkFastMoveitStateAdapter::computeIKFastTransforms()
 
   logInform("IkFastMoveitStateAdapter: initialized with IKFast tool frame '%s' and base frame '%s'.",
             ikfast_tool_frame.c_str(), ikfast_base_frame.c_str());
+  return true;
 }
