@@ -26,6 +26,10 @@ public:
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
+
+  /** \brief Populate a Cartesian trajectory graph, but do not solve. For use by external solvers */
+  virtual bool insertGraph(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
+
   virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const;
   virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
   virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);

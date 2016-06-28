@@ -199,7 +199,6 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
     return false;
   }
 
-  double cost;
   path_.clear();
   error_code_ = descartes_core::PlannerError::EMPTY_PATH;
 
@@ -213,6 +212,22 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
   }
 
   return descartes_core::PlannerError::OK == error_code_;
+}
+
+bool DensePlanner::insertGraph(const std::vector<descartes_core::TrajectoryPtPtr>& traj)
+{
+  if(error_code_ == descartes_core::PlannerError::UNINITIALIZED)
+  {
+    ROS_ERROR_STREAM("Planner has not been initialized");
+    return false;
+  }
+
+  if(!planning_graph_->insertGraph(&traj))
+  {
+    return false;
+  }
+
+  return true;
 }
 
 bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
