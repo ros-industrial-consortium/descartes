@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Boost REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -36,7 +36,7 @@ catkin_package(
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
-                    ${Eigen_INCLUDE_DIRS}
+                    ${EIGEN3_INCLUDE_DIRS}
 )
 
 add_library(descartes_trajectory
@@ -57,7 +57,7 @@ target_link_libraries(descartes_trajectory
 #############
 
 install(
-    TARGETS ${PROJECT_NAME} 
+    TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
 install(
