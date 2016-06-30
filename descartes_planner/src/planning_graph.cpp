@@ -354,15 +354,6 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
       to_remove_edges.push_back(e);
     }
 
-    // remove in edges
-    std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
-    for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
-    {
-      JointGraph::edge_descriptor e = *in_edge;
-      ROS_DEBUG_STREAM("REMOVE INEDGE: " << dg_[e].joint_start << " -> " << dg_[e].joint_end);
-      to_remove_edges.push_back(e);
-    }
-
     to_remove_vertices.push_back(jv);
     joint_solutions_map_.erase(*start_joint_iter);
     //    printMaps();
@@ -494,14 +485,6 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
       to_remove_edges.push_back(e);
     }
 
-    // remove in edges
-    std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
-    for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
-    {
-      JointGraph::edge_descriptor e = *in_edge;
-      ROS_DEBUG_STREAM("REMOVE INEDGE: " << dg_[e].joint_start << " -> " << dg_[e].joint_end);
-      to_remove_edges.push_back(e);
-    }
     to_remove_vertices.push_back(jv);
     // remove the graph vertex and joint point
 
@@ -772,24 +755,6 @@ void PlanningGraph::printGraph()
       ss << "[" << dg_[e].joint_end << "] , ";
     }
     ss << "}";
-    ROS_DEBUG_STREAM(ss.str());
-  }
-
-  ROS_DEBUG_STREAM("Graph InEdges:");
-  for (VertexIterator vert_iter = vi.first; vert_iter != vi.second; ++vert_iter)
-  {
-    JointGraph::vertex_descriptor jv = *vert_iter;
-
-    std::pair<InEdgeIterator, InEdgeIterator> in_ei = in_edges(jv, dg_);
-    ss.str("");
-    ss << "{";
-    for (InEdgeIterator in_edge = in_ei.first; in_edge != in_ei.second; ++in_edge)
-    {
-      JointGraph::edge_descriptor e = *in_edge;
-      ss << source(e, dg_) << "[" << dg_[e].joint_start << "], ";
-    }
-    ss << "} -> ";
-    ss << "Vertex (" << jv << "): ";  //<<  dg_[jv].id;
     ROS_DEBUG_STREAM(ss.str());
   }
 
