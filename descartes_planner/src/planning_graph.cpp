@@ -55,7 +55,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
   }
 
   // insert into graph as vertices
-  graph_.allocate(points.size());
+  graph_.resize(points.size());
   for (std::size_t i = 0; i < points.size(); ++i)
   {
     graph_.assignRung(i, points[i]->getID(), points[i]->getTiming(), all_joint_sols[i]);
