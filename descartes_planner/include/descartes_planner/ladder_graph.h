@@ -16,12 +16,14 @@ struct Rung
 
 struct __attribute__ ((__packed__)) Edge
 {
-  double cost;
+  double cost; // transition cost from vertex who owns this object to 'idx' in next rung
   unsigned idx; // from THIS rung to 'idx' into the NEXT rung
 };
 
 /**
- * @brief The LadderGraph class
+ * @brief LadderGraph is an adjacency list based, directed graph structure with vertices
+ *        arranged into "rungs" which have connections only to vertices in the adjacent
+ *        rungs. Assumes a fixed DOF.
  */
 class LadderGraph
 {
@@ -29,13 +31,21 @@ public:
   using size_type = std::size_t;
   using EdgeList = std::vector<Edge>;
 
+  /**
+   * @brief LadderGraph
+   * @param dof The number of joints that constitute a single 'DOF'
+   */
   explicit LadderGraph(size_type dof) noexcept
     : dof_(dof)
   {
     assert(dof != 0);
   }
 
-  void allocate(size_type n_rungs)
+  /**
+   * @brief resize Resizes the internal ladder to have 'n_rung' rungs
+   * @param n_rungs Number of individual rungs
+   */
+  void resize(size_type n_rungs)
   {
     rungs_.resize(n_rungs);
     edges_.resize(n_rungs);
@@ -67,6 +77,9 @@ public:
     return getRung(index).data.size() / dof_;
   }
 
+  /**
+   * @brief numVertices Counts the total number of vertices in the graph
+   */
   size_type numVertices() const noexcept
   {
     size_type count = 0; // Add the size of each rung d
@@ -74,36 +87,51 @@ public:
     return count;
   }
 
+  /**
+   * @brief indexOf returns a pair describing whether the given ID is in the graph and if so, what
+   *        index it has.
+   * @param id The ID to
+   * @return std::pair(index, was_found)
+   */
   std::pair<size_type, bool> indexOf(descartes_core::TrajectoryID id) const noexcept
   {
     auto it = std::find_if(rungs_.cbegin(), rungs_.cend(), [id] (const Rung& r) {
       return id == r.id;
     });
     if (it == rungs_.cend())
-    {
       return {0u, false};
-    }
     else
-    {
       return {static_cast<size_type>(std::distance(rungs_.cbegin(), it)), true};
-    }
   }
 
+  /**
+   * @brief isLast tests to see if a given index is the last one in the graph
+   */
   bool isLast(size_type index) const noexcept
   {
     return index + 1 == size();
   }
 
+  /**
+   * @brief isFirst tests to see if given index is the first in the graph
+   */
   bool isFirst(size_type index) const noexcept
   {
     return index == 0;
   }
 
+  /**
+   * @brief vertex returns a pointer to the data that constitutes the Nth vertex in the Jth row
+   *        where N = index & J = rung
+   */
   const double* vertex(size_type rung, size_type index) const
   {
     return getRung(rung).data.data() + (dof_ * index);
   }
 
+  /**
+   * @brief The number of rungs
+   */
   size_type size() const noexcept
   {
     return rungs_.size();
@@ -114,18 +142,19 @@ public:
     return dof_;
   }
 
-  // Mutate edges
-  void assignEdgeList(size_type rung, size_type index, EdgeList&& out_edges) // noexcept?
-  {
-    getEdges(rung)[index] = std::move(out_edges);
-  }
-
+  /**
+   * @brief assign Consumes the given edge list and assigns it to the rung-index given by 'rung'
+   */
   void assignEdges(size_type rung, std::vector<EdgeList>&& edges) // noexcept?
   {
     getEdges(rung) = std::move(edges);
   }
 
-  // Mutate Vertices
+  /**
+   * @brief assignRung Special helper function to assign a solution set associated with a Descartes point &
+   *        it's meta-info. Also resizes the associated edge list to the size of 'sols'.
+   * @param sols All of the joint solutions for this point.
+   */
   void assignRung(size_type index, descartes_core::TrajectoryID id, descartes_core::TimingConstraint time,
                   const std::vector<std::vector<double>>& sols)
   {
@@ -167,12 +196,19 @@ public:
     edges_[index].clear();
   }
 
+  /**
+   * @brief insertRung Adds a new rung at the 'index'-th position. E.g., insertRung(0) will add a new
+   *        rung to the beginning of the graph and the previous 0th index is now at 1.
+   */
   void insertRung(size_type index)
   {
     rungs_.insert(std::next(rungs_.begin(), index), Rung() );
     edges_.insert(std::next(edges_.begin(), index), std::vector<EdgeList>() );
   }
 
+  /**
+   * @brief Clears all existing rungs & associated data
+   */
   void clear()
   {
     rungs_.clear();
