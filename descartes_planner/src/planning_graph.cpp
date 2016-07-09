@@ -25,6 +25,7 @@
 
 #include "descartes_planner/planning_graph.h"
 #include "descartes_planner/ladder_graph_dijkstras.h"
+#include "descartes_planner/ladder_graph_dag_search.h"
 #include <ros/console.h>
 
 using namespace descartes_core;
@@ -156,9 +157,9 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
 bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& path)
 {
-  DijkstrasSearch search (graph_);
+  DAGSearch search (graph_);
   cost = search.run();
-  if (cost == std::numeric_limits<double>::infinity()) return false;
+  if (cost == std::numeric_limits<double>::max()) return false;
 
   auto path_idxs = search.shortestPath();
   const auto dof = graph_.dof();
