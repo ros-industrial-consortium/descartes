@@ -69,6 +69,7 @@ public:
 
   const std::vector<EdgeList>& getEdges(size_type index) const noexcept
   {
+    assert(index < rungs_.size());
     return edges_[index];
   }
 
