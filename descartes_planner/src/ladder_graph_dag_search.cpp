@@ -22,13 +22,13 @@ double DAGSearch::run()
   // Cost to the first rung should be set to zero
   std::fill(solution_.front().distance.begin(), solution_.front().distance.end(), 0.0);
   // Other rows initialize to zero
-  for (size_t i = 1; i < solution_.size(); ++i)
+  for (size_type i = 1; i < solution_.size(); ++i)
   {
     std::fill(solution_[i].distance.begin(), solution_[i].distance.end(), std::numeric_limits<double>::max());
   }
 
   // Now we iterate over the graph in 'topological' order
-  for (size_t rung = 0; rung < solution_.size() - 1; ++rung)
+  for (size_type rung = 0; rung < solution_.size() - 1; ++rung)
   {
     const auto n_vertices = graph_.rungSize(rung);
     const auto next_rung = rung + 1;
