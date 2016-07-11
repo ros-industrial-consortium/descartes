@@ -54,7 +54,6 @@ add_library(descartes_planner
             src/sparse_planner.cpp
             src/dense_planner.cpp
             src/plugin_init.cpp
-            src/ladder_graph_dijkstras.cpp
             src/ladder_graph_dag_search.cpp
 )
 
