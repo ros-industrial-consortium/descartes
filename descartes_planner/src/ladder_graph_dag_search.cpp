@@ -24,7 +24,7 @@ double DAGSearch::run()
   // Other rows initialize to zero
   for (size_t i = 1; i < solution_.size(); ++i)
   {
-    std::fill(solution_[i].distance.begin(), solution_[i].distance.begin(), std::numeric_limits<double>::max());
+    std::fill(solution_[i].distance.begin(), solution_[i].distance.end(), std::numeric_limits<double>::max());
   }
 
   // Now we iterate over the graph in 'topological' order
