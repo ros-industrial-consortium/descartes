@@ -25,17 +25,20 @@
 namespace descartes_planner
 {
 
-struct Rung
-{
-  descartes_core::TrajectoryID id; // corresponds to user's input ID
-  descartes_core::TimingConstraint timing; // user input timing
-  std::vector<double> data; // joint values stored in one contiguous array
-};
-
 struct __attribute__ ((__packed__)) Edge
 {
   double cost; // transition cost from vertex who owns this object to 'idx' in next rung
   unsigned idx; // from THIS rung to 'idx' into the NEXT rung
+};
+
+struct Rung
+{
+  using EdgeList = std::vector<Edge>;
+
+  descartes_core::TrajectoryID id; // corresponds to user's input ID
+  descartes_core::TimingConstraint timing; // user input timing
+  std::vector<double> data; // joint values stored in one contiguous array
+  std::vector<EdgeList> edges;
 };
 
 /**
@@ -47,7 +50,7 @@ class LadderGraph
 {
 public:
   using size_type = std::size_t;
-  using EdgeList = std::vector<Edge>;
+  using EdgeList = Rung::EdgeList;
 
   /**
    * @brief LadderGraph
@@ -66,7 +69,6 @@ public:
   void resize(size_type n_rungs)
   {
     rungs_.resize(n_rungs);
-    edges_.resize(n_rungs);
   }
 
   Rung& getRung(size_type index) noexcept
@@ -88,7 +90,7 @@ public:
   const std::vector<EdgeList>& getEdges(size_type index) const noexcept
   {
     assert(index < rungs_.size());
-    return edges_[index];
+    return rungs_[index].edges;
   }
 
   size_type rungSize(size_type index) const noexcept
@@ -189,20 +191,9 @@ public:
     getEdges(index).resize(r.data.size());
   }
 
-  void removeVertices(size_type index)
-  {
-    rungs_.erase(std::next(rungs_.begin(), index));
-  }
-
-  void removeEdges(size_type index)
-  {
-    edges_.erase(std::next(edges_.begin(), index));
-  }
-
   void removeRung(size_type index)
   {
-    removeVertices(index);
-    removeEdges(index);
+    rungs_.erase(std::next(rungs_.begin(), index));
   }
 
   void clearVertices(size_type index)
@@ -212,7 +203,7 @@ public:
 
   void clearEdges(size_type index)
   {
-    edges_[index].clear();
+    rungs_[index].edges.clear();
   }
 
   /**
@@ -222,7 +213,6 @@ public:
   void insertRung(size_type index)
   {
     rungs_.insert(std::next(rungs_.begin(), index), Rung() );
-    edges_.insert(std::next(edges_.begin(), index), std::vector<EdgeList>() );
   }
 
   /**
@@ -231,13 +221,11 @@ public:
   void clear()
   {
     rungs_.clear();
-    edges_.clear();
   }
 
 private:
   const size_type dof_;
   std::vector<Rung> rungs_;
-  std::vector<std::vector<EdgeList>> edges_;
 };
 } // descartes_planner
 #endif
