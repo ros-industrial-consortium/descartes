@@ -24,7 +24,6 @@
  */
 
 #include "descartes_planner/planning_graph.h"
-#include "descartes_planner/ladder_graph_dijkstras.h"
 #include "descartes_planner/ladder_graph_dag_search.h"
 #include <ros/console.h>
 

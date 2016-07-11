@@ -6,54 +6,44 @@
 namespace descartes_planner
 {
 
-
 // Directed Acyclic graph search
 class DAGSearch
 {
 public:
-  struct VD // Vertex Descriptor
-  {
-    unsigned rung;
-    unsigned index;
-  };
+  using predecessor_t = unsigned;
+  using size_type = std::size_t;
+
   explicit DAGSearch(const LadderGraph& graph);
 
   double run();
 
-  std::vector<unsigned> shortestPath() const;
+  std::vector<predecessor_t> shortestPath() const;
 
 private:
   const LadderGraph& graph_;
 
-  inline size_t index(VD a) const noexcept
-  {
-    return solution_[a.rung].n_start + a.index;
-  }
-
-  inline double& distance(VD v) noexcept
-  {
-    return solution_[v.rung].distance[v.index];
-  }
-
-  inline VD& predecessor(VD v) noexcept
-  {
-    return solution_[v.rung].predecessor[v.index];
-  }
-
-  inline const VD& predecessor(VD v) const noexcept
-  {
-    return solution_[v.rung].predecessor[v.index];
-  }
-
   struct SolutionRung
   {
-    size_t n_start;
     std::vector<double> distance;
-    std::vector<VD> predecessor;
+    std::vector<predecessor_t> predecessor;
   };
 
+  inline double& distance(size_type rung, size_type index) noexcept
+  {
+    return solution_[rung].distance[index];
+  }
+
+  inline predecessor_t& predecessor(size_type rung, size_type index) noexcept
+  {
+    return solution_[rung].predecessor[index];
+  }
+
+  inline const predecessor_t& predecessor(size_type rung, size_type index) const noexcept
+  {
+    return solution_[rung].predecessor[index];
+  }
+
   std::vector<SolutionRung> solution_;
-  std::size_t N;
 };
 } // descartes_planner
 #endif
