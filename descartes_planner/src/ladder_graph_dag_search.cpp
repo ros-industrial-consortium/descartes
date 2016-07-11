@@ -9,18 +9,12 @@ DAGSearch::DAGSearch(const LadderGraph &graph)
   // On creating an object, let's allocate everything we need
   solution_.resize(graph.size());
 
-  size_t n = 0; // rolling count
-
   for (size_t i = 0; i < graph.size(); ++i)
   {
-    const auto n_vertices = graph.getRung(i).data.size() / graph.dof();
-    solution_[i].n_start = n;
+    const auto n_vertices = graph.rungSize(i);
     solution_[i].distance.resize(n_vertices);
     solution_[i].predecessor.resize(n_vertices);
-    n += n_vertices;
   }
-
-  N = n;
 }
 
 double DAGSearch::run()
@@ -37,21 +31,20 @@ double DAGSearch::run()
   for (size_t rung = 0; rung < solution_.size() - 1; ++rung)
   {
     const auto n_vertices = graph_.rungSize(rung);
+    const auto next_rung = rung + 1;
     // For each vertex in the out edge list
     for (size_t index = 0; index < n_vertices; ++index)
     {
-      const auto u = VD{rung, index};
-      const auto u_cost = distance(u);
+      const auto u_cost = distance(rung, index);
       const auto& edges = graph_.getEdges(rung)[index];
       // for each out edge
       for (const auto& edge : edges)
       {
-        auto v = VD{rung + 1, edge.idx};
         auto dv = u_cost + edge.cost; // new cost
-        if (dv < distance(v))
+        if (dv < distance(next_rung, edge.idx))
         {
-          distance(v) = dv;
-          predecessor(v) = u;
+          distance(next_rung, edge.idx) = dv;
+          predecessor(next_rung, edge.idx) = index; // the predecessor's rung is implied to be the current rung
         }
       }
     } // vertex for loop
@@ -60,21 +53,24 @@ double DAGSearch::run()
   return *std::min_element(solution_.back().distance.begin(), solution_.back().distance.end());
 }
 
-std::vector<unsigned> DAGSearch::shortestPath() const
+std::vector<DAGSearch::predecessor_t> DAGSearch::shortestPath() const
 {
   auto min_it = std::min_element(solution_.back().distance.begin(), solution_.back().distance.end());
   auto min_idx = std::distance(solution_.back().distance.begin(), min_it);
   assert(min_idx >= 0);
 
-  std::vector<unsigned> path (solution_.size());
+  std::vector<predecessor_t> path (solution_.size());
 
-  VD vd {static_cast<unsigned>(path.size() - 1), static_cast<unsigned>(min_idx)};
+  size_type current_rung = path.size() - 1;
+  size_type current_index = min_idx;
+
   for (unsigned i = 0; i < path.size(); ++i)
   {
     auto count = path.size() - 1 - i;
-    assert(vd.rung == count);
-    path[count] = vd.index;
-    vd = predecessor(vd);
+    assert(current_rung == count);
+    path[count] = current_index;
+    current_index = predecessor(current_rung, current_index);
+    current_rung -= 1;
   }
 
   return path;
