@@ -13,6 +13,14 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 
+# For parallelization
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message(STATUS "OPENMP FOUND")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
+  set(OpenMP_LIBS gomp)
+endif()
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -30,6 +38,7 @@ catkin_package(
   DEPENDS
     Boost
     Eigen
+    OpenMP
 )
 
 ###########
@@ -49,8 +58,13 @@ add_library(descartes_planner
             src/plugin_init.cpp
 )
 
+target_compile_options(descartes_planner PRIVATE ${OpenMP_FLAGS}) 
+
+add_dependencies(descartes_planner ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(descartes_planner
                       ${catkin_LIBRARIES}
+                      ${OpenMP_LIBS}
 )
 
 
