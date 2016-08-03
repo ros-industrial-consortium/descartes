@@ -814,25 +814,38 @@ bool PlanningGraph::calculateJointSolutions(const std::vector<TrajectoryPtPtr>& 
 {
   poses.resize(points.size());
 
-  for (std::size_t i = 0; i < points.size(); ++i)
+  bool success = true;
+  #pragma omp parallel shared(success)
   {
-    std::vector<std::vector<double>> joint_poses;
-    points[i]->getJointPoses(*robot_model_, joint_poses);
+    //make private copy of robot model for each thread
+    descartes_core::RobotModelPtr model_copy = robot_model_->clone();
 
-    if (joint_poses.empty())
+    #pragma omp for
+    for (std::size_t i = 0; i < points.size(); ++i)
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
-      return false;
-    }
+      #pragma omp flush (success)
+      if (success)
+      {
+        std::vector<std::vector<double>> joint_poses;
+        points[i]->getJointPoses(*model_copy, joint_poses);
 
-    poses[i].reserve(joint_poses.size());
-    for (auto& sol : joint_poses)
-    {
-      poses[i].emplace_back(std::move(sol), points[i]->getTiming());
+        if (joint_poses.empty())
+        {
+          ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
+          success = false;
+          #pragma omp flush (success)
+        }
+
+        poses[i].reserve(joint_poses.size());
+        for (auto& sol : joint_poses)
+        {
+          poses[i].emplace_back(std::move(sol), points[i]->getTiming());
+        }
+      }
     }
   }
 
-  return true;
+  return success;
 }
 
 bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointTrajectoryPt>>& poses,
