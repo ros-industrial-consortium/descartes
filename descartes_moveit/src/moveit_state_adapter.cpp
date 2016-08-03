@@ -134,6 +134,20 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
   return true;
 }
 
+descartes_core::RobotModelPtr MoveitStateAdapter::clone() const
+{
+  descartes_core::RobotModelPtr model_clone(new MoveitStateAdapter());
+  if (model_clone->initialize(robot_model_ptr_, group_name_, world_frame_, tool_frame_))
+  {
+    model_clone->setCheckCollisions(check_collisions_);
+    return model_clone;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 bool MoveitStateAdapter::getIK(const Eigen::Affine3d& pose, const std::vector<double>& seed_state,
                                std::vector<double>& joint_pose) const
 {

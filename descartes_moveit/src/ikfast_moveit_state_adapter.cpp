@@ -64,6 +64,33 @@ bool descartes_moveit::IkFastMoveitStateAdapter::initialize(const std::string& r
   return computeIKFastTransforms();
 }
 
+bool descartes_moveit::IkFastMoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
+                                                            const std::string& group_name,
+                                                            const std::string& world_frame,
+                                                            const std::string& tcp_frame)
+{
+  if (!MoveitStateAdapter::initialize(robot_model, group_name, world_frame, tcp_frame))
+  {
+    return false;
+  }
+
+  return computeIKFastTransforms();
+}
+
+descartes_core::RobotModelPtr descartes_moveit::IkFastMoveitStateAdapter::clone() const
+{
+  descartes_core::RobotModelPtr model_clone(new IkFastMoveitStateAdapter);
+  if (model_clone->initialize(robot_model_ptr_, group_name_, world_frame_, tool_frame_))
+  {
+    model_clone->setCheckCollisions(check_collisions_);
+    return model_clone;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
