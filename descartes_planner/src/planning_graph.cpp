@@ -853,19 +853,35 @@ bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointT
 {
   // We check that the size of input traj is at least 2 at the start of insertGraph()
   // iterate over each pair of points
+
+  std::vector< std::vector<JointEdge> > thread_edges(omp_get_max_threads(), std::vector<JointEdge>());
+  bool success = true;
+  #pragma omp parallel for
   for (std::size_t i = 1; i < poses.size(); ++i)
   {
-    const std::vector<JointTrajectoryPt>& from = poses[i - 1];
-    const std::vector<JointTrajectoryPt>& to = poses[i];
-
-    if (!calculateEdgeWeights(from, to, edges))
+    #pragma omp flush (success)
+    if (success)
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i - 1)
-                                    << " and " << i);
-      return false;
+      const std::vector<JointTrajectoryPt>& from = poses[i - 1];
+      const std::vector<JointTrajectoryPt>& to = poses[i];
+
+      if (!calculateEdgeWeights(from, to, thread_edges[omp_get_thread_num()]))
+      {
+        ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i - 1)
+                                      << " and " << i);
+        success = false;
+        #pragma omp flush (success)
+      }
     }
   }
+  if (!success)
+    return false;
 
+  //flatten thread_edges into edges and return
+  for (auto thread_edges_iter = thread_edges.begin(); thread_edges_iter != thread_edges.end(); ++thread_edges_iter)
+  {
+    std::copy(thread_edges_iter->begin(), thread_edges_iter->end(), std::back_inserter(edges));
+  }
   return !edges.empty();
 }
 
