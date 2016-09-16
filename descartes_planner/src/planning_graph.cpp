@@ -817,17 +817,14 @@ bool PlanningGraph::calculateJointSolutions(const std::vector<TrajectoryPtPtr>& 
   bool success = true;
   #pragma omp parallel shared(success)
   {
-    //make private copy of robot model for each thread
-    descartes_core::RobotModelPtr model_copy = robot_model_->clone();
-
     #pragma omp for
     for (std::size_t i = 0; i < points.size(); ++i)
     {
       #pragma omp flush (success)
-      if (success)
+      if (success) // stop all threads after first observed failure
       {
         std::vector<std::vector<double>> joint_poses;
-        points[i]->getJointPoses(*model_copy, joint_poses);
+        points[i]->getJointPoses(*robot_model_, joint_poses);
 
         if (joint_poses.empty())
         {
