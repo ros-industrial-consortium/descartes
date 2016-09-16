@@ -35,6 +35,8 @@ public:
   CartesianRobot(double pos_range, double orient_range,
                  const std::vector<double> &joint_velocities = std::vector<double>(6, 1.0));
 
+  virtual descartes_core::RobotModelPtr clone() const;
+
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
 
@@ -49,6 +51,9 @@ public:
   virtual int getDOF() const;
 
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
+                          const std::string &world_frame, const std::string &tcp_frame);
+
+  virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
                           const std::string &world_frame, const std::string &tcp_frame);
 
   virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
