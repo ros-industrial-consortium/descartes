@@ -814,25 +814,35 @@ bool PlanningGraph::calculateJointSolutions(const std::vector<TrajectoryPtPtr>& 
 {
   poses.resize(points.size());
 
-  for (std::size_t i = 0; i < points.size(); ++i)
+  bool success = true;
+  #pragma omp parallel shared(success)
   {
-    std::vector<std::vector<double>> joint_poses;
-    points[i]->getJointPoses(*robot_model_, joint_poses);
-
-    if (joint_poses.empty())
+    #pragma omp for
+    for (std::size_t i = 0; i < points.size(); ++i)
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
-      return false;
-    }
+      #pragma omp flush (success)
+      if (success) // stop all threads after first observed failure
+      {
+        std::vector<std::vector<double>> joint_poses;
+        points[i]->getJointPoses(*robot_model_, joint_poses);
 
-    poses[i].reserve(joint_poses.size());
-    for (auto& sol : joint_poses)
-    {
-      poses[i].emplace_back(std::move(sol), points[i]->getTiming());
+        if (joint_poses.empty())
+        {
+          ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
+          success = false;
+          #pragma omp flush (success)
+        }
+
+        poses[i].reserve(joint_poses.size());
+        for (auto& sol : joint_poses)
+        {
+          poses[i].emplace_back(std::move(sol), points[i]->getTiming());
+        }
+      }
     }
   }
 
-  return true;
+  return success;
 }
 
 bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointTrajectoryPt>>& poses,
@@ -840,19 +850,35 @@ bool PlanningGraph::calculateAllEdgeWeights(const std::vector<std::vector<JointT
 {
   // We check that the size of input traj is at least 2 at the start of insertGraph()
   // iterate over each pair of points
+
+  std::vector< std::vector<JointEdge> > thread_edges(omp_get_max_threads(), std::vector<JointEdge>());
+  bool success = true;
+  #pragma omp parallel for
   for (std::size_t i = 1; i < poses.size(); ++i)
   {
-    const std::vector<JointTrajectoryPt>& from = poses[i - 1];
-    const std::vector<JointTrajectoryPt>& to = poses[i];
-
-    if (!calculateEdgeWeights(from, to, edges))
+    #pragma omp flush (success)
+    if (success)
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i - 1)
-                                    << " and " << i);
-      return false;
+      const std::vector<JointTrajectoryPt>& from = poses[i - 1];
+      const std::vector<JointTrajectoryPt>& to = poses[i];
+
+      if (!calculateEdgeWeights(from, to, thread_edges[omp_get_thread_num()]))
+      {
+        ROS_ERROR_STREAM(__FUNCTION__ << ": unable to calculate any valid transitions between inputs " << (i - 1)
+                                      << " and " << i);
+        success = false;
+        #pragma omp flush (success)
+      }
     }
   }
+  if (!success)
+    return false;
 
+  //flatten thread_edges into edges and return
+  for (auto thread_edges_iter = thread_edges.begin(); thread_edges_iter != thread_edges.end(); ++thread_edges_iter)
+  {
+    std::copy(thread_edges_iter->begin(), thread_edges_iter->end(), std::back_inserter(edges));
+  }
   return !edges.empty();
 }
 

@@ -33,6 +33,11 @@ public:
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
                           const std::string& world_frame, const std::string& tcp_frame);
 
+  virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string& group_name,
+                          const std::string& world_frame, const std::string& tcp_frame);
+
+  virtual descartes_core::RobotModelPtr clone() const;
+
   virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::vector<double> >& joint_poses) const;
 
   virtual bool getIK(const Eigen::Affine3d& pose, const std::vector<double>& seed_state,
