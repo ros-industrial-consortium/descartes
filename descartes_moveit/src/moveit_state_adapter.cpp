@@ -109,7 +109,7 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
     return false;
   }
 
-  if (!getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
+  if (!::getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
   {
     logWarn("%s: Could not determine velocity limits of RobotModel from MoveIt", __FUNCTION__);
   }
@@ -316,6 +316,11 @@ bool MoveitStateAdapter::isValidMove(const double* from_joint_pose,
   }
 
   return true;
+}
+
+std::vector<double> MoveitStateAdapter::getJointVelocityLimits() const
+{
+  return velocity_limits_;
 }
 
 void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
