@@ -61,6 +61,8 @@ public:
 
   virtual bool isValidMove(const double* from_joint_pose, const double* to_joint_pose,
                            double dt) const;
+
+  virtual std::vector<double> getJointVelocityLimits() const override;
   /**
    * @brief Set the initial states used for iterative inverse kineamtics
    * @param seeds Vector of vector of doubles representing joint positions.
