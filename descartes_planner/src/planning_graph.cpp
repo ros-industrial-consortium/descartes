@@ -200,6 +200,19 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
   return true;
 }
 
+static inline std::vector<double> calculateMaxDeltaTheta(const std::vector<double>& joint_vel_limits,
+                                                         const descartes_core::TimingConstraint& tm)
+{
+  std::vector<double> v;
+  v.reserve(joint_vel_limits.size());
+
+  for (const auto limit : joint_vel_limits)
+  {
+    v.push_back( tm.upper * limit );
+  }
+  return v;
+}
+
 std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std::vector<double>& start_joints,
                                          const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm, bool &found_edges) const
 {
@@ -212,6 +225,10 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
   std::vector<LadderGraph::EdgeList> edges (n_start_points); // ret value
   LadderGraph::EdgeList edge_scratch (n_end_points); // pre-allocated space to work in
 
+  // For the given time step, calculate the maximum step change allowed in a given joint
+  const auto max_dthetas = calculateMaxDeltaTheta(robot_model_->getJointVelocityLimits(), tm);
+  std::vector<double> delta_buffer (max_dthetas.size()); // a buffer space for accumulating the sum of the differences
+
   for (size_t i = 0; i < n_start_points; i++) // from rung
   {
     auto start_index = i * dof;
@@ -220,27 +237,56 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
     for (size_t j = 0; j < n_end_points; j++) // to rung
     {
       auto end_index = j * dof;
-      if (tm.isSpecified() && !robot_model_->isValidMove(start_joints.data() + start_index,
-                                                         end_joints.data() + end_index, tm.upper))
-      {
-        continue;
-      }
 
-      double cost;
-      if (custom_cost_function_)
+      bool is_valid_edge = true;
+
+      // If we have a specified time, we need to check the limits of joint motion
+      if (tm.isSpecified())
       {
-        cost = custom_cost_function_(&start_joints[start_index], &end_joints[end_index]);
+        // check the limits
+        for (size_t k = 0; k < dof; ++k)
+        {
+          delta_buffer[k] = std::abs(start_joints[start_index + k] - end_joints[end_index + k]);
+          if (delta_buffer[k] > max_dthetas[k])
+          {
+            is_valid_edge = false;
+            break;
+          }
+        }
+
+        if (!is_valid_edge)
+          continue;
+
+        // If we have a valid edge, now we test whether we have a custom function
+        double cost;
+        if (custom_cost_function_)
+        {
+          cost = custom_cost_function_(&start_joints[start_index], &end_joints[end_index]);
+        }
+        else
+        {
+          cost = std::accumulate(delta_buffer.cbegin(), delta_buffer.cend(), 0.0);
+        }
+        edge_scratch[count++] = {cost, static_cast<unsigned>(j)};
       }
       else
       {
-        cost = 0.0;
-        for (size_t k = 0; k < dof; ++k)
+        // timing is NOT specified
+        double cost;
+        if (custom_cost_function_)
+          cost = custom_cost_function_(&start_joints[start_index], &end_joints[end_index]);
+        else
         {
-          cost += std::abs(start_joints[start_index + k] - end_joints[end_index + k]);
+          cost = 0.0;
+          for (size_t k = 0; k < dof; ++k)
+          {
+            cost += std::abs(start_joints[start_index + k] - end_joints[end_index + k]);
+          }
         }
+        edge_scratch[count++] = {cost, static_cast<unsigned>(j)};
       }
-      edge_scratch[count++] = {cost, static_cast<unsigned>(j)};
-    }
+
+    } // end inner loop
 
     edges[i] = LadderGraph::EdgeList(edge_scratch.begin(), edge_scratch.begin() + count);
     total_edges += count;
