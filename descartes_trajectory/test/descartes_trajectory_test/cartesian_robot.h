@@ -53,6 +53,11 @@ public:
 
   virtual bool isValidMove(const double* s, const double* f, double dt) const override;
 
+  virtual std::vector<double> getJointVelocityLimits() const override
+  {
+    return joint_velocities_;
+  }
+
   bool setJointVelocities(const std::vector<double> &new_joint_vels)
   {
     if (new_joint_vels.size() != joint_velocities_.size())
