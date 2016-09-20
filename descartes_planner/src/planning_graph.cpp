@@ -231,12 +231,12 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
 
   for (size_t i = 0; i < n_start_points; i++) // from rung
   {
-    auto start_index = i * dof;
+    const auto start_index = i * dof;
     auto count = 0u;
 
     for (size_t j = 0; j < n_end_points; j++) // to rung
     {
-      auto end_index = j * dof;
+      const auto end_index = j * dof;
 
       bool is_valid_edge = true;
 
