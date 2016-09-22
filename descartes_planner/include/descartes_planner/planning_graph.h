@@ -86,15 +86,97 @@ protected:
   bool populateGraphVertices(const std::vector<descartes_core::TrajectoryPtPtr> &points,
                              std::vector<std::vector<descartes_trajectory::JointTrajectoryPt>> &poses);
 
-  /** @brief calculate weights fro each start point to each end point */
-  std::vector<LadderGraph::EdgeList> calculateEdgeWeights(const std::vector<double> &start_joints,
+  void computeAndAssignEdges(const std::size_t start_idx, const std::size_t end_idx);
+
+
+  template <typename EdgeBuilder>
+  std::vector<LadderGraph::EdgeList> calculateEdgeWeights(EdgeBuilder&& builder,
+                                                          const std::vector<double> &start_joints,
                                                           const std::vector<double> &end_joints,
-                                                          size_t dof,
-                                                          const descartes_core::TimingConstraint& tm,
-                                                          bool& found_edges) const;
+                                                          const size_t dof,
+                                                          bool& has_edges) const;
 
-  void computeAndAssignEdges(std::size_t start_idx, std::size_t end_idx);
+};
 
+struct DefaultEdgesWithTime
+{
+ DefaultEdgesWithTime(const size_t n_start,
+                      const size_t n_end,
+                      const size_t dof,
+                      const double upper_tm,
+                      const std::vector<double>& joint_vel_limits)
+    : results_(n_start)
+    , edge_scratch_(n_end)
+    , max_dtheta_(dof)
+    , delta_buffer_(dof)
+    , dof_(dof)
+    , count_(0)
+    , has_edges_(false)
+  {
+   std::transform(joint_vel_limits.cbegin(), joint_vel_limits.cend(), max_dtheta_.begin(), [upper_tm] (double v) {
+                    return v * upper_tm;
+                  });
+  }
+
+  inline void consider(const double* const start, const double* const stop, size_t index) noexcept
+  {
+    for (size_t i = 0; i < dof_; ++i)
+    {
+      delta_buffer_[i] = std::abs(start[i] - stop[i]);
+      if (delta_buffer_[i] > max_dtheta_[i]) return;
+    }
+
+    auto cost = std::accumulate(delta_buffer_.cbegin(), delta_buffer_.cend(), 0.0);
+    edge_scratch_[count_].cost = cost;
+    edge_scratch_[count_].idx = static_cast<unsigned>(index);
+    count_++;
+  }
+
+  inline void next(const size_t i)
+  {
+    results_[i].assign(edge_scratch_.cbegin(), edge_scratch_.cbegin() + count_);
+    has_edges_ = has_edges_ || count_ > 0;
+    count_ = 0;
+  }
+
+  inline std::vector<LadderGraph::EdgeList>& result() noexcept { return results_; }
+
+  inline bool hasEdges() const noexcept { return has_edges_; }
+
+  std::vector<LadderGraph::EdgeList> results_;
+  LadderGraph::EdgeList edge_scratch_; // pre-allocated space to work in
+  std::vector<double> max_dtheta_;
+  std::vector<double> delta_buffer_;
+  size_t dof_;
+  unsigned count_;
+  bool has_edges_;
+};
+
+struct CustomEdgesWithTime : public DefaultEdgesWithTime
+{
+  CustomEdgesWithTime(const size_t n_start,
+                      const size_t n_end,
+                      const size_t dof,
+                      const double upper_tm,
+                      const std::vector<double>& joint_vel_limits,
+                      descartes_planner::CostFunction fn)
+    : DefaultEdgesWithTime(n_start, n_end, dof, upper_tm, joint_vel_limits)
+    , custom_cost_fn(fn)
+  {}
+
+  inline void consider(const double * const start, const double * const stop, size_t index) noexcept
+  {
+    for (size_t i = 0; i < dof_; ++i)
+    {
+      delta_buffer_[i] = std::abs(start[i] - stop[i]);
+      if (delta_buffer_[i] > max_dtheta_[i]) return;
+    }
+
+    double cost = custom_cost_fn(start, stop);
+    edge_scratch_[count_++] = {cost, static_cast<unsigned>(index)};
+  }
+
+  descartes_planner::CostFunction custom_cost_fn;
 };
 
 } /* namespace descartes_planner */

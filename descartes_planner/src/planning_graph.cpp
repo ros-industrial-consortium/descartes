@@ -200,115 +200,60 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
   return true;
 }
 
-static inline std::vector<double> calculateMaxDeltaTheta(const std::vector<double>& joint_vel_limits,
-                                                         const descartes_core::TimingConstraint& tm)
+void PlanningGraph::computeAndAssignEdges(const std::size_t start_idx, const std::size_t end_idx)
 {
-  std::vector<double> v;
-  v.reserve(joint_vel_limits.size());
+  const auto& joints1 = graph_.getRung(start_idx).data;
+  const auto& joints2 = graph_.getRung(end_idx).data;
+  const auto& tm = graph_.getRung(end_idx).timing;
+  const auto dof = robot_model_->getDOF();
 
-  for (const auto limit : joint_vel_limits)
+  const auto start_size = joints1.size() / dof;
+  const auto end_size = joints2.size() / dof;
+
+  bool b;
+  std::vector<LadderGraph::EdgeList> edges;
+
+  if (!custom_cost_function_)
   {
-    v.push_back( tm.upper * limit );
+    DefaultEdgesWithTime builder (start_size, end_size, dof, tm.upper, robot_model_->getJointVelocityLimits());
+    edges = calculateEdgeWeights(builder, joints1, joints2, dof, b);
   }
-  return v;
+  else
+  {
+    CustomEdgesWithTime builder (start_size, end_size, dof, tm.upper, robot_model_->getJointVelocityLimits(), custom_cost_function_);
+    edges = calculateEdgeWeights(builder, joints1, joints2, dof, b);
+  }
+
+  graph_.assignEdges(start_idx, std::move(edges));
+  if (!b) ROS_WARN("No edges between user input points at index %lu and %lu", start_idx, end_idx);
 }
 
-std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std::vector<double>& start_joints,
-                                         const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm, bool &found_edges) const
+template<typename EdgeBuilder>
+std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(EdgeBuilder&& builder, const std::vector<double>& start_joints,
+                                                                       const std::vector<double>& end_joints, const size_t dof,
+                                                                       bool& has_edges) const
 {
   const auto from_size = start_joints.size();
   const auto to_size = end_joints.size();
   const auto n_start_points = from_size / dof;
   const auto n_end_points = to_size / dof;
-  auto total_edges = 0u;
-
-  std::vector<LadderGraph::EdgeList> edges (n_start_points); // ret value
-  LadderGraph::EdgeList edge_scratch (n_end_points); // pre-allocated space to work in
-
-  // For the given time step, calculate the maximum step change allowed in a given joint
-  const auto max_dthetas = calculateMaxDeltaTheta(robot_model_->getJointVelocityLimits(), tm);
-  std::vector<double> delta_buffer (max_dthetas.size()); // a buffer space for accumulating the sum of the differences
 
   for (size_t i = 0; i < n_start_points; i++) // from rung
   {
     const auto start_index = i * dof;
-    auto count = 0u;
 
     for (size_t j = 0; j < n_end_points; j++) // to rung
     {
       const auto end_index = j * dof;
 
-      bool is_valid_edge = true;
+      builder.consider(&start_joints[start_index], &end_joints[end_index], j);
+    }
 
-      // If we have a specified time, we need to check the limits of joint motion
-      if (tm.isSpecified())
-      {
-        // check the limits
-        for (size_t k = 0; k < dof; ++k)
-        {
-          delta_buffer[k] = std::abs(start_joints[start_index + k] - end_joints[end_index + k]);
-          if (delta_buffer[k] > max_dthetas[k])
-          {
-            is_valid_edge = false;
-            break;
-          }
-        }
-
-        if (!is_valid_edge)
-          continue;
-
-        // If we have a valid edge, now we test whether we have a custom function
-        double cost;
-        if (custom_cost_function_)
-        {
-          cost = custom_cost_function_(&start_joints[start_index], &end_joints[end_index]);
-        }
-        else
-        {
-          cost = std::accumulate(delta_buffer.cbegin(), delta_buffer.cend(), 0.0);
-        }
-        edge_scratch[count++] = {cost, static_cast<unsigned>(j)};
-      }
-      else
-      {
-        // timing is NOT specified
-        double cost;
-        if (custom_cost_function_)
-          cost = custom_cost_function_(&start_joints[start_index], &end_joints[end_index]);
-        else
-        {
-          cost = 0.0;
-          for (size_t k = 0; k < dof; ++k)
-          {
-            cost += std::abs(start_joints[start_index + k] - end_joints[end_index + k]);
-          }
-        }
-        edge_scratch[count++] = {cost, static_cast<unsigned>(j)};
-      }
-
-    } // end inner loop
-
-    edges[i] = LadderGraph::EdgeList(edge_scratch.begin(), edge_scratch.begin() + count);
-    total_edges += count;
+    builder.next(i);
   }
 
-  found_edges = (total_edges != 0u);
-
-  return edges;
-}
-
-inline void PlanningGraph::computeAndAssignEdges(std::size_t start_idx, std::size_t end_idx)
-{
-  const auto& joints1 = graph_.getRung(start_idx).data;
-  const auto& joints2 = graph_.getRung(end_idx).data;
-  const auto& tm = graph_.getRung(end_idx).timing;
-
-  bool b;
-  auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm, b);
-  graph_.assignEdges(start_idx, std::move(edges));
-
-  if (!b) ROS_WARN("Unable to find any edges between graph indices %lu and %lu.",
-                   start_idx, end_idx);
+  has_edges = builder.hasEdges();
+  return std::move(builder.result());
 }
 
 } /* namespace descartes_planner */
