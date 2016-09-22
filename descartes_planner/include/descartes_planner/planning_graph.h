@@ -123,7 +123,7 @@ struct DefaultEdgesWithTime
     for (size_t i = 0; i < dof_; ++i)
     {
       delta_buffer_[i] = std::abs(start[i] - stop[i]);
-      if (delta_buffer_[i] > max_dtheta_[i]) return;
+      if (max_dtheta_[i] != 0.0 && delta_buffer_[i] > max_dtheta_[i]) return;
     }
 
     auto cost = std::accumulate(delta_buffer_.cbegin(), delta_buffer_.cend(), 0.0);
@@ -169,7 +169,7 @@ struct CustomEdgesWithTime : public DefaultEdgesWithTime
     for (size_t i = 0; i < dof_; ++i)
     {
       delta_buffer_[i] = std::abs(start[i] - stop[i]);
-      if (delta_buffer_[i] > max_dtheta_[i]) return;
+      if (max_dtheta_[i] != 0.0 && delta_buffer_[i] > max_dtheta_[i]) return;
     }
 
     double cost = custom_cost_fn(start, stop);
