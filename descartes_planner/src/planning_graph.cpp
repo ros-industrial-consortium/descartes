@@ -25,6 +25,7 @@
 
 #include "descartes_planner/planning_graph.h"
 #include "descartes_planner/ladder_graph_dag_search.h"
+#include "descartes_planner/planning_graph_edge_policy.h"
 #include <ros/console.h>
 
 using namespace descartes_core;
@@ -213,14 +214,24 @@ void PlanningGraph::computeAndAssignEdges(const std::size_t start_idx, const std
   bool b;
   std::vector<LadderGraph::EdgeList> edges;
 
-  if (!custom_cost_function_)
+  if (!custom_cost_function_ && tm.isSpecified())
   {
     DefaultEdgesWithTime builder (start_size, end_size, dof, tm.upper, robot_model_->getJointVelocityLimits());
     edges = calculateEdgeWeights(builder, joints1, joints2, dof, b);
   }
-  else
+  else if (custom_cost_function_ && tm.isSpecified())
   {
     CustomEdgesWithTime builder (start_size, end_size, dof, tm.upper, robot_model_->getJointVelocityLimits(), custom_cost_function_);
+    edges = calculateEdgeWeights(builder, joints1, joints2, dof, b);
+  }
+  else if (!custom_cost_function_ && !tm.isSpecified())
+  {
+    DefaultEdgesWithoutTime builder (start_size, end_size, dof);
+    edges = calculateEdgeWeights(builder, joints1, joints2, dof, b);
+  }
+  else
+  {
+    CustomEdgesWithoutTime builder (start_size, end_size, dof, custom_cost_function_);
     edges = calculateEdgeWeights(builder, joints1, joints2, dof, b);
   }
 
