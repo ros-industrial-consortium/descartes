@@ -73,6 +73,9 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 
 bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previous_id, TrajectoryPt::ID next_id)
 {
+  assert(previous_id.is_nil() || graph_.indexOf(previous_id).second); // These tests ensure that the user points
+  assert(next_id.is_nil() || graph_.indexOf(next_id).second);         // actually exist. Maybe should be part of
+                                                                       // the normal interface? TODO
   auto ns = graph_.indexOf(next_id);
 
   // Next & prev can be 'null' indicating end & start of trajectory
@@ -203,6 +206,9 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 
 void PlanningGraph::computeAndAssignEdges(const std::size_t start_idx, const std::size_t end_idx)
 {
+  assert(end_idx > start_idx);
+  assert(end_idx - start_idx == 1);
+
   const auto& joints1 = graph_.getRung(start_idx).data;
   const auto& joints2 = graph_.getRung(end_idx).data;
   const auto& tm = graph_.getRung(end_idx).timing;
