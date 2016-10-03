@@ -172,7 +172,8 @@ TEST(PlanningGraph, insert_then_modify_all_points)
   // modify a point to be invalid
   auto invalid_pt = makePoint(100.0, 1.0); // way out of range of the other points (0, 1, & 2)
   invalid_pt->setID(points[1]->getID()); // copy that points ID
+  ASSERT_TRUE(invalid_pt->getTiming().isSpecified());
 
-  ASSERT_TRUE( graph.modifyTrajectory(points[1]) );
+  ASSERT_TRUE( graph.modifyTrajectory(invalid_pt) );
   EXPECT_FALSE(graph.getShortestPath(cost, out));
 }
