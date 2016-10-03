@@ -282,7 +282,7 @@ bool SparsePlanner::remove(const TrajectoryPt::ID& ref_id)
 
   if (isInSparseTrajectory(ref_id))
   {
-    if (!planning_graph_->removeTrajectory(cart_points_[index]))
+    if (!planning_graph_->removeTrajectory(cart_points_[index]->getID()))
     {
       ROS_ERROR_STREAM("Failed to removed point " << ref_id << " from sparse trajectory, aborting");
       return false;

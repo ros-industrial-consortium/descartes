@@ -32,10 +32,16 @@ static boost::shared_ptr<descartes_core::RobotModel> makeTestRobot()
   );
 }
 
+static inline boost::shared_ptr<descartes_trajectory::JointTrajectoryPt> makePoint(double v, double tm = 0.0)
+{
+  return boost::make_shared<descartes_trajectory::JointTrajectoryPt>(std::vector<double>(6, v),
+                                                                     descartes_core::TimingConstraint(tm));
+}
+
 static std::vector<descartes_core::TrajectoryPtPtr> twoPoints()
 {
-  auto start_pt = boost::make_shared<descartes_trajectory::JointTrajectoryPt>(std::vector<double>(6, 0.0));
-  auto stop_pt = boost::make_shared<descartes_trajectory::JointTrajectoryPt>(std::vector<double>(6, 1.0));
+  auto start_pt = makePoint(0.0);
+  auto stop_pt = makePoint(1.0);
 
   std::vector<descartes_core::TrajectoryPtPtr> ret;
   ret.push_back(start_pt);
@@ -45,7 +51,7 @@ static std::vector<descartes_core::TrajectoryPtPtr> twoPoints()
 
 static descartes_core::TrajectoryPtPtr thirdTestPoint()
 {
-  return boost::make_shared<descartes_trajectory::JointTrajectoryPt>(std::vector<double>(6, 2.0));
+  return makePoint(2.0);
 }
 
 static std::vector<descartes_core::TrajectoryPtPtr> threePoints()
@@ -114,4 +120,59 @@ TEST(PlanningGraph, insert_then_add_point)
 
   EXPECT_TRUE(out.size() == 3);
   EXPECT_TRUE(cost != 0.0);
+}
+
+TEST(PlanningGraph, insert_then_remove_point)
+{
+  // Create robot
+  auto robot = makeTestRobot();
+  auto points = threePoints();
+
+  // Create planner
+  descartes_planner::PlanningGraph graph {robot};
+
+  // initialize graph
+  ASSERT_TRUE(graph.insertGraph(points));
+
+  // Now remove the last point
+  ASSERT_TRUE( graph.removeTrajectory(points.back()->getID()) );
+
+  double cost;
+  std::list<descartes_trajectory::JointTrajectoryPt> out;
+  ASSERT_TRUE(graph.getShortestPath(cost, out));
+
+  EXPECT_TRUE(out.size() == 2);
+  EXPECT_TRUE(cost != 0.0);
+}
+
+TEST(PlanningGraph, insert_then_modify_all_points)
+{
+  // Create robot
+  auto robot = makeTestRobot();
+  auto points = threePoints();
+
+  // Create planner
+  descartes_planner::PlanningGraph graph {robot};
+
+  // initialize graph
+  ASSERT_TRUE(graph.insertGraph(points));
+
+  // modify each of the points to mimic itself
+  ASSERT_TRUE( graph.modifyTrajectory(points[0]) );
+  ASSERT_TRUE( graph.modifyTrajectory(points[1]) );
+  ASSERT_TRUE( graph.modifyTrajectory(points[2]) );
+
+  double cost;
+  std::list<descartes_trajectory::JointTrajectoryPt> out;
+  ASSERT_TRUE(graph.getShortestPath(cost, out));
+
+  EXPECT_TRUE(out.size() == 3);
+  EXPECT_TRUE(cost != 0.0);
+
+  // modify a point to be invalid
+  auto invalid_pt = makePoint(100.0, 1.0); // way out of range of the other points (0, 1, & 2)
+  invalid_pt->setID(points[1]->getID()); // copy that points ID
+
+  ASSERT_TRUE( graph.modifyTrajectory(points[1]) );
+  EXPECT_FALSE(graph.getShortestPath(cost, out));
 }
