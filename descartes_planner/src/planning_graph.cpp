@@ -80,7 +80,7 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   calculateJointSolutions(&point, 1, poses); // TODO: If there are no points, return false?
 
   // Insert new point into graph
-  auto insert_idx = ns.second ? ns.first : graph_.size() - 1;
+  auto insert_idx = ns.second ? ns.first : graph_.size();
   graph_.insertRung(insert_idx);
   graph_.assignRung(insert_idx, point->getID(), point->getTiming(), poses[0]);
 
@@ -133,10 +133,10 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   return true;
 }
 
-bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
+bool PlanningGraph::removeTrajectory(TrajectoryPt::ID point)
 {
   // Remove a point from the graph
-  auto s = graph_.indexOf(point->getID());
+  auto s = graph_.indexOf(point);
   if (!s.second) return false;
 
   auto in_middle = !graph_.isFirst(s.first) && !graph_.isLast(s.first);
