@@ -252,9 +252,9 @@ bool DensePlanner::remove(const descartes_core::TrajectoryPt::ID& ref_id)
   if (tp)
   {
     tp->setID(ref_id);
-    if (planning_graph_->removeTrajectory(tp))
+    if (planning_graph_->removeTrajectory(tp->getID())) // TODO: Clean up this extra copy & lookup
     {
-      if (updatePath())
+      if (updatePath()) // TODO: Should we force an update here? What if the user wants to remove several points?
       {
         error_code_ = descartes_core::PlannerError::OK;
       }
