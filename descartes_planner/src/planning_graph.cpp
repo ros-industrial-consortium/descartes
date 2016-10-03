@@ -133,7 +133,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   return true;
 }
 
-bool PlanningGraph::removeTrajectory(TrajectoryPt::ID point)
+bool PlanningGraph::removeTrajectory(const TrajectoryPt::ID& point)
 {
   // Remove a point from the graph
   auto s = graph_.indexOf(point);

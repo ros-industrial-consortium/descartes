@@ -62,7 +62,7 @@ public:
 
   bool modifyTrajectory(descartes_core::TrajectoryPtPtr point);
 
-  bool removeTrajectory(descartes_core::TrajectoryPt::ID point);
+  bool removeTrajectory(const descartes_core::TrajectoryPt::ID& point);
 
   bool getShortestPath(double &cost, std::list<descartes_trajectory::JointTrajectoryPt> &path);
 
