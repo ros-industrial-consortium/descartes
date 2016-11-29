@@ -22,6 +22,7 @@
 #include "descartes_core/robot_model.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
 #include <moveit/planning_scene/planning_scene.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <string>
@@ -61,6 +62,9 @@ public:
 
   virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
                            double dt) const;
+
+  virtual bool updateInternals() const;
+
   /**
    * @brief Set the initial states used for iterative inverse kineamtics
    * @param seeds Vector of vector of doubles representing joint positions.
@@ -118,7 +122,7 @@ protected:
 
   mutable moveit::core::RobotStatePtr robot_state_;
 
-  planning_scene::PlanningScenePtr planning_scene_;
+  mutable planning_scene::PlanningScenePtr planning_scene_;
 
   robot_model::RobotModelConstPtr robot_model_ptr_;
 
@@ -150,6 +154,11 @@ protected:
    * @brief convenient transformation frame
    */
   descartes_core::Frame world_to_root_;
+
+  /**
+   * @brief Planning scene monitor (used to update internal planning scene)
+   */
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 };
 
 }  // descartes_moveit
