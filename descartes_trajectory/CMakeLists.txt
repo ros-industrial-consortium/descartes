@@ -9,7 +9,12 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Boost REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+# Eigen 3.2 (Wily) only provides EIGEN3_INCLUDE_DIR, not EIGEN3_INCLUDE_DIRS
+if(NOT EIGEN3_INCLUDE_DIRS)
+  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+endif()
 
 ###################################
 ## catkin specific configuration ##
@@ -26,7 +31,7 @@ catkin_package(
     descartes_core
   DEPENDS
     Boost
-    Eigen
+    EIGEN3
 )
 
 ###########
@@ -36,7 +41,7 @@ catkin_package(
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
-                    ${Eigen_INCLUDE_DIRS}
+                    ${EIGEN3_INCLUDE_DIRS}
 )
 
 add_library(descartes_trajectory
