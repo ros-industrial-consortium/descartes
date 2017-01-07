@@ -70,6 +70,7 @@ if(CATKIN_ENABLE_TESTING)
       test/moveit_state_adapter_test.cpp)
 
   add_rostest_gtest(${PROJECT_NAME}_utest test/launch/utest.launch ${UTEST_SRC_FILES})
+  target_compile_definitions(${PROJECT_NAME}_utest PUBLIC GTEST_USE_OWN_TR1_TUPLE=0)
   target_link_libraries(${PROJECT_NAME}_utest descartes_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 

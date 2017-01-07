@@ -84,7 +84,9 @@ if(CATKIN_ENABLE_TESTING)
       test/cartesian_robot.cpp
       test/cartesian_robot_test.cpp
       test/axial_symmetric_pt.cpp)
+
   catkin_add_gtest(${PROJECT_NAME}_utest ${UTEST_SRC_FILES})
+  target_compile_definitions(${PROJECT_NAME}_utest PUBLIC GTEST_USE_OWN_TR1_TUPLE=0)
   target_link_libraries(${PROJECT_NAME}_utest descartes_trajectory)
 
 endif()
