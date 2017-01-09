@@ -132,7 +132,7 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
   }
 
   // create monitor and immediately retrieve up-to-date planning scene copy
-  planning_scene_monitor_ = boost::make_shared<planning_scene_monitor::PlanningSceneMonitor>("robot_description");
+  planning_scene_monitor_ = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>("robot_description");
   updateInternals();
 
   return true;
