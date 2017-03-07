@@ -63,6 +63,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
   }
 
   // now we have a graph with data in the 'rungs' and we need to compute the edges
+  #pragma omp parallel for
   for (std::size_t i = 0; i < graph_.size() - 1; ++i)
   {
     computeAndAssignEdges(i, i + 1);
@@ -187,6 +188,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 {
   poses.resize(count);
 
+  #pragma omp parallel for
   for (std::size_t i = 0; i < count; ++i)
   {
     std::vector<std::vector<double>> joint_poses;
@@ -195,10 +197,16 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
     if (joint_poses.empty())
     {
       ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
-     return false;
+//     return false;
     }
 
     poses[i] = std::move(joint_poses);
+  }
+
+  for (const auto& sols : poses)
+  {
+    if (sols.empty())
+      return false;
   }
 
   return true;
