@@ -88,10 +88,22 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
     return false;
   }
 
+  const auto last_index = getDOF() - 1;
+
   for (auto& sol : joint_results)
   {
     if (isValid(sol))
-      joint_poses.push_back(std::move(sol));
+      joint_poses.push_back(sol);
+
+    // Search last joint +2PI
+    sol[last_index] += 2.0 * M_PI;
+    if (isValid(sol))
+      joint_poses.push_back(sol);
+
+    // Search last joint -2PI
+    sol[last_index] -= 2.0 * 2.0 * M_PI;
+    if (isValid(sol))
+      joint_poses.push_back(sol);
   }
 
   return joint_poses.size() > 0;
