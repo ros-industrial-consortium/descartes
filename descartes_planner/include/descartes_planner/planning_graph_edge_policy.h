@@ -22,7 +22,7 @@ struct DefaultEdgesWithTime
     , has_edges_(false)
   {
    std::transform(joint_vel_limits.cbegin(), joint_vel_limits.cend(), max_dtheta_.begin(), [upper_tm] (double v) {
-                    return v * upper_tm;
+                    return std::min(1.0, v * upper_tm);
                   });
   }
 
