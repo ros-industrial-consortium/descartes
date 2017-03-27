@@ -33,7 +33,7 @@ public:
 
   explicit DAGSearch(const LadderGraph& graph);
 
-  double run();
+  double run(const std::vector<double>& seed_weights = {});
 
   std::vector<predecessor_t> shortestPath() const;
 

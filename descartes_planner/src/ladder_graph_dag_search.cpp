@@ -17,10 +17,22 @@ DAGSearch::DAGSearch(const LadderGraph &graph)
   }
 }
 
-double DAGSearch::run()
+double DAGSearch::run(const std::vector<double>& seed_weights)
 {
-  // Cost to the first rung should be set to zero
-  std::fill(solution_.front().distance.begin(), solution_.front().distance.end(), 0.0);
+
+  if (!seed_weights.empty())
+  {
+    if (seed_weights.size() != solution_.front().distance.size())
+      throw std::invalid_argument("Seed weights must match the size of initial row of joint solutions");
+
+    solution_.front().distance = seed_weights;
+  }
+  else
+  {
+    // Cost to the first rung should be set to zero
+    std::fill(solution_.front().distance.begin(), solution_.front().distance.end(), 0.0);
+  }
+
   // Other rows initialize to zero
   for (size_type i = 1; i < solution_.size(); ++i)
   {
