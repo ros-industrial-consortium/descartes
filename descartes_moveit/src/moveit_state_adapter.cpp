@@ -109,7 +109,7 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
     return false;
   }
 
-  if (!getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
+  if (!::getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
   {
     logWarn("%s: Could not determine velocity limits of RobotModel from MoveIt", __FUNCTION__);
   }
@@ -303,17 +303,11 @@ int MoveitStateAdapter::getDOF() const
   return joint_group_->getVariableCount();
 }
 
-bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
-                                     const std::vector<double>& to_joint_pose, double dt) const
+bool MoveitStateAdapter::isValidMove(const double* from_joint_pose,
+                                     const double* to_joint_pose, double dt) const
 {
-  // Check for equal sized arrays
-  if (from_joint_pose.size() != to_joint_pose.size())
-  {
-    logError("To and From joint poses are of different sizes.");
-    return false;
-  }
 
-  for (std::size_t i = 0; i < from_joint_pose.size(); ++i)
+  for (std::size_t i = 0; i < getDOF(); ++i)
   {
     double dtheta = std::abs(from_joint_pose[i] - to_joint_pose[i]);
     double max_dtheta = dt * velocity_limits_[i];
@@ -322,6 +316,11 @@ bool MoveitStateAdapter::isValidMove(const std::vector<double>& from_joint_pose,
   }
 
   return true;
+}
+
+std::vector<double> MoveitStateAdapter::getJointVelocityLimits() const
+{
+  return velocity_limits_;
 }
 
 void MoveitStateAdapter::setState(const moveit::core::RobotState& state)

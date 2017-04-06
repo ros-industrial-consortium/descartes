@@ -6,6 +6,7 @@
  */
 
 #include <descartes_planner/dense_planner.h>
+#include <boost/make_shared.hpp>
 
 namespace descartes_planner
 {
@@ -77,77 +78,22 @@ descartes_core::TrajectoryPt::ID DensePlanner::getPrevious(const descartes_core:
 
 bool DensePlanner::updatePath()
 {
-  std::vector<descartes_core::TrajectoryPtPtr> traj;
-  const CartesianMap& cart_map = planning_graph_->getCartesianMap();
-  descartes_core::TrajectoryPt::ID first_id = descartes_core::TrajectoryID::make_nil();
-  auto predicate = [&first_id](const std::pair<descartes_core::TrajectoryPt::ID, CartesianPointInformation>& p)
-  {
-    const auto& info = p.second;
-    if (info.links_.id_previous == descartes_core::TrajectoryID::make_nil())
-    {
-      first_id = p.first;
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  };
-
-  // finding first point
-  if (cart_map.empty() || (std::find_if(cart_map.begin(), cart_map.end(), predicate) == cart_map.end()) ||
-      first_id == descartes_core::TrajectoryID::make_nil())
-  {
-    error_code_ = descartes_core::PlannerError::INVALID_ID;
-    return false;
-  }
-
-  // retrieving original trajectory
-  traj.resize(cart_map.size());
-  descartes_core::TrajectoryPt::ID current_id = first_id;
-  for (int i = 0; i < traj.size(); i++)
-  {
-    if (cart_map.count(current_id) == 0)
-    {
-      ROS_ERROR_STREAM("Trajectory point " << current_id << " was not found in cartesian trajectory.");
-      return false;
-    }
-    const CartesianPointInformation& info = cart_map.at(current_id);
-    traj[i] = info.source_trajectory_;
-    current_id = info.links_.id_next;
-  }
-
-  // updating planned path
+  double c;
   std::list<descartes_trajectory::JointTrajectoryPt> list;
-  double cost;
-  if (planning_graph_->getShortestPath(cost, list))
+  if (planning_graph_->getShortestPath(c, list))
   {
-    ROS_INFO_STREAM("Traj size: " << traj.size() << " List size: " << list.size());
-    if (traj.size() == list.size())
+    error_code_ = descartes_core::PlannerErrors::OK;
+    for (auto&& p : list)
     {
-      error_code_ = descartes_core::PlannerError::OK;
-
-      // reassigning ids
-      int counter = 0;
-      path_.resize(list.size());
-      for (auto p : list)
-      {
-        path_[counter] = descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(p));
-        path_[counter]->setID(traj[counter]->getID());
-        counter++;
-      }
+      path_.push_back(boost::make_shared<descartes_trajectory::JointTrajectoryPt>(std::move(p)));
     }
-    else
-    {
-      error_code_ = descartes_core::PlannerError::INCOMPLETE_PATH;
-    }
+    return true;
   }
   else
   {
-    error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
+    error_code_ = descartes_core::PlannerErrors::UKNOWN;
+    return false;
   }
-
-  return error_code_ == descartes_core::PlannerError::OK;
 }
 
 descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::TrajectoryPt::ID& ref_id)
@@ -199,11 +145,10 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
     return false;
   }
 
-  double cost;
   path_.clear();
   error_code_ = descartes_core::PlannerError::EMPTY_PATH;
 
-  if (planning_graph_->insertGraph(&traj))
+  if (planning_graph_->insertGraph(traj))
   {
     updatePath();
   }
@@ -307,9 +252,9 @@ bool DensePlanner::remove(const descartes_core::TrajectoryPt::ID& ref_id)
   if (tp)
   {
     tp->setID(ref_id);
-    if (planning_graph_->removeTrajectory(tp))
+    if (planning_graph_->removeTrajectory(tp->getID())) // TODO: Clean up this extra copy & lookup
     {
-      if (updatePath())
+      if (updatePath()) // TODO: Should we force an update here? What if the user wants to remove several points?
       {
         error_code_ = descartes_core::PlannerError::OK;
       }

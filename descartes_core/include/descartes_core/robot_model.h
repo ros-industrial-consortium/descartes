@@ -92,6 +92,13 @@ public:
   virtual bool isValid(const Eigen::Affine3d &pose) const = 0;
 
   /**
+   * @brief Returns the joint velocity limits for each joint in the robot kinematic model
+   * @return Sequence of joint velocity limits. Units are a function of the joint type (m/s
+   * for linear joints; rad/s for rotational). size of vector == getDOF()
+   */
+  virtual std::vector<double> getJointVelocityLimits() const = 0;
+
+  /**
    * @brief Initializes the robot model when it is instantiated as a moveit_core plugin.
    * @param robot_description name of the ros parameter containing the urdf description
    * @param group_name the manipulation group for all the robot links that are part of the same kinematic chain
@@ -120,6 +127,7 @@ public:
     return check_collisions_;
   }
 
+
   /**
    * @brief Performs necessary checks to see if the robot is capable of moving from the initial joint pose
    *        to the final pose in dt seconds
@@ -129,7 +137,12 @@ public:
    * @return                 [description]
    */
   virtual bool isValidMove(const std::vector<double> &from_joint_pose, const std::vector<double> &to_joint_pose,
-                           double dt) const = 0;
+                           double dt) const
+  {
+    return isValidMove(from_joint_pose.data(), to_joint_pose.data(), dt);
+  }
+
+  virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
 protected:
   RobotModel() : check_collisions_(false)
