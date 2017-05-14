@@ -8,6 +8,8 @@ notifications:
     on_failure: always
 
 env:
+  global:
+    - BEFORE_SCRIPT='catkin config -w $CATKIN_WORKSPACE --no-install'
   matrix:
     - USE_DEB=true  
       ROS_DISTRO="kinetic" 
