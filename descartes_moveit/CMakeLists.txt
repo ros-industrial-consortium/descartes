@@ -59,22 +59,6 @@ target_link_libraries(descartes_moveit
                       ${catkin_LIBRARIES}
 )
 
-
-#############
-## Testing ##
-#############
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest)
-  set(UTEST_SRC_FILES test/utest.cpp
-      test/moveit_state_adapter_test.cpp)
-
-  add_rostest_gtest(${PROJECT_NAME}_utest test/launch/utest.launch ${UTEST_SRC_FILES})
-  target_compile_definitions(${PROJECT_NAME}_utest PUBLIC GTEST_USE_OWN_TR1_TUPLE=0)
-  target_link_libraries(${PROJECT_NAME}_utest descartes_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-endif()
-
-
 #############
 ## Install ##
 #############

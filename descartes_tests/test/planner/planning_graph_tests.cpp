@@ -18,7 +18,7 @@
 
 #include <descartes_planner/planning_graph.h>
 #include <descartes_trajectory/joint_trajectory_pt.h>
-#include <descartes_trajectory_test/cartesian_robot.h>
+#include <descartes_tests/cartesian_robot.h>
 #include <boost/make_shared.hpp>
 
 #include <gtest/gtest.h>
@@ -28,7 +28,7 @@ static boost::shared_ptr<descartes_core::RobotModel> makeTestRobot()
   const auto max_joint_vel = 1.0;
   const auto dof = 6;
   return boost::shared_ptr<descartes_core::RobotModel>(
-    new descartes_trajectory_test::CartesianRobot(5.0, 0.001, std::vector<double>(dof, max_joint_vel))
+    new descartes_tests::CartesianRobot(5.0, 0.001, std::vector<double>(dof, max_joint_vel))
   );
 }
 

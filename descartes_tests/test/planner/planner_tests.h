@@ -2,7 +2,7 @@
 
 #include <ros/console.h>
 #include <descartes_core/path_planner_base.h>
-#include <descartes_trajectory_test/cartesian_robot.h>
+#include <descartes_tests/cartesian_robot.h>
 
 #include "utils/trajectory_maker.h"
 
@@ -20,7 +20,7 @@ protected:
   }
 
   PathPlannerTest()
-    : velocity_limits_(6, 1.0), robot_(new descartes_trajectory_test::CartesianRobot(5.0, 0.001, velocity_limits_))
+    : velocity_limits_(6, 1.0), robot_(new descartes_tests::CartesianRobot(5.0, 0.001, velocity_limits_))
   {
     ros::Time::init();
   }

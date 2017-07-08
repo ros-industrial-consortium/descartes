@@ -21,7 +21,7 @@
 
 #include "descartes_core/robot_model.h"
 
-namespace descartes_trajectory_test
+namespace descartes_tests
 {
 /**@brief Cartesian Robot used for test purposes.  This is a simple robot with simple kinematics.  Each
  * joint corresponds to a cartesian direction (i.e. x, y, R, P, Y) (don't ask me how this is built, it
