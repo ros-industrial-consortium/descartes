@@ -16,7 +16,7 @@
   <run_depend>descartes_planner</run_depend>
   <run_depend>descartes_trajectory</run_depend>
   <run_depend>descartes_utilities</run_depend>
-
+  <run_depend>descartes_tests</run_depend>
   <export>
     <metapackage/>
   </export>
