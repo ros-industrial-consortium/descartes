@@ -127,6 +127,10 @@ public:
     return check_collisions_;
   }
 
+  virtual void setCheckTCPCollisions(bool)
+  {
+  }
+
 
   /**
    * @brief Performs necessary checks to see if the robot is capable of moving from the initial joint pose

@@ -22,19 +22,21 @@ struct DefaultEdgesWithTime
     , has_edges_(false)
   {
    std::transform(joint_vel_limits.cbegin(), joint_vel_limits.cend(), max_dtheta_.begin(), [upper_tm] (double v) {
-                    return std::min(1.0, v * upper_tm);
+                    return  v * upper_tm;
                   });
   }
 
   inline void consider(const double* const start, const double* const stop, size_t index) noexcept
   {
+    double cost = 0.0;
     for (size_t i = 0; i < dof_; ++i)
     {
       delta_buffer_[i] = std::abs(start[i] - stop[i]);
       if (delta_buffer_[i] > max_dtheta_[i]) return;
+      cost += std::pow(delta_buffer_[i], 2);
     }
 
-    auto cost = std::accumulate(delta_buffer_.cbegin(), delta_buffer_.cend(), 0.0);
+//    auto cost = std::accumulate(delta_buffer_.cbegin(), delta_buffer_.cend(), 0.0);
     edge_scratch_[count_].cost = cost;
     edge_scratch_[count_].idx = static_cast<unsigned>(index);
     count_++;

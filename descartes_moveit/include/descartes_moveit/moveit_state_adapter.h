@@ -96,6 +96,8 @@ public:
    */
   void setState(const moveit::core::RobotState &state);
 
+  void setCheckTCPCollisions(bool check_tcp_collisions) override;
+
 protected:
   /**
    * Gets IK solution (assumes robot state is pre-seeded)

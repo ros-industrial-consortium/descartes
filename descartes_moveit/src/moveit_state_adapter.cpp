@@ -106,7 +106,7 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
     logError("%s: Tool frame '%s' does not match group tool frame '%s', functionality"
              "will be implemented in the future",
              __FUNCTION__, tool_frame_.c_str(), link_names.back().c_str());
-    return false;
+//    return false;
   }
 
   if (!::getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
@@ -330,6 +330,12 @@ void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
                                                   "initialize()?");
   *robot_state_ = state;
   planning_scene_->setCurrentState(state);
+}
+
+void MoveitStateAdapter::setCheckTCPCollisions(bool check_tcp_collisions)
+{
+  auto& collision = planning_scene_->getAllowedCollisionMatrixNonConst();
+  collision.setEntry("no_go_zone", "tcp_model", !check_tcp_collisions);
 }
 
 }  // descartes_moveit
