@@ -26,7 +26,6 @@ endif()
 catkin_package(
   INCLUDE_DIRS
     include
-    test
   LIBRARIES
     descartes_planner
   CATKIN_DEPENDS
@@ -72,20 +71,3 @@ install(
 install(
     DIRECTORY include/${PROJECT_NAME}/
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-
-#############
-## Testing ##
-#############
-if(CATKIN_ENABLE_TESTING)
-
-  set(UTEST_PLANNER_SRC_FILES 
-      test/utest.cpp
-      test/dense_planner.cpp
-      test/sparse_planner.cpp
-      test/planning_graph_tests.cpp
-      test/utils/trajectory_maker.cpp)
-  catkin_add_gtest(${PROJECT_NAME}_planner_utest ${UTEST_PLANNER_SRC_FILES})
-  target_link_libraries(${PROJECT_NAME}_planner_utest descartes_planner)
-
-endif()

@@ -33,7 +33,7 @@
   </a>
   */
 
-namespace descartes_trajectory_test
+namespace descartes_tests
 {
 template <class T>
 descartes_core::RobotModelPtr CreateRobotModel();
@@ -114,6 +114,6 @@ TYPED_TEST_P(RobotModelTest, getAllIK)
 
 REGISTER_TYPED_TEST_CASE_P(RobotModelTest, construction, getIK, getAllIK);
 
-}  // descartes_trajectory_test
+}  // descartes_tests
 
 #endif  // ROBOT_MODEL_TEST_HPP_

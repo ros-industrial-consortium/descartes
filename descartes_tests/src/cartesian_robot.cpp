@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 
-#include "descartes_trajectory_test/cartesian_robot.h"
+#include "descartes_tests/cartesian_robot.h"
 #include "descartes_core/pretty_print.hpp"
 #include "eigen_conversions/eigen_kdl.h"
 #include "ros/console.h"
 #include "ros/assert.h"
 
-namespace descartes_trajectory_test
+namespace descartes_tests
 {
 const static int DOF = 6;
 
@@ -160,4 +160,4 @@ bool CartesianRobot::isValid(const Eigen::Affine3d &pose) const
 }
 
 
-}  // descartes_trajectory_test
+}

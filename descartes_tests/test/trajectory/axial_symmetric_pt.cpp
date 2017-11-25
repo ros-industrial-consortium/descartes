@@ -18,11 +18,11 @@
 
 #include "descartes_trajectory/axial_symmetric_pt.h"
 #include "descartes_core/utils.h"
-#include "descartes_trajectory_test/cartesian_robot.h"
+#include "descartes_tests/cartesian_robot.h"
 #include <gtest/gtest.h>
 
 using namespace descartes_trajectory;
-using namespace descartes_trajectory_test;
+using namespace descartes_tests;
 
 // Does it have a default constructor
 TEST(AxialSymPt, construction)

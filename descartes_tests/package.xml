@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>descartes_tests</name>
+  <version>0.1.0</version>
+  <description>
+    A package dedicated to unit tests for the Descartes cartesian path
+    planning library.
+  </description>
+
+  <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
+  <license>Apache 2.0</license>
+
+  <test_depend>gtest</test_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>descartes_moveit</build_depend>
+  <build_depend>descartes_planner</build_depend>
+  <build_depend>descartes_trajectory</build_depend>
+  <run_depend>descartes_moveit</run_depend>
+  <run_depend>descartes_planner</run_depend>
+  <run_depend>descartes_trajectory</run_depend>
+
+</package>
