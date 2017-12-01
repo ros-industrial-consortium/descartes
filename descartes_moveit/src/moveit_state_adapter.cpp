@@ -245,8 +245,10 @@ bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) co
   bool in_collision = false;
   if (check_collisions_)
   {
-    robot_state_->setJointGroupPositions(group_name_, joint_pose);
-    in_collision = planning_scene_->isStateColliding(*robot_state_, group_name_);
+    moveit::core::RobotState state (robot_model_ptr_);
+    state.setToDefaultValues();
+    robot_state_->setJointGroupPositions(joint_group_, joint_pose);
+    in_collision = planning_scene_->isStateColliding(state, group_name_);
   }
   return in_collision;
 }
