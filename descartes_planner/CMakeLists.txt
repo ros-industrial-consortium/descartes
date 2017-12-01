@@ -15,6 +15,13 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# Let's try to use open-mp parallization if we can
+find_package(OpenMP)
+if (OPENMP_FOUND)
+  message(STATUS "Descartes will use OpenMP")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
+endif()
+
 # Eigen 3.2 (Wily) only provides EIGEN3_INCLUDE_DIR, not EIGEN3_INCLUDE_DIRS
 if(NOT EIGEN3_INCLUDE_DIRS)
   set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
@@ -58,8 +65,12 @@ add_library(descartes_planner
 
 target_link_libraries(descartes_planner
                       ${catkin_LIBRARIES}
+                      ${OpenMP_FLAGS}
 )
 
+target_compile_options(descartes_planner PRIVATE ${OpenMP_FLAGS})
+
+add_dependencies(descartes_planner ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
