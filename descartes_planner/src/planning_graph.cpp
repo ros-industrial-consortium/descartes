@@ -187,22 +187,27 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
                                             std::vector<std::vector<std::vector<double>>>& poses) const
 {
   poses.resize(count);
+  bool success = true;
 
-  #pragma omp parallel for
+  #pragma omp parallel for shared(success)
   for (std::size_t i = 0; i < count; ++i)
   {
-    std::vector<std::vector<double>> joint_poses;
-    points[i]->getJointPoses(*robot_model_, joint_poses);
-
-    if (joint_poses.empty())
+    if (success)
     {
-      ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
-    }
+      std::vector<std::vector<double>> joint_poses;
+      points[i]->getJointPoses(*robot_model_, joint_poses);
 
-    poses[i] = std::move(joint_poses);
+      if (joint_poses.empty())
+      {
+        ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
+        success = false;
+      }
+
+      poses[i] = std::move(joint_poses);
+    }
   }
 
-  return true;
+  return success;
 }
 
 void PlanningGraph::computeAndAssignEdges(const std::size_t start_idx, const std::size_t end_idx)
