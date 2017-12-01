@@ -72,8 +72,14 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
 {
   // Initialize MoveIt state objects
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
+  auto model = robot_model_loader_->getModel();
+  if (!model)
+  {
+    logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
+    return false;
+  }
 
-  return initialize(robot_model_loader_->getModel(), group_name, world_frame, tcp_frame);
+  return initialize(model, group_name, world_frame, tcp_frame);
 }
 
 bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
