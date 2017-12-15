@@ -23,6 +23,13 @@
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/utils.h"
 
+
+namespace planning_scene_monitor
+{
+  MOVEIT_CLASS_FORWARD(PlanningSceneMonitor);
+  class PlanningSceneMonitor;
+}
+
 namespace descartes_core
 {
 DESCARTES_CLASS_FORWARD(RobotModel);
@@ -107,7 +114,8 @@ public:
    * a fixed location relative to the last link in 'group_name'.
    */
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
-                          const std::string &world_frame, const std::string &tcp_frame) = 0;
+                          const std::string &world_frame, const std::string &tcp_frame,
+                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr) = 0;
 
   /**
    * @brief Enables collision checks
