@@ -31,7 +31,8 @@ public:
   }
 
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
-                          const std::string& world_frame, const std::string& tcp_frame);
+                          const std::string& world_frame, const std::string& tcp_frame,
+                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr);
 
   virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::vector<double> >& joint_poses) const;
 

@@ -21,10 +21,17 @@
 
 #include "descartes_core/robot_model.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
-#include <moveit/planning_scene/planning_scene.h>
+
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <string>
+
+
+namespace planning_scene_monitor
+{
+  MOVEIT_CLASS_FORWARD(PlanningSceneMonitor);
+  class PlanningSceneMonitor;
+}
 
 namespace descartes_moveit
 {
@@ -41,10 +48,12 @@ public:
   }
 
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
-                          const std::string &world_frame, const std::string &tcp_frame);
+                          const std::string &world_frame, const std::string &tcp_frame,
+                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr);
 
   virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
-                          const std::string &world_frame, const std::string &tcp_frame);
+                          const std::string &world_frame, const std::string &tcp_frame,
+                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr);
 
   virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -128,8 +137,6 @@ protected:
 
   mutable moveit::core::RobotStatePtr robot_state_;
 
-  planning_scene::PlanningScenePtr planning_scene_;
-
   robot_model::RobotModelConstPtr robot_model_ptr_;
 
   robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
@@ -147,6 +154,11 @@ protected:
   std::string group_name_;
 
   /**
+   * @brief name of parameter for robot URDF
+   */
+  std::string robot_description_ = "robot_description";
+
+  /**
    * @brief Tool frame name
    */
   std::string tool_frame_;
@@ -160,6 +172,11 @@ protected:
    * @brief convenient transformation frame
    */
   descartes_core::Frame world_to_root_;
+
+  /**
+   * @brief Planning scene monitor (used to update internal planning scene)
+   */
+  mutable planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 };
 
 }  // descartes_moveit
