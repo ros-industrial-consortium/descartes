@@ -253,6 +253,11 @@ bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) co
   return in_collision;
 }
 
+bool MoveitStateAdapter::isInLimits(const std::vector<double> &joint_pose) const
+{
+  return joint_group_->satisfiesPositionBounds(joint_pose.data());
+}
+
 bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Affine3d& pose) const
 {
   bool rtn = false;
@@ -290,13 +295,7 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
     return false;
   }
 
-  // Satisfies joint positional bounds?
-  if (!joint_group_->satisfiesPositionBounds(joint_pose.data()))
-  {
-    return false;
-  }
-  // Is in collision (if collision is active)
-  return !isInCollision(joint_pose);
+  return isInLimits(joint_pose) && !isInCollision(joint_pose);
 }
 
 bool MoveitStateAdapter::isValid(const Eigen::Affine3d& pose) const

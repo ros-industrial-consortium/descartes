@@ -110,7 +110,15 @@ protected:
    * called previously in order to enable collision checks, otherwise it will return false.
    * @param joint_pose the joint values at which check for collisions will be made
    */
-  bool isInCollision(const std::vector<double> &joint_pose) const;
+  bool isInCollision(const std::vector<double>& joint_pose) const;
+
+  /**
+   * @brief Checks to see if the given joint_pose state is inside the bounds for the initialized
+   * robot model's active joints.
+   * @param joint_pose The pose to check; should be the same length as your groups active num active joints
+   * @return true if the @e joint_pose is in bounds, false otherwise
+   */
+  bool isInLimits(const std::vector<double>& joint_pose) const;
 
   /**
    * Maximum joint velocities (rad/s) for each joint in the chain. Used for checking in
