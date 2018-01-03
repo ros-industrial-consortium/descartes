@@ -25,7 +25,6 @@
   <build_depend>eigen</build_depend>
 
   <test_depend>rosunit</test_depend>
-  <test_depend>moveit_ros</test_depend>
 
   <export>
     <descartes_core plugin="${prefix}/moveit_adapter_plugins.xml"/>
