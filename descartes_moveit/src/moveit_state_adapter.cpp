@@ -72,8 +72,14 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
 {
   // Initialize MoveIt state objects
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
+  auto model = robot_model_loader_->getModel();
+  if (!model)
+  {
+    logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
+    return false;
+  }
 
-  return initialize(robot_model_loader_->getModel(), group_name, world_frame, tcp_frame);
+  return initialize(model, group_name, world_frame, tcp_frame);
 }
 
 bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
@@ -239,8 +245,10 @@ bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) co
   bool in_collision = false;
   if (check_collisions_)
   {
-    robot_state_->setJointGroupPositions(group_name_, joint_pose);
-    in_collision = planning_scene_->isStateColliding(*robot_state_, group_name_);
+    moveit::core::RobotState state (robot_model_ptr_);
+    state.setToDefaultValues();
+    robot_state_->setJointGroupPositions(joint_group_, joint_pose);
+    in_collision = planning_scene_->isStateColliding(state, group_name_);
   }
   return in_collision;
 }
