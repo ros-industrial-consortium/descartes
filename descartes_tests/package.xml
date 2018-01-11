@@ -11,6 +11,9 @@
   <license>Apache 2.0</license>
 
   <test_depend>gtest</test_depend>
+  <test_depend>rosunit</test_depend>
+  <test_depend>moveit_kinematics</test_depend>
+
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>descartes_moveit</build_depend>
   <build_depend>descartes_planner</build_depend>
