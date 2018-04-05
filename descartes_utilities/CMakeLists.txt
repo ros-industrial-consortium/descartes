@@ -12,7 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES descartes_utilities
-  CATKIN_DEPENDS descartes_core descartes_trajectory trajectory_msgs
+  CATKIN_DEPENDS 
+    descartes_core 
+    descartes_trajectory 
+    trajectory_msgs
 )
 
 include_directories(
@@ -22,7 +25,10 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/ros_conversions.cpp
+  src/spline_interpolator.cpp
+  src/parameterization.cpp
 )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_dependencies(${PROJECT_NAME} 
   ${catkin_EXPORTED_TARGETS}
@@ -42,3 +48,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
 )
+
+if(CATKIN_ENABLE_TESTING)
+  set(UTEST_SRC_FILES 
+      test/utest.cpp
+      test/parameterization_tests.cpp
+  )
+  catkin_add_gtest(${PROJECT_NAME}_utest ${UTEST_SRC_FILES})
+  target_link_libraries(${PROJECT_NAME}_utest ${PROJECT_NAME})
+endif()
