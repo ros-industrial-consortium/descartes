@@ -2,6 +2,7 @@
 #define PLANNING_GRAPH_EDGE_POLICY_H
 
 #include "descartes_planner/ladder_graph.h"
+#include <numeric>
 
 namespace descartes_planner
 {
