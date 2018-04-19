@@ -4,16 +4,16 @@ project(descartes_moveit)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  moveit_core
-  tf
   cmake_modules
   descartes_core
   descartes_trajectory
+  moveit_core
   moveit_ros_planning
   pluginlib
+  rosconsole_bridge
+  tf
 )
 
-find_package(rosconsole_bridge REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -26,15 +26,15 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    descartes_moveit
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
-    moveit_core
-    tf
     cmake_modules
     descartes_core
     descartes_trajectory
-  DEPENDS
+    moveit_core
     rosconsole_bridge
+    tf
+  DEPENDS
     Boost
     EIGEN3
 )
@@ -49,13 +49,13 @@ include_directories(include
 )
 
 ## Descartes MoveIt lib
-add_library(descartes_moveit
+add_library(${PROJECT_NAME}
+            src/ikfast_moveit_state_adapter.cpp
             src/moveit_state_adapter.cpp
             src/plugin_init.cpp
             src/seed_search.cpp
-            src/ikfast_moveit_state_adapter.cpp
 )
-target_link_libraries(descartes_moveit
+target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
 )
 
@@ -64,8 +64,12 @@ target_link_libraries(descartes_moveit
 #############
 
 install(
-    TARGETS ${PROJECT_NAME} 
+    TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+install(
+  FILES moveit_adapter_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 install(
     DIRECTORY include/${PROJECT_NAME}/
