@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(descartes_tests)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 -Wall -Wextra)
 
 find_package(catkin REQUIRED COMPONENTS
   descartes_moveit

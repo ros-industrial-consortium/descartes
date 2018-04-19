@@ -34,7 +34,7 @@ namespace descartes_planner
 class SparsePlanner : public descartes_core::PathPlannerBase
 {
 public:
-  typedef std::vector<std::tuple<int, descartes_core::TrajectoryPtPtr, descartes_trajectory::JointTrajectoryPt> >
+  typedef std::vector<std::tuple<std::size_t, descartes_core::TrajectoryPtPtr, descartes_trajectory::JointTrajectoryPt> >
       SolutionArray;
 
 public:

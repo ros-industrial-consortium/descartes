@@ -47,15 +47,15 @@ CartesianRobot::CartesianRobot(double pos_range, double orient_range, const std:
   displayRange(pos_range_, orient_range_);
 }
 
-bool CartesianRobot::initialize(const std::string &robot_description, const std::string &group_name,
-                                const std::string &world_frame, const std::string &tcp_frame)
+bool CartesianRobot::initialize(const std::string &, const std::string &,
+                                const std::string &, const std::string &)
 {
   return true;
 }
 
 bool CartesianRobot::isValidMove(const double *s, const double *f, double dt) const
 {
-  for (size_t i = 0; i < getDOF(); ++i)
+  for (int i = 0; i < getDOF(); ++i)
   {
     if (std::abs(s[i] - f[i]) / dt > joint_velocities_[i])
       return false;
@@ -63,7 +63,7 @@ bool CartesianRobot::isValidMove(const double *s, const double *f, double dt) co
   return true;
 }
 
-bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
+bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &,
                            std::vector<double> &joint_pose) const
 {
   bool rtn = false;

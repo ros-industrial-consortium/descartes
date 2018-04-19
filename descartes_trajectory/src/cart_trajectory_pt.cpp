@@ -136,7 +136,7 @@ double distance(const std::vector<double> &j1, const std::vector<double> &j2)
   double d;
   if (j1.size() == j2.size())
   {
-    for (int i = 0; i < j1.size(); i++)
+    for (std::size_t i = 0; i < j1.size(); i++)
     {
       d = j1[i] - j2[i];
       rt += d * d;
@@ -198,13 +198,13 @@ CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt, const descartes_core::T
 {
 }
 
-bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state, const RobotModel &model,
-                                          Eigen::Affine3d &pose) const
+bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &, const RobotModel &,
+                                          Eigen::Affine3d &) const
 {
   NOT_IMPLEMENTED_ERR(false);
 }
 
-bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state, const RobotModel &model,
+bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &, const RobotModel &,
                                           Eigen::Affine3d &pose) const
 {
   /* Simply return wobj_pt expressed in world */
@@ -291,7 +291,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 
   std::vector<double> closest_pose_vals = { t(0), t(1), t(2), rpy(0), rpy(1), rpy(2) };
   bool solve_ik = false;
-  for (int i = 0; i < vals.size(); i++)
+  for (std::size_t i = 0; i < vals.size(); i++)
   {
     auto &lower = std::get<1>(vals[i]);
     auto &upper = std::get<2>(vals[i]);
@@ -304,7 +304,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
       {
         solve_ik = true;
         closest_pose_vals[i] = v < lower ? lower : upper;
-        ROS_DEBUG("Cartesian nominal [%i] exceeded bounds: [val: %f, lower: %f, upper: %f]", i, v, lower, upper);
+        ROS_DEBUG("Cartesian nominal [%lu] exceeded bounds: [val: %f, lower: %f, upper: %f]", i, v, lower, upper);
       }
     }
     else
@@ -312,7 +312,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
       if (std::abs(v - lower) > EQUALITY_TOLERANCE)
       {
         solve_ik = true;
-        ROS_DEBUG("Cartesian nominals [%i] differ: [val: %f, lower: %f, upper: %f]", i, v, lower, upper);
+        ROS_DEBUG("Cartesian nominals [%lu] differ: [val: %f, lower: %f, upper: %f]", i, v, lower, upper);
         closest_pose_vals[i] = lower;
       }
     }
@@ -408,7 +408,7 @@ bool CartTrajectoryPt::isValid(const RobotModel &model) const
   return model.isValid(robot_pose);
 }
 
-bool CartTrajectoryPt::setDiscretization(const std::vector<double> &discretization)
+bool CartTrajectoryPt::setDiscretization(const std::vector<double> &)
 {
   NOT_IMPLEMENTED_ERR(false);
 }

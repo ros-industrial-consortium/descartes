@@ -69,28 +69,28 @@ JointTrajectoryPt::JointTrajectoryPt(const std::vector<TolerancedJointValue> &jo
 }
 
 JointTrajectoryPt::JointTrajectoryPt(const std::vector<double> &joints, const descartes_core::TimingConstraint &timing)
-  : nominal_(joints)
+  : descartes_core::TrajectoryPt(timing)
+  , nominal_(joints)
   , lower_(joints)
   , upper_(joints)
-  , descartes_core::TrajectoryPt(timing)
   , tool_(Eigen::Affine3d::Identity())
   , wobj_(Eigen::Affine3d::Identity())
 {
 }
 
-bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &seed_state, const RobotModel &model,
-                                           Eigen::Affine3d &pose) const
+bool JointTrajectoryPt::getClosestCartPose(const std::vector<double> &, const RobotModel &,
+                                           Eigen::Affine3d &) const
 {
   NOT_IMPLEMENTED_ERR(false)
 }
 
-bool JointTrajectoryPt::getNominalCartPose(const std::vector<double> &seed_state, const RobotModel &model,
+bool JointTrajectoryPt::getNominalCartPose(const std::vector<double> &, const RobotModel &model,
                                            Eigen::Affine3d &pose) const
 {
   return model.getFK(nominal_, pose);
 }
 
-void JointTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
+void JointTrajectoryPt::getCartesianPoses(const RobotModel &, EigenSTL::vector_Affine3d &poses) const
 {
   poses.clear();
 }
@@ -108,7 +108,7 @@ bool JointTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_stat
   }
 }
 
-bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state, const RobotModel &model,
+bool JointTrajectoryPt::getNominalJointPose(const std::vector<double> &, const RobotModel &,
                                             std::vector<double> &joint_pose) const
 {
   joint_pose.assign(nominal_.begin(), nominal_.end());

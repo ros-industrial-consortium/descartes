@@ -314,7 +314,7 @@ bool MoveitStateAdapter::isValidMove(const double* from_joint_pose,
                                      const double* to_joint_pose, double dt) const
 {
 
-  for (std::size_t i = 0; i < getDOF(); ++i)
+  for (int i = 0; i < getDOF(); ++i)
   {
     double dtheta = std::abs(from_joint_pose[i] - to_joint_pose[i]);
     double max_dtheta = dt * velocity_limits_[i];
