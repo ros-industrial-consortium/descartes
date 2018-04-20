@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   descartes_core
   descartes_trajectory
-  moveit_core
   pluginlib
   roscpp
 )
@@ -38,7 +37,6 @@ catkin_package(
   CATKIN_DEPENDS
     descartes_core
     descartes_trajectory
-    moveit_core
     roscpp
   DEPENDS
     Boost
