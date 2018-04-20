@@ -3,7 +3,7 @@
   <name>descartes_trajectory</name>
   <version>0.0.1</version>
   <description>The descartes_trajectory package</description>
-  
+
   <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
   <maintainer email="jonathan.meyer@swri.org">Jonathan Meyer</maintainer>
   <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
@@ -21,6 +21,8 @@
   <run_depend>descartes_core</run_depend>
   <run_depend>moveit_core</run_depend>
   <run_depend>roscpp</run_depend>
+
+  <test_depend>rosunit</test_depend>
 
   <export>
     <rosdoc config="rosdoc.yaml"/>

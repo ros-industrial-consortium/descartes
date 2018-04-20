@@ -4,12 +4,12 @@ project(descartes_planner)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
   descartes_core
   descartes_trajectory
   moveit_core
-  roscpp
   pluginlib
-  cmake_modules
+  roscpp
 )
 
 find_package(Boost REQUIRED)
@@ -34,12 +34,12 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    descartes_planner
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
-    roscpp
-    moveit_core
     descartes_core
     descartes_trajectory
+    moveit_core
+    roscpp
   DEPENDS
     Boost
     EIGEN3
@@ -55,29 +55,33 @@ include_directories(include
 )
 
 ## DescartesTrajectoryPt lib
-add_library(descartes_planner
-            src/planning_graph.cpp
-            src/sparse_planner.cpp
+add_library(${PROJECT_NAME}
             src/dense_planner.cpp
-            src/plugin_init.cpp
             src/ladder_graph_dag_search.cpp
+            src/planning_graph.cpp
+            src/plugin_init.cpp
+            src/sparse_planner.cpp
 )
 
-target_link_libraries(descartes_planner
+target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
                       ${OpenMP_FLAGS}
 )
 
-target_compile_options(descartes_planner PRIVATE ${OpenMP_FLAGS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${OpenMP_FLAGS})
 
-add_dependencies(descartes_planner ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
 #############
 install(
-    TARGETS ${PROJECT_NAME} 
+    TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+install(
+  FILES ${PROJECT_NAME}_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 install(
     DIRECTORY include/${PROJECT_NAME}/

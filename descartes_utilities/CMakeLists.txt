@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES descartes_utilities
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS descartes_core descartes_trajectory trajectory_msgs
 )
 
@@ -24,7 +24,7 @@ add_library(${PROJECT_NAME}
   src/ros_conversions.cpp
 )
 
-add_dependencies(${PROJECT_NAME} 
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 

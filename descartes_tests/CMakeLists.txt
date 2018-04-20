@@ -70,7 +70,7 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(${PROJECT_NAME}_planner_utest ${PROJECT_NAME})
 
   # Moveit adapter unit tests
-  find_package(rostest)
+  find_package(rostest REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_moveit_utest
     test/moveit/launch/utest.launch
     test/moveit/utest.cpp
