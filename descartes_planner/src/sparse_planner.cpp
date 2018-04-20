@@ -337,7 +337,7 @@ bool SparsePlanner::modify(const TrajectoryPt::ID& ref_id, TrajectoryPtPtr cp)
     }
   }
 
-  int index = getDensePointIndex(ref_id);
+  std::size_t index = getDensePointIndex(ref_id);
   cart_points_[index] = cp;
   if (plan())
   {
@@ -365,7 +365,7 @@ bool SparsePlanner::isInSparseTrajectory(const TrajectoryPt::ID& ref_id)
           sparse_solution_array_.end());
 }
 
-int SparsePlanner::getDensePointIndex(const TrajectoryPt::ID& ref_id)
+std::size_t SparsePlanner::getDensePointIndex(const TrajectoryPt::ID& ref_id)
 {
   std::size_t index = INVALID_INDEX;
   auto predicate = [&ref_id](TrajectoryPtPtr cp)
@@ -399,7 +399,7 @@ int SparsePlanner::getSparsePointIndex(const TrajectoryPt::ID& ref_id)
   return index;
 }
 
-int SparsePlanner::findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id, bool skip_equal)
+std::size_t SparsePlanner::findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id, bool skip_equal)
 {
   std::size_t index = INVALID_INDEX;
   std::size_t dense_index = getDensePointIndex(ref_id);
