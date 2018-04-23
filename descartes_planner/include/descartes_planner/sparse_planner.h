@@ -34,7 +34,7 @@ namespace descartes_planner
 class SparsePlanner : public descartes_core::PathPlannerBase
 {
 public:
-  typedef std::vector<std::tuple<std::size_t, descartes_core::TrajectoryPtPtr, descartes_trajectory::JointTrajectoryPt> >
+  typedef std::vector<std::tuple<int, descartes_core::TrajectoryPtPtr, descartes_trajectory::JointTrajectoryPt> >
       SolutionArray;
 
 public:
@@ -69,9 +69,9 @@ protected:
   void sampleTrajectory(double sampling, const std::vector<descartes_core::TrajectoryPtPtr>& dense_trajectory_array,
                         std::vector<descartes_core::TrajectoryPtPtr>& sparse_trajectory_array);
 
-  std::size_t getDensePointIndex(const descartes_core::TrajectoryPt::ID& ref_id);
+  int getDensePointIndex(const descartes_core::TrajectoryPt::ID& ref_id);
   int getSparsePointIndex(const descartes_core::TrajectoryPt::ID& ref_id);
-  std::size_t findNearestSparsePointIndex(const descartes_core::TrajectoryPt::ID& ref_id, bool skip_equal = true);
+  int findNearestSparsePointIndex(const descartes_core::TrajectoryPt::ID& ref_id, bool skip_equal = true);
   bool isInSparseTrajectory(const descartes_core::TrajectoryPt::ID& ref_id);
   bool checkJointChanges(const std::vector<double>& s1, const std::vector<double>& s2, const double& max_change);
 

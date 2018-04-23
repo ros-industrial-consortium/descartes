@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(descartes_planner)
 
-add_compile_options(-std=c++11 -Wall -Wextra)
+add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   descartes_core
   descartes_trajectory
-  moveit_core
   pluginlib
   roscpp
 )
@@ -38,7 +37,6 @@ catkin_package(
   CATKIN_DEPENDS
     descartes_core
     descartes_trajectory
-    moveit_core
     roscpp
   DEPENDS
     Boost
