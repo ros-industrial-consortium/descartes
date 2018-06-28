@@ -75,7 +75,7 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   auto model = robot_model_loader_->getModel();
   if (!model)
   {
-    logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
+    CONSOLE_BRIDGE_logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
     return false;
   }
 
@@ -99,17 +99,17 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
   // Validate our model inputs w/ URDF
   if (!joint_group_)
   {
-    logError("%s: Joint group '%s' does not exist in robot model", __FUNCTION__, group_name_.c_str());
+    CONSOLE_BRIDGE_logError("%s: Joint group '%s' does not exist in robot model", __FUNCTION__, group_name_.c_str());
     std::stringstream msg;
     msg << "Possible group names: " << robot_state_->getRobotModel()->getJointModelGroupNames();
-    logError(msg.str().c_str());
+    CONSOLE_BRIDGE_logError(msg.str().c_str());
     return false;
   }
 
   const auto& link_names = joint_group_->getLinkModelNames();
   if (tool_frame_ != link_names.back())
   {
-    logError("%s: Tool frame '%s' does not match group tool frame '%s', functionality"
+    CONSOLE_BRIDGE_logError("%s: Tool frame '%s' does not match group tool frame '%s', functionality"
              "will be implemented in the future",
              __FUNCTION__, tool_frame_.c_str(), link_names.back().c_str());
     return false;
@@ -117,19 +117,19 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
 
   if (!::getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
   {
-    logWarn("%s: Could not determine velocity limits of RobotModel from MoveIt", __FUNCTION__);
+    CONSOLE_BRIDGE_logWarn("%s: Could not determine velocity limits of RobotModel from MoveIt", __FUNCTION__);
   }
 
   if (seed_states_.empty())
   {
     seed_states_ = seed::findRandomSeeds(*robot_state_, group_name_, SAMPLE_ITERATIONS);
-    logDebug("Generated %lu random seeds", static_cast<unsigned long>(seed_states_.size()));
+    CONSOLE_BRIDGE_logDebug("Generated %lu random seeds", static_cast<unsigned long>(seed_states_.size()));
   }
 
   auto model_frame = robot_state_->getRobotModel()->getModelFrame();
   if (world_frame_ != model_frame)
   {
-    logInform("%s: World frame '%s' does not match model root frame '%s', all poses will be"
+    CONSOLE_BRIDGE_logInform("%s: World frame '%s' does not match model root frame '%s', all poses will be"
               " transformed to world frame '%s'",
               __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
 
@@ -181,7 +181,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
   // in the middle of a discretization step could be double counted.  In reality, we'd like solutions
   // to be further apart than this.
   double epsilon = 4 * joint_group_->getSolverInstance()->getSearchDiscretization();
-  logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
+  CONSOLE_BRIDGE_logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
   for (size_t sample_iter = 0; sample_iter < seed_states_.size(); ++sample_iter)
   {
@@ -193,14 +193,14 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
       {
         std::stringstream msg;
         msg << "Found *first* solution on " << sample_iter << " iteration, joint: " << joint_pose;
-        logDebug(msg.str().c_str());
+        CONSOLE_BRIDGE_logDebug(msg.str().c_str());
         joint_poses.push_back(joint_pose);
       }
       else
       {
         std::stringstream msg;
         msg << "Found *potential* solution on " << sample_iter << " iteration, joint: " << joint_pose;
-        logDebug(msg.str().c_str());
+        CONSOLE_BRIDGE_logDebug(msg.str().c_str());
 
         std::vector<std::vector<double> >::iterator joint_pose_it;
         bool match_found = false;
@@ -208,7 +208,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
         {
           if (descartes_core::utils::equal(joint_pose, (*joint_pose_it), epsilon))
           {
-            logDebug("Found matching, potential solution is not new");
+            CONSOLE_BRIDGE_logDebug("Found matching, potential solution is not new");
             match_found = true;
             break;
           }
@@ -217,24 +217,24 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
         {
           std::stringstream msg;
           msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << joint_pose;
-          logDebug(msg.str().c_str());
+          CONSOLE_BRIDGE_logDebug(msg.str().c_str());
           joint_poses.push_back(joint_pose);
         }
       }
     }
   }
 
-  logDebug("Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
+  CONSOLE_BRIDGE_logDebug("Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
            static_cast<unsigned long>(seed_states_.size()));
 
   if (joint_poses.empty())
   {
-    logError("Found 0 joint solutions out of %lu iterations", static_cast<unsigned long>(seed_states_.size()));
+    CONSOLE_BRIDGE_logError("Found 0 joint solutions out of %lu iterations", static_cast<unsigned long>(seed_states_.size()));
     return false;
   }
   else
   {
-    logInform("Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
+    CONSOLE_BRIDGE_logInform("Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
               static_cast<unsigned long>(seed_states_.size()));
     return true;
   }
@@ -271,13 +271,13 @@ bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Aff
     }
     else
     {
-      logError("Robot state does not recognize tool frame: %s", tool_frame_.c_str());
+      CONSOLE_BRIDGE_logError("Robot state does not recognize tool frame: %s", tool_frame_.c_str());
       rtn = false;
     }
   }
   else
   {
-    logError("Invalid joint pose passed to get forward kinematics");
+    CONSOLE_BRIDGE_logError("Invalid joint pose passed to get forward kinematics");
     rtn = false;
   }
 
@@ -289,7 +289,7 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
   // Logical check on input sizes
   if (joint_group_->getActiveJointModels().size() != joint_pose.size())
   {
-    logError("Size of joint pose: %lu doesn't match robot state variable size: %lu",
+    CONSOLE_BRIDGE_logError("Size of joint pose: %lu doesn't match robot state variable size: %lu",
              static_cast<unsigned long>(joint_pose.size()),
              static_cast<unsigned long>(joint_group_->getActiveJointModels().size()));
     return false;

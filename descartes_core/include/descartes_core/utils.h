@@ -20,6 +20,7 @@
 #define UTILS_H_
 
 #include <boost/shared_ptr.hpp>
+#include <console_bridge/console.h>
 #include <Eigen/Core>
 
 /** \def DESCARTES_CLASS_FORWARD
@@ -80,7 +81,7 @@ static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, doubl
       break;
 
     default:
-      logError("Invalid euler convention entry %i", convention);
+      CONSOLE_BRIDGE_logError("Invalid euler convention entry %i", convention);
       break;
   }
 
