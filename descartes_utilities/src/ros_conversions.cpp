@@ -54,14 +54,14 @@ bool descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& mod
 {
   if (default_joint_vel <= 0.0)
   {
-    logError("%s: Invalid value for default joint velocity. Must be > 0 (radians/second)", __FUNCTION__);
+    CONSOLE_BRIDGE_logError("%s: Invalid value for default joint velocity. Must be > 0 (radians/second)", __FUNCTION__);
     return false;
   }
 
   const static double max_default_joint_velocity = 100.0;  // (radians / s); approx 1000 rpm
   if (default_joint_vel > max_default_joint_velocity)
   {
-    logError("%s: Default joint velocity of %f exceeds assumed limit of %f.", __FUNCTION__, default_joint_vel,
+    CONSOLE_BRIDGE_logError("%s: Default joint velocity of %f exceeds assumed limit of %f.", __FUNCTION__, default_joint_vel,
              max_default_joint_velocity);
     return false;
   }
@@ -77,7 +77,7 @@ bool descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& mod
   {
     if (!joint_traj[i])
     {
-      logError("%s: Input trajectory contained null pointer at index %lu", __FUNCTION__, static_cast<unsigned long>(i));
+      CONSOLE_BRIDGE_logError("%s: Input trajectory contained null pointer at index %lu", __FUNCTION__, static_cast<unsigned long>(i));
       return false;
     }
 
@@ -85,7 +85,7 @@ bool descartes_utilities::toRosJointPoints(const descartes_core::RobotModel& mod
 
     if (!pt.getNominalJointPose(dummy, model, joint_point))
     {
-      logError("%s: Failed to extract joint positions from input trajectory at index %lu", __FUNCTION__,
+      CONSOLE_BRIDGE_logError("%s: Failed to extract joint positions from input trajectory at index %lu", __FUNCTION__,
                static_cast<unsigned long>(i));
       return false;
     }
