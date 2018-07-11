@@ -19,7 +19,6 @@
 #include <console_bridge/console.h>
 
 #include "descartes_moveit/moveit_state_adapter.h"
-#include "descartes_core/pretty_print.hpp"
 #include "descartes_moveit/seed_search.h"
 
 #include <eigen_conversions/eigen_msg.h>
@@ -101,8 +100,12 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
   {
     CONSOLE_BRIDGE_logError("%s: Joint group '%s' does not exist in robot model", __FUNCTION__, group_name_.c_str());
     std::stringstream msg;
-    msg << "Possible group names: " << robot_state_->getRobotModel()->getJointModelGroupNames();
+
+    msg << "Possible group names: ";
+    for (const auto& name : robot_state_->getRobotModel()->getJointModelGroupNames())
+      msg << name << ", ";
     CONSOLE_BRIDGE_logError(msg.str().c_str());
+
     return false;
   }
 
@@ -192,14 +195,12 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
       if (joint_poses.empty())
       {
         std::stringstream msg;
-        msg << "Found *first* solution on " << sample_iter << " iteration, joint: " << joint_pose;
         CONSOLE_BRIDGE_logDebug(msg.str().c_str());
         joint_poses.push_back(joint_pose);
       }
       else
       {
         std::stringstream msg;
-        msg << "Found *potential* solution on " << sample_iter << " iteration, joint: " << joint_pose;
         CONSOLE_BRIDGE_logDebug(msg.str().c_str());
 
         std::vector<std::vector<double> >::iterator joint_pose_it;
@@ -216,7 +217,6 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
         if (!match_found)
         {
           std::stringstream msg;
-          msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << joint_pose;
           CONSOLE_BRIDGE_logDebug(msg.str().c_str());
           joint_poses.push_back(joint_pose);
         }
