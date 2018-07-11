@@ -49,7 +49,6 @@ add_library(${PROJECT_NAME}
             src/axial_symmetric_pt.cpp
             src/cart_trajectory_pt.cpp
             src/joint_trajectory_pt.cpp
-            src/trajectory.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
