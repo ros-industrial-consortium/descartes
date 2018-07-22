@@ -72,10 +72,17 @@ public:
   AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis,
                    const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
-  virtual descartes_core::TrajectoryPtPtr copy() const
+  descartes_core::TrajectoryPtPtr copy() const override
   {
     return descartes_core::TrajectoryPtPtr(new AxialSymmetricPt(*this));
   }
+
+  void getJointPoses(const descartes_core::RobotModel &model, std::vector<std::vector<double>> &joint_poses) const override;
+
+  void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Affine3d &poses) const override;
+
+private:
+  FreeAxis axis_;
 };
 
 }  // descartes trajectory

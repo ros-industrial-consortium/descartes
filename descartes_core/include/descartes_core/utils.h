@@ -21,7 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <console_bridge/console.h>
-#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 /** \def DESCARTES_CLASS_FORWARD
     Macro that forward declares a class XXX, and also defines two shared ptrs with named XXXPtr and XXXConstPtr  */
