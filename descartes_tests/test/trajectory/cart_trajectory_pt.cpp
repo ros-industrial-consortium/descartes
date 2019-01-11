@@ -38,7 +38,7 @@ TEST(CartTrajPt, zeroTolerance)
                                                 ToleranceBase::zeroTolerance<OrientationTolerance>(0.0, 0.0, 0.0)),
                                 0, 0);
 
-  EigenSTL::vector_Affine3d solutions;
+  EigenSTL::vector_Isometry3d solutions;
   std::vector<std::vector<double> > joint_solutions;
 
   CartesianRobot robot;
@@ -64,7 +64,7 @@ TEST(CartTrajPt, closestJointPose)
   const double ry = 0.0f;
   const double rz = M_PI / 4;
   std::vector<double> joint_pose = { x, y, z, rx, ry, rz };
-  Eigen::Affine3d frame_pose = descartes_core::utils::toFrame(x, y, z, rx, ry, rz);
+  Eigen::Isometry3d frame_pose = descartes_core::utils::toFrame(x, y, z, rx, ry, rz);
 
   ROS_INFO_STREAM("Initializing tolerance cartesian point");
   CartTrajectoryPt cart_point(
@@ -119,7 +119,7 @@ TEST(CartTrajPt, getPoses)
                       ToleranceBase::createSymmetric<OrientationTolerance>(0.0, 0.0, 0.0, ORIENT_TOL + EPSILON)),
       POS_INC, ORIENT_INC);
 
-  EigenSTL::vector_Affine3d solutions;
+  EigenSTL::vector_Isometry3d solutions;
   std::vector<std::vector<double> > joint_solutions;
 
   ROS_INFO_STREAM("Testing fuzzy pos point");

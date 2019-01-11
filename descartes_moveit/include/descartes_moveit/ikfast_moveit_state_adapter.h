@@ -33,12 +33,12 @@ public:
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
                           const std::string& world_frame, const std::string& tcp_frame);
 
-  virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::vector<double> >& joint_poses) const;
+  virtual bool getAllIK(const Eigen::Isometry3d& pose, std::vector<std::vector<double> >& joint_poses) const;
 
-  virtual bool getIK(const Eigen::Affine3d& pose, const std::vector<double>& seed_state,
+  virtual bool getIK(const Eigen::Isometry3d& pose, const std::vector<double>& seed_state,
                      std::vector<double>& joint_pose) const;
 
-  virtual bool getFK(const std::vector<double>& joint_pose, Eigen::Affine3d& pose) const;
+  virtual bool getFK(const std::vector<double>& joint_pose, Eigen::Isometry3d& pose) const;
 
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,

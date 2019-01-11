@@ -35,13 +35,13 @@ TEST(AxialSymPt, discretization_count)
   const double SEARCH_DISC = M_PI / 2.0;
   CartesianRobot robot(10.0, 2 * M_PI);
 
-  Eigen::Affine3d pose(Eigen::Affine3d::Identity());
+  Eigen::Isometry3d pose(Eigen::Isometry3d::Identity());
 
   AxialSymmetricPt z_point(pose, SEARCH_DISC, AxialSymmetricPt::Z_AXIS);
   AxialSymmetricPt x_point(pose, SEARCH_DISC, AxialSymmetricPt::X_AXIS);
   AxialSymmetricPt y_point(pose, SEARCH_DISC, AxialSymmetricPt::Y_AXIS);
 
-  EigenSTL::vector_Affine3d solutions;
+  EigenSTL::vector_Isometry3d solutions;
   std::vector<std::vector<double> > joint_solutions;
 
   const unsigned EXPECTED_POSES = (2.0 * M_PI / SEARCH_DISC) + 1;
@@ -72,7 +72,7 @@ TEST(AxialSymPt, discretization_values)
   const double SEARCH_DISC = M_PI / 2.0;
   CartesianRobot robot(10.0, 2 * M_PI);
 
-  Eigen::Affine3d pose(Eigen::Affine3d::Identity());
+  Eigen::Isometry3d pose(Eigen::Isometry3d::Identity());
 
   AxialSymmetricPt z_point(pose, SEARCH_DISC, AxialSymmetricPt::Z_AXIS);
   AxialSymmetricPt x_point(pose, SEARCH_DISC, AxialSymmetricPt::X_AXIS);
@@ -80,7 +80,7 @@ TEST(AxialSymPt, discretization_values)
 
   const double ANGLE_TOL = 0.001;
   //
-  EigenSTL::vector_Affine3d solutions;
+  EigenSTL::vector_Isometry3d solutions;
   z_point.getCartesianPoses(robot, solutions);
   for (std::size_t i = 0; i < solutions.size(); ++i)
   {

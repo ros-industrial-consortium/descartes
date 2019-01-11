@@ -42,15 +42,15 @@ namespace descartes_core
 struct Frame
 {
   Frame(){};
-  Frame(const Eigen::Affine3d &a) : frame(a), frame_inv(a.inverse()){};
+  Frame(const Eigen::Isometry3d &a) : frame(a), frame_inv(a.inverse()){};
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-  Eigen::Affine3d frame;
-  Eigen::Affine3d frame_inv;
+  Eigen::Isometry3d frame;
+  Eigen::Isometry3d frame_inv;
 
   static const Frame Identity()
   {
-    return Frame(Eigen::Affine3d::Identity());
+    return Frame(Eigen::Isometry3d::Identity());
   }
 };
 
@@ -90,7 +90,7 @@ public:
    * @return True if calculation successful. pose untouched if return false.
    */
   virtual bool getClosestCartPose(const std::vector<double> &seed_state, const RobotModel &kinematics,
-                                  Eigen::Affine3d &pose) const = 0;
+                                  Eigen::Isometry3d &pose) const = 0;
 
   /**@brief Get single Cartesian pose associated with nominal of this point.
     * (Pose of TOOL point expressed in WOBJ frame).
@@ -100,13 +100,13 @@ public:
     * @return True if calculation successful. pose untouched if return false.
     */
   virtual bool getNominalCartPose(const std::vector<double> &seed_state, const RobotModel &kinematics,
-                                  Eigen::Affine3d &pose) const = 0;
+                                  Eigen::Isometry3d &pose) const = 0;
 
   /**@brief Get "all" Cartesian poses that satisfy this point.
    * @param kinematics Kinematics object used to calculate pose
    * @param poses Note: Number of poses returned may be subject to discretization used.
    */
-  virtual void getCartesianPoses(const RobotModel &kinematics, EigenSTL::vector_Affine3d &poses) const = 0;
+  virtual void getCartesianPoses(const RobotModel &kinematics, EigenSTL::vector_Isometry3d &poses) const = 0;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)

@@ -64,14 +64,14 @@ bool descartes_moveit::IkFastMoveitStateAdapter::initialize(const std::string& r
   return computeIKFastTransforms();
 }
 
-bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose,
+bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
   joint_poses.clear();
   const auto& solver = joint_group_->getSolverInstance();
 
   // Transform input pose
-  Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
+  Eigen::Isometry3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
 
   // convert to geometry_msgs ...
   geometry_msgs::Pose geometry_pose;
@@ -97,7 +97,7 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
   return joint_poses.size() > 0;
 }
 
-bool descartes_moveit::IkFastMoveitStateAdapter::getIK(const Eigen::Affine3d& pose,
+bool descartes_moveit::IkFastMoveitStateAdapter::getIK(const Eigen::Isometry3d& pose,
                                                        const std::vector<double>& seed_state,
                                                        std::vector<double>& joint_pose) const
 {
@@ -111,7 +111,7 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getIK(const Eigen::Affine3d& po
 }
 
 bool descartes_moveit::IkFastMoveitStateAdapter::getFK(const std::vector<double>& joint_pose,
-                                                       Eigen::Affine3d& pose) const
+                                                       Eigen::Isometry3d& pose) const
 {
   const auto& solver = joint_group_->getSolverInstance();
 
