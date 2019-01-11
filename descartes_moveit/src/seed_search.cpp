@@ -14,7 +14,7 @@ typedef std::vector<JointConfig> JointConfigVec;
  * @brief Forward kinematics helper
  */
 bool doFK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* group, const std::string& tool,
-          const JointConfig& joint_pose, Eigen::Affine3d& result)
+          const JointConfig& joint_pose, Eigen::Isometry3d& result)
 {
   state.setJointGroupPositions(group, joint_pose);
   if (!state.knowsFrameTransform(tool))
@@ -38,7 +38,7 @@ bool doFK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* 
  *        May return false if IK failed.
  */
 bool doIK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* group, const std::string& group_name,
-          const std::string& tool, const Eigen::Affine3d& pose, const JointConfig& seed, JointConfig& result)
+          const std::string& tool, const Eigen::Isometry3d& pose, const JointConfig& seed, JointConfig& result)
 {
   const static int N_ATTEMPTS = 1;
   const static double IK_TIMEOUT = 0.01;
@@ -151,7 +151,7 @@ JointConfigVec findSeedStatesForPair(moveit::core::RobotState& state, const std:
     JointConfigVec this_round_iks;
 
     // Forward kinematics
-    Eigen::Affine3d target_pose;
+    Eigen::Isometry3d target_pose;
     if (!doFK(state, group, tool_frame, round_ik, target_pose))
     {
       ROS_DEBUG_STREAM("No FK for pose " << i);

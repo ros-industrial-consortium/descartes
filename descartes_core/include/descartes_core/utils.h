@@ -56,12 +56,12 @@ enum EulerConvention
 typedef EulerConventions::EulerConvention EulerConvention;
 
 // Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
-static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
+static Eigen::Isometry3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
                                int convention = int(EulerConventions::ZYX)) __attribute__((unused));
 
-static Eigen::Affine3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz, int convention)
+static Eigen::Isometry3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz, int convention)
 {
-  Eigen::Affine3d rtn;
+  Eigen::Isometry3d rtn;
 
   switch (convention)
   {

@@ -41,10 +41,10 @@ using namespace descartes_core;
 
 namespace descartes_trajectory
 {
-EigenSTL::vector_Affine3d uniform(const TolerancedFrame &frame, const double orient_increment,
+EigenSTL::vector_Isometry3d uniform(const TolerancedFrame &frame, const double orient_increment,
                                   const double pos_increment)
 {
-  EigenSTL::vector_Affine3d rtn;
+  EigenSTL::vector_Isometry3d rtn;
 
   if (pos_increment < 0.0 || orient_increment < 0.0)
   {
@@ -53,7 +53,7 @@ EigenSTL::vector_Affine3d uniform(const TolerancedFrame &frame, const double ori
     return rtn;
   }
 
-  Eigen::Affine3d sampled_frame;
+  Eigen::Isometry3d sampled_frame;
 
   // Calculating the number of samples for each tolerance (position and orientation)
   size_t ntx, nty, ntz, nrx, nry, nrz;
@@ -153,10 +153,10 @@ double distance(const std::vector<double> &j1, const std::vector<double> &j2)
 
 CartTrajectoryPt::CartTrajectoryPt(const descartes_core::TimingConstraint &timing)
   : descartes_core::TrajectoryPt(timing)
-  , tool_base_(Eigen::Affine3d::Identity())
-  , tool_pt_(Eigen::Affine3d::Identity())
-  , wobj_base_(Eigen::Affine3d::Identity())
-  , wobj_pt_(Eigen::Affine3d::Identity())
+  , tool_base_(Eigen::Isometry3d::Identity())
+  , tool_pt_(Eigen::Isometry3d::Identity())
+  , wobj_base_(Eigen::Isometry3d::Identity())
+  , wobj_pt_(Eigen::Isometry3d::Identity())
   , pos_increment_(0.0)
   , orient_increment_(0.0)
 {
@@ -178,9 +178,9 @@ CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_base, const TolerancedFrame
 CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_increment, double orient_increment,
                                    const descartes_core::TimingConstraint &timing)
   : descartes_core::TrajectoryPt(timing)
-  , tool_base_(Eigen::Affine3d::Identity())
-  , tool_pt_(Eigen::Affine3d::Identity())
-  , wobj_base_(Eigen::Affine3d::Identity())
+  , tool_base_(Eigen::Isometry3d::Identity())
+  , tool_pt_(Eigen::Isometry3d::Identity())
+  , wobj_base_(Eigen::Isometry3d::Identity())
   , wobj_pt_(wobj_pt)
   , pos_increment_(pos_increment)
   , orient_increment_(orient_increment)
@@ -189,9 +189,9 @@ CartTrajectoryPt::CartTrajectoryPt(const TolerancedFrame &wobj_pt, double pos_in
 
 CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt, const descartes_core::TimingConstraint &timing)
   : descartes_core::TrajectoryPt(timing)
-  , tool_base_(Eigen::Affine3d::Identity())
-  , tool_pt_(Eigen::Affine3d::Identity())
-  , wobj_base_(Eigen::Affine3d::Identity())
+  , tool_base_(Eigen::Isometry3d::Identity())
+  , tool_pt_(Eigen::Isometry3d::Identity())
+  , wobj_base_(Eigen::Isometry3d::Identity())
   , wobj_pt_(wobj_pt)
   , pos_increment_(0)
   , orient_increment_(0)
@@ -199,23 +199,23 @@ CartTrajectoryPt::CartTrajectoryPt(const Frame &wobj_pt, const descartes_core::T
 }
 
 bool CartTrajectoryPt::getClosestCartPose(const std::vector<double> &, const RobotModel &,
-                                          Eigen::Affine3d &) const
+                                          Eigen::Isometry3d &) const
 {
   NOT_IMPLEMENTED_ERR(false);
 }
 
 bool CartTrajectoryPt::getNominalCartPose(const std::vector<double> &, const RobotModel &,
-                                          Eigen::Affine3d &pose) const
+                                          Eigen::Isometry3d &pose) const
 {
   /* Simply return wobj_pt expressed in world */
   pose = wobj_base_.frame * wobj_pt_.frame;
   return true;  // TODO can this ever return false?
 }
 
-bool CartTrajectoryPt::computeCartesianPoses(EigenSTL::vector_Affine3d &poses) const
+bool CartTrajectoryPt::computeCartesianPoses(EigenSTL::vector_Isometry3d &poses) const
 {
-  EigenSTL::vector_Affine3d sampled_wobj_pts = uniform(wobj_pt_, orient_increment_, pos_increment_);
-  EigenSTL::vector_Affine3d sampled_tool_pts = uniform(tool_pt_, orient_increment_, pos_increment_);
+  EigenSTL::vector_Isometry3d sampled_wobj_pts = uniform(wobj_pt_, orient_increment_, pos_increment_);
+  EigenSTL::vector_Isometry3d sampled_tool_pts = uniform(tool_pt_, orient_increment_, pos_increment_);
 
   poses.clear();
   poses.reserve(sampled_wobj_pts.size() * sampled_tool_pts.size());
@@ -223,7 +223,7 @@ bool CartTrajectoryPt::computeCartesianPoses(EigenSTL::vector_Affine3d &poses) c
   {
     for (size_t tool_pt = 0; tool_pt < sampled_tool_pts.size(); ++tool_pt)
     {
-      Eigen::Affine3d pose =
+      Eigen::Isometry3d pose =
           wobj_base_.frame * sampled_wobj_pts[wobj_pt] * sampled_tool_pts[tool_pt].inverse() * tool_base_.frame_inv;
 
       poses.push_back(pose);
@@ -233,9 +233,9 @@ bool CartTrajectoryPt::computeCartesianPoses(EigenSTL::vector_Affine3d &poses) c
   return !poses.empty();
 }
 
-void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Affine3d &poses) const
+void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vector_Isometry3d &poses) const
 {
-  EigenSTL::vector_Affine3d all_poses;
+  EigenSTL::vector_Isometry3d all_poses;
   poses.clear();
 
   if (computeCartesianPoses(all_poses))
@@ -268,7 +268,7 @@ void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vect
 bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state, const RobotModel &model,
                                            std::vector<double> &joint_pose) const
 {
-  Eigen::Affine3d nominal_pose, candidate_pose;
+  Eigen::Isometry3d nominal_pose, candidate_pose;
 
   if (!model.getFK(seed_state, candidate_pose))
   {
@@ -320,7 +320,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 
   if (solve_ik)
   {
-    Eigen::Affine3d closest_pose = descartes_core::utils::toFrame(
+    Eigen::Isometry3d closest_pose = descartes_core::utils::toFrame(
         closest_pose_vals[0], closest_pose_vals[1], closest_pose_vals[2], closest_pose_vals[3], closest_pose_vals[4],
         closest_pose_vals[5], descartes_core::utils::EulerConventions::XYZ);
     if (!model.getIK(closest_pose, seed_state, joint_pose))
@@ -365,7 +365,7 @@ bool CartTrajectoryPt::getClosestJointPose(const std::vector<double> &seed_state
 bool CartTrajectoryPt::getNominalJointPose(const std::vector<double> &seed_state, const RobotModel &model,
                                            std::vector<double> &joint_pose) const
 {
-  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame * tool_pt_.frame_inv * tool_base_.frame_inv;
+  Eigen::Isometry3d robot_pose = wobj_base_.frame * wobj_pt_.frame * tool_pt_.frame_inv * tool_base_.frame_inv;
   return model.getIK(robot_pose, seed_state, joint_pose);
 }
 
@@ -373,7 +373,7 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
 {
   joint_poses.clear();
 
-  EigenSTL::vector_Affine3d poses;
+  EigenSTL::vector_Isometry3d poses;
   if (computeCartesianPoses(poses))
   {
     poses.reserve(poses.size());
@@ -404,7 +404,7 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
 
 bool CartTrajectoryPt::isValid(const RobotModel &model) const
 {
-  Eigen::Affine3d robot_pose = wobj_base_.frame * wobj_pt_.frame * tool_pt_.frame_inv * tool_base_.frame_inv;
+  Eigen::Isometry3d robot_pose = wobj_base_.frame * wobj_pt_.frame * tool_pt_.frame_inv * tool_base_.frame_inv;
   return model.isValid(robot_pose);
 }
 

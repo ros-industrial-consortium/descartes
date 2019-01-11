@@ -63,7 +63,7 @@ bool CartesianRobot::isValidMove(const double *s, const double *f, double dt) co
   return true;
 }
 
-bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double> &,
+bool CartesianRobot::getIK(const Eigen::Isometry3d &pose, const std::vector<double> &,
                            std::vector<double> &joint_pose) const
 {
   bool rtn = false;
@@ -87,14 +87,14 @@ bool CartesianRobot::getIK(const Eigen::Affine3d &pose, const std::vector<double
   return rtn;
 }
 
-bool CartesianRobot::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const
+bool CartesianRobot::getAllIK(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &joint_poses) const
 {
   std::vector<double> empty;
   joint_poses.resize(1);
   return getIK(pose, empty, joint_poses[0]);
 }
 
-bool CartesianRobot::getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const
+bool CartesianRobot::getFK(const std::vector<double> &joint_pose, Eigen::Isometry3d &pose) const
 {
   bool rtn = false;
 
@@ -141,7 +141,7 @@ bool CartesianRobot::isValid(const std::vector<double> &joint_pose) const
   return rtn;
 }
 
-bool CartesianRobot::isValid(const Eigen::Affine3d &pose) const
+bool CartesianRobot::isValid(const Eigen::Isometry3d &pose) const
 {
   bool rtn = false;
   double R, P, Y;

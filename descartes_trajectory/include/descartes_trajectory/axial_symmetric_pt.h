@@ -69,7 +69,7 @@ public:
    * @brief Similar to other constructor except that it takes an affine pose instead of
    *        individual translation and rotation arguments.
    */
-  AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis,
+  AxialSymmetricPt(const Eigen::Isometry3d& pose, double orient_increment, FreeAxis axis,
                    const descartes_core::TimingConstraint& timing = descartes_core::TimingConstraint());
 
   virtual descartes_core::TrajectoryPtPtr copy() const
