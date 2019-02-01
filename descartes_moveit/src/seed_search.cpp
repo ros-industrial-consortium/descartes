@@ -1,3 +1,4 @@
+#include "descartes_moveit/utils.h"
 #include <descartes_moveit/seed_search.h>
 
 #include <ros/ros.h>
@@ -29,7 +30,7 @@ bool doFK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* 
     return false;
   }
 
-  result = state.getFrameTransform(tool);
+  result = toIsometry(state.getFrameTransform(tool));
   return true;
 }
 

@@ -18,9 +18,11 @@
 
 #include <console_bridge/console.h>
 
+#include "descartes_moveit/utils.h"
 #include "descartes_moveit/moveit_state_adapter.h"
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_moveit/seed_search.h"
+
 
 #include <eigen_conversions/eigen_msg.h>
 #include <random_numbers/random_numbers.h>
@@ -133,7 +135,7 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
               " transformed to world frame '%s'",
               __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
 
-    Eigen::Isometry3d root_to_world = robot_state_->getFrameTransform(world_frame_);
+    Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
   }
 
@@ -266,7 +268,8 @@ bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Iso
   {
     if (robot_state_->knowsFrameTransform(tool_frame_))
     {
-      pose = world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_);
+      pose = toIsometry(world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_));
+      //pose.
       rtn = true;
     }
     else
