@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>descartes_tests</name>
   <version>0.1.0</version>
   <description>
@@ -16,11 +16,10 @@
   <test_depend>moveit_kinematics</test_depend>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>descartes_moveit</build_depend>
-  <build_depend>descartes_planner</build_depend>
-  <build_depend>descartes_trajectory</build_depend>
-  <run_depend>descartes_moveit</run_depend>
-  <run_depend>descartes_planner</run_depend>
-  <run_depend>descartes_trajectory</run_depend>
+  <depend>descartes_moveit</depend>
+  <depend>descartes_planner</depend>
+  <depend>descartes_trajectory</depend>
+  <depend>eigen_conversions</depend>
+ 
 
 </package>

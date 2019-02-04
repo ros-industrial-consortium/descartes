@@ -18,9 +18,11 @@
 
 #include <console_bridge/console.h>
 
+#include "descartes_moveit/utils.h"
 #include "descartes_moveit/moveit_state_adapter.h"
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_moveit/seed_search.h"
+
 
 #include <eigen_conversions/eigen_msg.h>
 #include <random_numbers/random_numbers.h>
@@ -63,7 +65,7 @@ bool getJointVelocityLimits(const moveit::core::RobotState& state, const std::st
 
 namespace descartes_moveit
 {
-MoveitStateAdapter::MoveitStateAdapter() : world_to_root_(Eigen::Affine3d::Identity())
+MoveitStateAdapter::MoveitStateAdapter() : world_to_root_(Eigen::Isometry3d::Identity())
 {
 }
 
@@ -133,26 +135,26 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
               " transformed to world frame '%s'",
               __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
 
-    Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(world_frame_);
+    Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
   }
 
   return true;
 }
 
-bool MoveitStateAdapter::getIK(const Eigen::Affine3d& pose, const std::vector<double>& seed_state,
+bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, const std::vector<double>& seed_state,
                                std::vector<double>& joint_pose) const
 {
   robot_state_->setJointGroupPositions(group_name_, seed_state);
   return getIK(pose, joint_pose);
 }
 
-bool MoveitStateAdapter::getIK(const Eigen::Affine3d& pose, std::vector<double>& joint_pose) const
+bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, std::vector<double>& joint_pose) const
 {
   bool rtn = false;
 
   // transform to group base
-  Eigen::Affine3d tool_pose = world_to_root_.frame * pose;
+  Eigen::Isometry3d tool_pose = world_to_root_.frame * pose;
 
   if (robot_state_->setFromIK(joint_group_, tool_pose, tool_frame_))
   {
@@ -174,7 +176,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Affine3d& pose, std::vector<double>&
   return rtn;
 }
 
-bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::vector<double> >& joint_poses) const
+bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std::vector<double> >& joint_poses) const
 {
   // The minimum difference between solutions should be greater than the search discretization
   // used by the IK solver.  This value is multiplied by 4 to remove any chance that a solution
@@ -258,7 +260,7 @@ bool MoveitStateAdapter::isInLimits(const std::vector<double> &joint_pose) const
   return joint_group_->satisfiesPositionBounds(joint_pose.data());
 }
 
-bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Affine3d& pose) const
+bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Isometry3d& pose) const
 {
   bool rtn = false;
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
@@ -266,7 +268,8 @@ bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Aff
   {
     if (robot_state_->knowsFrameTransform(tool_frame_))
     {
-      pose = world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_);
+      pose = toIsometry(world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_));
+      //pose.
       rtn = true;
     }
     else
@@ -298,7 +301,7 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
   return isInLimits(joint_pose) && !isInCollision(joint_pose);
 }
 
-bool MoveitStateAdapter::isValid(const Eigen::Affine3d& pose) const
+bool MoveitStateAdapter::isValid(const Eigen::Isometry3d& pose) const
 {
   // TODO: Could check robot extents first as a quick check
   std::vector<double> dummy;

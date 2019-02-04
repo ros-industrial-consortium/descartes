@@ -156,7 +156,7 @@ struct OrientationTolerance : public ToleranceBase
 struct TolerancedFrame : public descartes_core::Frame
 {
   TolerancedFrame(){};
-  TolerancedFrame(const Eigen::Affine3d &a) : descartes_core::Frame(a)
+  TolerancedFrame(const Eigen::Isometry3d &a) : descartes_core::Frame(a)
   {
     Eigen::Vector3d t = a.translation();
     Eigen::Matrix3d m = a.rotation();
@@ -173,7 +173,7 @@ struct TolerancedFrame : public descartes_core::Frame
     orientation_tolerance = ToleranceBase::createSymmetric<OrientationTolerance>(rxyz(0), rxyz(1), rxyz(2), 0);
   };
 
-  TolerancedFrame(const Eigen::Affine3d &a, const PositionTolerance &pos_tol, const OrientationTolerance &orient_tol)
+  TolerancedFrame(const Eigen::Isometry3d &a, const PositionTolerance &pos_tol, const OrientationTolerance &orient_tol)
     : Frame(a), position_tolerance(pos_tol), orientation_tolerance(orient_tol)
   {
   }
@@ -257,14 +257,14 @@ public:
 
   // TODO complete
   virtual bool getClosestCartPose(const std::vector<double> &seed_state, const descartes_core::RobotModel &model,
-                                  Eigen::Affine3d &pose) const;
+                                  Eigen::Isometry3d &pose) const;
 
   // TODO complete
   virtual bool getNominalCartPose(const std::vector<double> &seed_state, const descartes_core::RobotModel &model,
-                                  Eigen::Affine3d &pose) const;
+                                  Eigen::Isometry3d &pose) const;
 
   // TODO complete
-  virtual void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
+  virtual void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Isometry3d &poses) const;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
@@ -310,7 +310,7 @@ public:
   }
 
 protected:
-  bool computeCartesianPoses(EigenSTL::vector_Affine3d &poses) const;
+  bool computeCartesianPoses(EigenSTL::vector_Isometry3d &poses) const;
 
 protected:
   descartes_core::Frame tool_base_; /**<@brief Fixed transform from wrist/tool_plate to tool base. */

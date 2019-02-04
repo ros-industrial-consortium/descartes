@@ -14,7 +14,7 @@ std::vector<descartes_core::TrajectoryPtPtr> descartes_tests::makeConstantVeloci
   std::vector<descartes_core::TrajectoryPtPtr> result;
   for (size_t i = 0; i <= n_steps; ++i)
   {
-    Eigen::Affine3d pose;
+    Eigen::Isometry3d pose;
     pose = Eigen::Translation3d(start + i * step);
     descartes_core::TrajectoryPtPtr pt(new descartes_trajectory::CartTrajectoryPt(pose, tm));
     result.push_back(pt);
@@ -40,7 +40,7 @@ std::vector<descartes_core::TrajectoryPtPtr> descartes_tests::makeZigZagTrajecto
   std::vector<descartes_core::TrajectoryPtPtr> result;
   for (size_t i = 0; i <= n_steps; ++i)
   {
-    Eigen::Affine3d pose;
+    Eigen::Isometry3d pose;
     pose = Eigen::Translation3d(start + i * step);
     if (i & 1)
     {

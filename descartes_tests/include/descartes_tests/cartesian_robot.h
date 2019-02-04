@@ -35,16 +35,16 @@ public:
   CartesianRobot(double pos_range, double orient_range,
                  const std::vector<double> &joint_velocities = std::vector<double>(6, 1.0));
 
-  virtual bool getIK(const Eigen::Affine3d &pose, const std::vector<double> &seed_state,
+  virtual bool getIK(const Eigen::Isometry3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
 
-  virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const;
+  virtual bool getAllIK(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &joint_poses) const;
 
-  virtual bool getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const;
+  virtual bool getFK(const std::vector<double> &joint_pose, Eigen::Isometry3d &pose) const;
 
   virtual bool isValid(const std::vector<double> &joint_pose) const;
 
-  virtual bool isValid(const Eigen::Affine3d &pose) const;
+  virtual bool isValid(const Eigen::Isometry3d &pose) const;
 
   virtual int getDOF() const;
 

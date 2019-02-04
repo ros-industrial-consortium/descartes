@@ -83,7 +83,7 @@ TYPED_TEST_P(RobotModelTest, getIK)
   ROS_INFO_STREAM("Testing getIK");
   std::vector<double> fk_joint(6, 0.0);
   std::vector<double> ik_joint;
-  Eigen::Affine3d ik_pose, fk_pose;
+  Eigen::Isometry3d ik_pose, fk_pose;
   EXPECT_TRUE(this->model_->getFK(fk_joint, ik_pose));
   EXPECT_TRUE(this->model_->getIK(ik_pose, fk_joint, ik_joint));
   // This doesn't always work, but it should.  The IKFast solution doesn't
@@ -98,7 +98,7 @@ TYPED_TEST_P(RobotModelTest, getAllIK)
   ROS_INFO_STREAM("Testing getAllIK");
   std::vector<double> fk_joint(6, 0.5);
   std::vector<std::vector<double> > joint_poses;
-  Eigen::Affine3d ik_pose, fk_pose;
+  Eigen::Isometry3d ik_pose, fk_pose;
 
   EXPECT_TRUE(this->model_->getFK(fk_joint, ik_pose));
   EXPECT_TRUE(this->model_->getAllIK(ik_pose, joint_poses));

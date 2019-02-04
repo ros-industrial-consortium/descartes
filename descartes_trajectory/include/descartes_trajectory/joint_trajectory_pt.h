@@ -107,14 +107,14 @@ public:
 
   // TODO complete
   virtual bool getClosestCartPose(const std::vector<double> &seed_state, const descartes_core::RobotModel &model,
-                                  Eigen::Affine3d &pose) const;
+                                  Eigen::Isometry3d &pose) const;
 
   // TODO complete
   virtual bool getNominalCartPose(const std::vector<double> &seed_state, const descartes_core::RobotModel &model,
-                                  Eigen::Affine3d &pose) const;
+                                  Eigen::Isometry3d &pose) const;
 
   // TODO complete
-  virtual void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Affine3d &poses) const;
+  virtual void getCartesianPoses(const descartes_core::RobotModel &model, EigenSTL::vector_Isometry3d &poses) const;
   /** @} (end section) */
 
   /**@name Getters for joint pose(s)
