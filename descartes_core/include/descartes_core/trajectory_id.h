@@ -5,6 +5,8 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "descartes_core/export.h"
+
 namespace descartes_core
 {
 namespace detail
@@ -26,7 +28,7 @@ struct IdGenerator;
  *        for the unique 'state'. Zero is reserved as a special value
  */
 template <>
-struct IdGenerator<uint64_t>
+struct DESCARTES_CORE_DECL IdGenerator<uint64_t>
 {
   typedef uint64_t value_type;
 

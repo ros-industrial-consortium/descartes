@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(descartes_moveit)
 
-add_compile_options(-std=c++11 -Wall -Wextra)
+if(NOT MSVC)
+  add_compile_options(-std=c++11 -Wall -Wextra)
+endif()
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
@@ -12,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   rosconsole_bridge
   tf
+  eigen_conversions
 )
 
 find_package(Boost REQUIRED)
@@ -65,7 +68,9 @@ target_link_libraries(${PROJECT_NAME}
 
 install(
     TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
 
 install(
   FILES moveit_adapter_plugins.xml

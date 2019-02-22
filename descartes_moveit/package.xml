@@ -23,6 +23,7 @@
   <depend>moveit_ros_planning</depend>
   <depend>pluginlib</depend>
   <build_depend>eigen</build_depend>
+  <build_depend>eigen_conversions</build_depend>
 
   <export>
     <descartes_core plugin="${prefix}/moveit_adapter_plugins.xml"/>

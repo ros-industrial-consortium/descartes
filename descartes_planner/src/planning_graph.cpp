@@ -64,7 +64,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 
   // now we have a graph with data in the 'rungs' and we need to compute the edges
   #pragma omp parallel for
-  for (std::size_t i = 0; i < graph_.size() - 1; ++i)
+  for (int i = 0; i < graph_.size() - 1; ++i)
   {
     computeAndAssignEdges(i, i + 1);
   }
@@ -190,7 +190,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
   bool success = true;
 
   #pragma omp parallel for shared(success)
-  for (std::size_t i = 0; i < count; ++i)
+  for (int i = 0; i < count; ++i)
   {
     if (success)
     {

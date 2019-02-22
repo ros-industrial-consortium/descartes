@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(descartes_trajectory)
 
-add_compile_options(-std=c++11 -Wall -Wextra)
+if(NOT MSVC)
+  add_compile_options(-std=c++11 -Wall -Wextra)
+else()
+  add_definitions(-D__PRETTY_FUNCTION__=__FUNCTION__)
+endif()
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
@@ -63,7 +67,9 @@ target_link_libraries(${PROJECT_NAME}
 
 install(
     TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
 install(
     DIRECTORY include/${PROJECT_NAME}/
