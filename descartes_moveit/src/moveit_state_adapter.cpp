@@ -368,7 +368,7 @@ std::vector<double> MoveitStateAdapter::getJointVelocityLimits() const
 void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
 {
   if(static_cast<bool>(robot_state_)){
-    logError("'robot_state_' member pointer is null. Have you called "
+    CONSOLE_BRIDGE_logDebug("'robot_state_' member pointer is null. Have you called "
                                                   "initialize()?");
   }
   *robot_state_ = state;
