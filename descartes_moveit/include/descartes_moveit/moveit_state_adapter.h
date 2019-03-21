@@ -27,12 +27,6 @@
 #include <string>
 
 
-namespace planning_scene_monitor
-{
-  MOVEIT_CLASS_FORWARD(PlanningSceneMonitor);
-  class PlanningSceneMonitor;
-}
-
 namespace descartes_moveit
 {
 /**

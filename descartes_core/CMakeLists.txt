@@ -5,7 +5,6 @@ add_compile_options(-std=c++11 -Wall -Wextra)
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
-  moveit_core
   roscpp
 )
 
@@ -23,7 +22,6 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    moveit_core
     roscpp
   DEPENDS
     Boost
