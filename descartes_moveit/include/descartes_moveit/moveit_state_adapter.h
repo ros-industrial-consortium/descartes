@@ -42,12 +42,10 @@ public:
   }
 
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
-                          const std::string &world_frame, const std::string &tcp_frame,
-                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr);
+                          const std::string &world_frame, const std::string &tcp_frame);
 
   virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
-                          const std::string &world_frame, const std::string &tcp_frame,
-                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr);
+                          const std::string &world_frame, const std::string &tcp_frame);
 
   virtual bool getIK(const Eigen::Isometry3d &pose, const std::vector<double> &seed_state,
                      std::vector<double> &joint_pose) const;
@@ -98,6 +96,8 @@ public:
    *        'initialize()'.
    */
   void setState(const moveit::core::RobotState &state);
+
+  void setPlanningSceneMonitor(planning_scene_monitor::PlanningSceneMonitorPtr psm);
 
 protected:
   /**
@@ -161,6 +161,11 @@ protected:
    * @brief Work object/reference frame name
    */
   std::string world_frame_;
+
+  /**
+   * @brief Name of robot base frame
+   */
+  std::string robot_base_frame_;
 
   /**
    * @brief convenient transformation frame

@@ -55,10 +55,9 @@ static size_t closestJointPose(const std::vector<double>& target, const std::vec
 bool descartes_moveit::IkFastMoveitStateAdapter::initialize(const std::string& robot_description,
                                                             const std::string& group_name,
                                                             const std::string& world_frame,
-                                                            const std::string& tcp_frame,
-                                                            planning_scene_monitor::PlanningSceneMonitorPtr psm)
+                                                            const std::string& tcp_frame)
 {
-  if (!MoveitStateAdapter::initialize(robot_description, group_name, world_frame, tcp_frame, psm))
+  if (!MoveitStateAdapter::initialize(robot_description, group_name, world_frame, tcp_frame))
   {
     return false;
   }

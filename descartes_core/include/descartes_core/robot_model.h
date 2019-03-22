@@ -114,8 +114,7 @@ public:
    * a fixed location relative to the last link in 'group_name'.
    */
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
-                          const std::string &world_frame, const std::string &tcp_frame,
-                          planning_scene_monitor::PlanningSceneMonitorPtr psm = nullptr) = 0;
+                          const std::string &world_frame, const std::string &tcp_frame) = 0;
 
   /**
    * @brief Enables collision checks
@@ -158,6 +157,7 @@ protected:
   }
 
   bool check_collisions_;
+
 };
 
 }  // descartes_core

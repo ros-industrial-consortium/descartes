@@ -70,8 +70,7 @@ MoveitStateAdapter::MoveitStateAdapter() : world_to_root_(Eigen::Isometry3d::Ide
 }
 
 bool MoveitStateAdapter::initialize(const std::string& robot_description, const std::string& group_name,
-                                    const std::string& world_frame, const std::string& tcp_frame,
-                                    planning_scene_monitor::PlanningSceneMonitorPtr psm)
+                                    const std::string& world_frame, const std::string& tcp_frame)
 
 {
   robot_description_ = robot_description;
@@ -84,19 +83,18 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
     return false;
   }
 
-  return initialize(model, group_name, world_frame, tcp_frame, psm);
+  return initialize(model, group_name, world_frame, tcp_frame);
 }
 
 bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
-                                    const std::string &world_frame, const std::string &tcp_frame,
-                                    planning_scene_monitor::PlanningSceneMonitorPtr psm)
+                                    const std::string &world_frame, const std::string &tcp_frame)
 {
   robot_model_ptr_ = robot_model;
   robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
   robot_state_->setToDefaultValues();
   joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
 
-  // Assign robot frames
+  // Assign robot parameters
   group_name_ = group_name;
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
@@ -111,12 +109,11 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
     return false;
   }
 
-  const auto& link_names = joint_group_->getLinkModelNames();
-  if (tool_frame_ != link_names.back())
+  if (tool_frame_ != joint_group_->getLinkModelNames().back())
   {
     CONSOLE_BRIDGE_logWarn("%s: Tool frame '%s' does not match group tool frame '%s', functionality"
                            "will be implemented in the future",
-                           __FUNCTION__, tool_frame_.c_str(), link_names.back().c_str());
+                           __FUNCTION__, tool_frame_.c_str(), joint_group_->getLinkModelNames().back().c_str());
   }
 
   if (!::getJointVelocityLimits(*robot_state_, group_name, velocity_limits_))
@@ -130,27 +127,26 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
     CONSOLE_BRIDGE_logDebug("Generated %lu random seeds", static_cast<unsigned long>(seed_states_.size()));
   }
 
-  auto model_frame = robot_state_->getRobotModel()->getModelFrame();
-  if (world_frame_ != model_frame)
+  robot_base_frame_ = robot_state_->getRobotModel()->getModelFrame();
+  if (world_frame_ != robot_base_frame_)
   {
     CONSOLE_BRIDGE_logInform("%s: World frame '%s' does not match model root frame '%s', all poses will be"
               " transformed to world frame '%s'",
-              __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
+              __FUNCTION__, world_frame_.c_str(), robot_base_frame_.c_str(), world_frame_.c_str());
 
     Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
   }
 
-  if(psm)
-  {
-    planning_scene_monitor_ = psm;
-  }
-  else
-  {
-    planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(robot_description_));
-  }
+  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(robot_description_));
   planning_scene_monitor_->startSceneMonitor();
   return true;
+}
+
+void MoveitStateAdapter::setPlanningSceneMonitor(planning_scene_monitor::PlanningSceneMonitorPtr psm)
+{
+  planning_scene_monitor_ = psm;
+  planning_scene_monitor_->startSceneMonitor();
 }
 
 bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, const std::vector<double>& seed_state,
@@ -263,13 +259,12 @@ bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) co
   {
     std::unique_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
 
-    // (*ls)->printKnownObjects(std::cout);
-
-    robot_state_->setJointGroupPositions(group_name_, joint_pose);
-    robot_state_->update();
+    robot_state::RobotState robot_state_copy = *robot_state_;
+    robot_state_copy.setJointGroupPositions(group_name_, joint_pose);
+    robot_state_copy.update();
 
     // If either there is no locked planning scene or if the state is colliding return false
-    in_collision = !(*ls) || (*ls)->isStateColliding(*robot_state_, group_name_);
+    in_collision = !(*ls) || (*ls)->isStateColliding(robot_state_copy, group_name_);
   }
 
   return in_collision;
@@ -321,9 +316,10 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
   // Satisfies joint positional bounds?
   if (!isInLimits(joint_pose))
   {
-    CONSOLE_BRIDGE_logError("Joint pose does not satisfy positional bounds");
+    CONSOLE_BRIDGE_logInform("Joint pose does not satisfy positional bounds");
     return false;
   }
+
   // Is in collision (if collision is active)
   if (isInCollision(joint_pose))
   {
