@@ -24,12 +24,6 @@
 #include "descartes_core/utils.h"
 
 
-namespace planning_scene_monitor
-{
-  MOVEIT_CLASS_FORWARD(PlanningSceneMonitor);
-  class PlanningSceneMonitor;
-}
-
 namespace descartes_core
 {
 DESCARTES_CLASS_FORWARD(RobotModel);

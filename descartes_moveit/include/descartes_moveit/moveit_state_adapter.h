@@ -24,6 +24,7 @@
 
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <string>
 
 
@@ -148,11 +149,6 @@ protected:
   std::string group_name_;
 
   /**
-   * @brief name of parameter for robot URDF
-   */
-  std::string robot_description_ = "robot_description";
-
-  /**
    * @brief Tool frame name
    */
   std::string tool_frame_;
@@ -161,11 +157,6 @@ protected:
    * @brief Work object/reference frame name
    */
   std::string world_frame_;
-
-  /**
-   * @brief Name of robot base frame
-   */
-  std::string robot_base_frame_;
 
   /**
    * @brief convenient transformation frame

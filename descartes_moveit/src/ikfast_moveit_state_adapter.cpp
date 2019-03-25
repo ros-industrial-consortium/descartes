@@ -17,13 +17,12 @@
  */
 
 #include "descartes_moveit/ikfast_moveit_state_adapter.h"
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/node_handle.h>
 
-const static std::string default_base_frame = "base_link";
-const static std::string default_tool_frame = "tool0";
+const static std::string DEFAULT_BASE_FRAME = "base_link";
+const static std::string DEFAULT_TOOL_FRAME = "tool0";
 
 // Compute the 'joint distance' between two poses
 static double distance(const std::vector<double>& a, const std::vector<double>& b)
@@ -71,9 +70,12 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   joint_poses.clear();
   const auto& solver = joint_group_->getSolverInstance();
 
+  // Transform input pose
+  Eigen::Isometry3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
+
   // convert to geometry_msgs ...
   geometry_msgs::Pose geometry_pose;
-  tf::poseEigenToMsg(pose, geometry_pose);
+  tf::poseEigenToMsg(tool_pose, geometry_pose);
   std::vector<geometry_msgs::Pose> poses = { geometry_pose };
 
   std::vector<double> dummy_seed(getDOF(), 0.0);
@@ -138,8 +140,8 @@ bool descartes_moveit::IkFastMoveitStateAdapter::computeIKFastTransforms()
   // look up the IKFast base and tool frame
   ros::NodeHandle nh;
   std::string ikfast_base_frame, ikfast_tool_frame;
-  nh.param<std::string>("ikfast_base_frame", ikfast_base_frame, default_base_frame);
-  nh.param<std::string>("ikfast_tool_frame", ikfast_tool_frame, default_tool_frame);
+  nh.param<std::string>("ikfast_base_frame", ikfast_base_frame, DEFAULT_BASE_FRAME);
+  nh.param<std::string>("ikfast_tool_frame", ikfast_tool_frame, DEFAULT_TOOL_FRAME);
 
   if (!robot_state_->knowsFrameTransform(ikfast_base_frame))
   {
