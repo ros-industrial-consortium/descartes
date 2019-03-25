@@ -147,9 +147,7 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
 void MoveitStateAdapter::setPlanningSceneMonitor(planning_scene_monitor::PlanningSceneMonitorPtr psm)
 {
   planning_scene_monitor_ = psm;
-  planning_scene_monitor->startSceneMonitor();
-  planning_scene_monitor->startWorldGeometryMonitor();
-  planning_scene_monitor->startStateMonitor();
+  planning_scene_monitor_->startSceneMonitor();
 }
 
 bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, const std::vector<double>& seed_state,
@@ -262,12 +260,19 @@ bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) co
   {
     std::unique_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
 
-    robot_state::RobotState robot_state_copy = *robot_state_;
-    robot_state_copy.setJointGroupPositions(group_name_, joint_pose);
-    robot_state_copy.update();
+    // Check if we successfully got a locked planning scene
+    if (!(*ls))
+    {
+      CONSOLE_BRIDGE_logError("MoveitStateAdapter.isInCollision: Failed to secure a locked planning scene. Has the planing scene monitor been correctly initialized?");
+      return false;
+    }
 
-    // If either there is no locked planning scene or if the state is colliding return false
-    in_collision = !(*ls) || (*ls)->isStateColliding(robot_state_copy, group_name_);
+    // Seed with current state in case their are joints outside of the planning group
+    robot_state::RobotState robot_state_copy = (*ls)->getCurrentState();
+    robot_state_copy.setJointGroupPositions(group_name_, joint_pose);
+
+    // If the state is colliding return false
+    in_collision = (*ls)->isStateColliding(robot_state_copy);
   }
 
   return in_collision;
