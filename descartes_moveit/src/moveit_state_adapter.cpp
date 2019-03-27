@@ -73,24 +73,20 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
 
 {
   // Initialize MoveIt state objects
-  robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
-  auto model = robot_model_loader_->getModel();
-  if (!model)
-  {
-    CONSOLE_BRIDGE_logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
-    return false;
-  }
-
-  return initialize(model, group_name, world_frame, tcp_frame);
+  planning_scene_monitor::PlanningSceneMonitorPtr psm(new planning_scene_monitor::PlanningSceneMonitor(robot_description));
+  return initialize(psm, group_name, world_frame, tcp_frame);
 }
 
-bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
+bool MoveitStateAdapter::initialize(planning_scene_monitor::PlanningSceneMonitorPtr& psm, const std::string &group_name,
                                     const std::string &world_frame, const std::string &tcp_frame)
 {
-  robot_model_ptr_ = robot_model;
-  robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
+  planning_scene_monitor_ = psm;
+  planning_scene_monitor_->startSceneMonitor();
+
+
+  robot_state_.reset(new moveit::core::RobotState(planning_scene_monitor_->getRobotModel()));
   robot_state_->setToDefaultValues();
-  joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
+  joint_group_ = planning_scene_monitor_->getRobotModel()->getJointModelGroup(group_name);
 
   // Assign robot parameters
   group_name_ = group_name;
@@ -138,16 +134,8 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
   }
 
-  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(robot_model_loader_->getRobotDescription()));
   // Start the psm
-  setPlanningSceneMonitor(planning_scene_monitor_);
   return true;
-}
-
-void MoveitStateAdapter::setPlanningSceneMonitor(planning_scene_monitor::PlanningSceneMonitorPtr psm)
-{
-  planning_scene_monitor_ = psm;
-  planning_scene_monitor_->startSceneMonitor();
 }
 
 bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, const std::vector<double>& seed_state,
@@ -193,9 +181,9 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std
   double epsilon = 4 * joint_group_->getSolverInstance()->getSearchDiscretization();
   CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getAllIK: Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
+  getCurrentRobotState();
   for (size_t sample_iter = 0; sample_iter < seed_states_.size(); ++sample_iter)
   {
-    robot_state_->setJointGroupPositions(group_name_, seed_states_[sample_iter]);
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
@@ -235,6 +223,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std
         }
       }
     }
+    robot_state_->setJointGroupPositions(group_name_, seed_states_[sample_iter]);
   }
 
   CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getAllIK: Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
@@ -378,6 +367,24 @@ void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
   }
   *robot_state_ = state;
   planning_scene_monitor::LockedPlanningSceneRW(planning_scene_monitor_)->setCurrentState(state);
+}
+
+bool MoveitStateAdapter::getCurrentRobotState() const
+{
+  planning_scene_monitor_->updateFrameTransforms();
+  std::unique_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
+
+  if (!(*ls))
+  {
+    CONSOLE_BRIDGE_logWarn("MoveitStateAdapter.getCurrentRobotState: Failed to get locked planning scene.");
+    return false;
+  }
+  else
+  {
+    *robot_state_ = (*ls)->getCurrentState();
+    robot_state_->update();
+    return true;
+  }
 }
 
 }  // descartes_moveit

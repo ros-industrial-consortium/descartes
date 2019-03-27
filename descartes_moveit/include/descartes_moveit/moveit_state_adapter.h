@@ -45,7 +45,7 @@ public:
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
                           const std::string &world_frame, const std::string &tcp_frame);
 
-  virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
+  virtual bool initialize(planning_scene_monitor::PlanningSceneMonitorPtr& psm, const std::string &group_name,
                           const std::string &world_frame, const std::string &tcp_frame);
 
   virtual bool getIK(const Eigen::Isometry3d &pose, const std::vector<double> &seed_state,
@@ -98,8 +98,6 @@ public:
    */
   void setState(const moveit::core::RobotState &state);
 
-  void setPlanningSceneMonitor(planning_scene_monitor::PlanningSceneMonitorPtr psm);
-
 protected:
   /**
    * Gets IK solution (assumes robot state is pre-seeded)
@@ -125,16 +123,17 @@ protected:
   bool isInLimits(const std::vector<double>& joint_pose) const;
 
   /**
+   * @brief Updates the robot_state_ variable with the most recent joint states from the psm.
+   */
+  bool getCurrentRobotState() const;
+
+  /**
    * Maximum joint velocities (rad/s) for each joint in the chain. Used for checking in
    * `isValidMove()`
    */
   std::vector<double> velocity_limits_;
 
   mutable moveit::core::RobotStatePtr robot_state_;
-
-  robot_model::RobotModelConstPtr robot_model_ptr_;
-
-  robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
 
   const moveit::core::JointModelGroup *joint_group_;
 
