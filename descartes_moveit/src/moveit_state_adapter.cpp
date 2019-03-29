@@ -83,9 +83,9 @@ bool MoveitStateAdapter::initialize(planning_scene_monitor::PlanningSceneMonitor
   planning_scene_monitor_ = psm;
   planning_scene_monitor_->startSceneMonitor();
 
-
   robot_state_.reset(new moveit::core::RobotState(planning_scene_monitor_->getRobotModel()));
   robot_state_->setToDefaultValues();
+  getCurrentRobotState();
   joint_group_ = planning_scene_monitor_->getRobotModel()->getJointModelGroup(group_name);
 
   // Assign robot parameters
@@ -130,7 +130,7 @@ bool MoveitStateAdapter::initialize(planning_scene_monitor::PlanningSceneMonitor
               " transformed to world frame '%s'",
               __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
 
-    Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
+    Eigen::Isometry3d root_to_world = Eigen::Isometry3d(robot_state_->getFrameTransform(world_frame_));
     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
   }
 
@@ -150,7 +150,7 @@ bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, std::vector<double
   bool rtn = false;
 
   // transform to group base
-  Eigen::Isometry3d tool_pose = world_to_root_.frame * pose;
+  Eigen::Isometry3d tool_pose = Eigen::Isometry3d(world_to_root_.frame * pose);
 
   if (robot_state_->setFromIK(joint_group_, tool_pose, tool_frame_))
   {
@@ -181,7 +181,6 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std
   double epsilon = 4 * joint_group_->getSolverInstance()->getSearchDiscretization();
   CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getAllIK: Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
-  getCurrentRobotState();
   for (size_t sample_iter = 0; sample_iter < seed_states_.size(); ++sample_iter)
   {
     std::vector<double> joint_pose;
@@ -275,12 +274,13 @@ bool MoveitStateAdapter::isInLimits(const std::vector<double> &joint_pose) const
 bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Isometry3d& pose) const
 {
   bool rtn = false;
+  getCurrentRobotState();
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if (isValid(joint_pose))
   {
     if (robot_state_->knowsFrameTransform(tool_frame_))
     {
-      pose = toIsometry(world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_));
+      pose = Eigen::Isometry3d(world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_));
       //pose.
       rtn = true;
     }
@@ -366,6 +366,7 @@ void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
                                                   "initialize()?");
   }
   *robot_state_ = state;
+  robot_state_->update();
   planning_scene_monitor::LockedPlanningSceneRW(planning_scene_monitor_)->setCurrentState(state);
 }
 
