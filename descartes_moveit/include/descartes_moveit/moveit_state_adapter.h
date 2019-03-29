@@ -21,10 +21,12 @@
 
 #include "descartes_core/robot_model.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
-#include <moveit/planning_scene/planning_scene.h>
+
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <string>
+
 
 namespace descartes_moveit
 {
@@ -43,7 +45,7 @@ public:
   virtual bool initialize(const std::string &robot_description, const std::string &group_name,
                           const std::string &world_frame, const std::string &tcp_frame);
 
-  virtual bool initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
+  virtual bool initialize(planning_scene_monitor::PlanningSceneMonitorPtr& psm, const std::string &group_name,
                           const std::string &world_frame, const std::string &tcp_frame);
 
   virtual bool getIK(const Eigen::Isometry3d &pose, const std::vector<double> &seed_state,
@@ -121,18 +123,17 @@ protected:
   bool isInLimits(const std::vector<double>& joint_pose) const;
 
   /**
+   * @brief Updates the robot_state_ variable with the most recent joint states from the psm.
+   */
+  bool getCurrentRobotState() const;
+
+  /**
    * Maximum joint velocities (rad/s) for each joint in the chain. Used for checking in
    * `isValidMove()`
    */
   std::vector<double> velocity_limits_;
 
   mutable moveit::core::RobotStatePtr robot_state_;
-
-  planning_scene::PlanningScenePtr planning_scene_;
-
-  robot_model::RobotModelConstPtr robot_model_ptr_;
-
-  robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
 
   const moveit::core::JointModelGroup *joint_group_;
 
@@ -160,6 +161,11 @@ protected:
    * @brief convenient transformation frame
    */
   descartes_core::Frame world_to_root_;
+
+  /**
+   * @brief Planning scene monitor (used to update internal planning scene)
+   */
+  mutable planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 };
 
 }  // descartes_moveit

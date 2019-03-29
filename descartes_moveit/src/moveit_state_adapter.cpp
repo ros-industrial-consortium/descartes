@@ -23,7 +23,6 @@
 #include "descartes_core/pretty_print.hpp"
 #include "descartes_moveit/seed_search.h"
 
-
 #include <eigen_conversions/eigen_msg.h>
 #include <random_numbers/random_numbers.h>
 #include <ros/assert.h>
@@ -71,29 +70,25 @@ MoveitStateAdapter::MoveitStateAdapter() : world_to_root_(Eigen::Isometry3d::Ide
 
 bool MoveitStateAdapter::initialize(const std::string& robot_description, const std::string& group_name,
                                     const std::string& world_frame, const std::string& tcp_frame)
+
 {
   // Initialize MoveIt state objects
-  robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
-  auto model = robot_model_loader_->getModel();
-  if (!model)
-  {
-    CONSOLE_BRIDGE_logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
-    return false;
-  }
-
-  return initialize(model, group_name, world_frame, tcp_frame);
+  planning_scene_monitor::PlanningSceneMonitorPtr psm(new planning_scene_monitor::PlanningSceneMonitor(robot_description));
+  return initialize(psm, group_name, world_frame, tcp_frame);
 }
 
-bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model, const std::string &group_name,
+bool MoveitStateAdapter::initialize(planning_scene_monitor::PlanningSceneMonitorPtr& psm, const std::string &group_name,
                                     const std::string &world_frame, const std::string &tcp_frame)
 {
-  robot_model_ptr_ = robot_model;
-  robot_state_.reset(new moveit::core::RobotState(robot_model_ptr_));
-  robot_state_->setToDefaultValues();
-  planning_scene_.reset(new planning_scene::PlanningScene(robot_model));
-  joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
+  planning_scene_monitor_ = psm;
+  planning_scene_monitor_->startSceneMonitor();
 
-  // Assign robot frames
+  robot_state_.reset(new moveit::core::RobotState(planning_scene_monitor_->getRobotModel()));
+  robot_state_->setToDefaultValues();
+  getCurrentRobotState();
+  joint_group_ = planning_scene_monitor_->getRobotModel()->getJointModelGroup(group_name);
+
+  // Assign robot parameters
   group_name_ = group_name;
   tool_frame_ = tcp_frame;
   world_frame_ = world_frame;
@@ -135,10 +130,11 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
               " transformed to world frame '%s'",
               __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
 
-    Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
+    Eigen::Isometry3d root_to_world = Eigen::Isometry3d(robot_state_->getFrameTransform(world_frame_));
     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
   }
 
+  // Start the psm
   return true;
 }
 
@@ -154,14 +150,14 @@ bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, std::vector<double
   bool rtn = false;
 
   // transform to group base
-  Eigen::Isometry3d tool_pose = world_to_root_.frame * pose;
+  Eigen::Isometry3d tool_pose = Eigen::Isometry3d(world_to_root_.frame * pose);
 
   if (robot_state_->setFromIK(joint_group_, tool_pose, tool_frame_))
   {
     robot_state_->copyJointGroupPositions(group_name_, joint_pose);
     if (!isValid(joint_pose))
     {
-      ROS_DEBUG_STREAM("Robot joint pose is invalid");
+      CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getIK: Robot joint pose is invalid");
     }
     else
     {
@@ -183,25 +179,26 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std
   // in the middle of a discretization step could be double counted.  In reality, we'd like solutions
   // to be further apart than this.
   double epsilon = 4 * joint_group_->getSolverInstance()->getSearchDiscretization();
-  CONSOLE_BRIDGE_logDebug("Utilizing an min. difference of %f between IK solutions", epsilon);
+  CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getAllIK: Utilizing an min. difference of %f between IK solutions", epsilon);
   joint_poses.clear();
   for (size_t sample_iter = 0; sample_iter < seed_states_.size(); ++sample_iter)
   {
-    robot_state_->setJointGroupPositions(group_name_, seed_states_[sample_iter]);
     std::vector<double> joint_pose;
     if (getIK(pose, joint_pose))
     {
       if (joint_poses.empty())
       {
         std::stringstream msg;
-        msg << "Found *first* solution on " << sample_iter << " iteration, joint: " << joint_pose;
+        msg << "MoveitStateAdapter.getAllIK: " << "Found *first* solution on " << sample_iter
+            << " iteration, joint: " << joint_pose;
         CONSOLE_BRIDGE_logDebug(msg.str().c_str());
         joint_poses.push_back(joint_pose);
       }
       else
       {
         std::stringstream msg;
-        msg << "Found *potential* solution on " << sample_iter << " iteration, joint: " << joint_pose;
+        msg << "MoveitStateAdapter.getAllIK: " << "Found *potential* solution on " << sample_iter
+            << " iteration, joint: " << joint_pose;
         CONSOLE_BRIDGE_logDebug(msg.str().c_str());
 
         std::vector<std::vector<double> >::iterator joint_pose_it;
@@ -210,7 +207,7 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std
         {
           if (descartes_core::utils::equal(joint_pose, (*joint_pose_it), epsilon))
           {
-            CONSOLE_BRIDGE_logDebug("Found matching, potential solution is not new");
+            CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getAllIK: Found matching, potential solution is not new");
             match_found = true;
             break;
           }
@@ -218,26 +215,28 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Isometry3d& pose, std::vector<std
         if (!match_found)
         {
           std::stringstream msg;
-          msg << "Found *new* solution on " << sample_iter << " iteration, joint: " << joint_pose;
+          msg << "MoveitStateAdapter.getAllIK: " << "Found *new* solution on " << sample_iter
+              << " iteration, joint: " << joint_pose;
           CONSOLE_BRIDGE_logDebug(msg.str().c_str());
           joint_poses.push_back(joint_pose);
         }
       }
     }
+    robot_state_->setJointGroupPositions(group_name_, seed_states_[sample_iter]);
   }
 
-  CONSOLE_BRIDGE_logDebug("Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
-           static_cast<unsigned long>(seed_states_.size()));
+  CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.getAllIK: Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
+                          static_cast<unsigned long>(seed_states_.size()));
 
   if (joint_poses.empty())
   {
-    CONSOLE_BRIDGE_logError("Found 0 joint solutions out of %lu iterations", static_cast<unsigned long>(seed_states_.size()));
+    CONSOLE_BRIDGE_logError("MoveitStateAdapter.getAllIK: Found 0 joint solutions out of %lu iterations", static_cast<unsigned long>(seed_states_.size()));
     return false;
   }
   else
   {
-    CONSOLE_BRIDGE_logInform("Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
-              static_cast<unsigned long>(seed_states_.size()));
+    CONSOLE_BRIDGE_logInform("MoveitStateAdapter.getAllIK: Found %lu joint solutions out of %lu iterations", static_cast<unsigned long>(joint_poses.size()),
+                             static_cast<unsigned long>(seed_states_.size()));
     return true;
   }
 }
@@ -247,11 +246,23 @@ bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) co
   bool in_collision = false;
   if (check_collisions_)
   {
-    moveit::core::RobotState state (robot_model_ptr_);
-    state.setToDefaultValues();
-    state.setJointGroupPositions(joint_group_, joint_pose);
-    in_collision = planning_scene_->isStateColliding(state, group_name_);
+    std::unique_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
+
+    // Check if we successfully got a locked planning scene
+    if (!(*ls))
+    {
+      CONSOLE_BRIDGE_logError("MoveitStateAdapter.isInCollision: Failed to secure a locked planning scene. Has the planing scene monitor been correctly initialized?");
+      return false;
+    }
+
+    // Seed with current state in case their are joints outside of the planning group
+    robot_state::RobotState robot_state_copy = (*ls)->getCurrentState();
+    robot_state_copy.setJointGroupPositions(group_name_, joint_pose);
+
+    // If the state is colliding return false
+    in_collision = (*ls)->isStateColliding(robot_state_copy);
   }
+
   return in_collision;
 }
 
@@ -263,24 +274,25 @@ bool MoveitStateAdapter::isInLimits(const std::vector<double> &joint_pose) const
 bool MoveitStateAdapter::getFK(const std::vector<double>& joint_pose, Eigen::Isometry3d& pose) const
 {
   bool rtn = false;
+  getCurrentRobotState();
   robot_state_->setJointGroupPositions(group_name_, joint_pose);
   if (isValid(joint_pose))
   {
     if (robot_state_->knowsFrameTransform(tool_frame_))
     {
-      pose = toIsometry(world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_));
+      pose = Eigen::Isometry3d(world_to_root_.frame * robot_state_->getFrameTransform(tool_frame_));
       //pose.
       rtn = true;
     }
     else
     {
-      CONSOLE_BRIDGE_logError("Robot state does not recognize tool frame: %s", tool_frame_.c_str());
+      CONSOLE_BRIDGE_logError("MoveitStateAdapter.getFK: Robot state does not recognize tool frame: %s", tool_frame_.c_str());
       rtn = false;
     }
   }
   else
   {
-    CONSOLE_BRIDGE_logError("Invalid joint pose passed to get forward kinematics");
+    CONSOLE_BRIDGE_logError("MoveitStateAdapter.getFK: Invalid joint pose passed to get forward kinematics");
     rtn = false;
   }
 
@@ -298,7 +310,21 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
     return false;
   }
 
-  return isInLimits(joint_pose) && !isInCollision(joint_pose);
+  // Satisfies joint positional bounds?
+  if (!isInLimits(joint_pose))
+  {
+    CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.isValid: Joint pose does not satisfy positional bounds");
+    return false;
+  }
+
+  // Is in collision (if collision is active)
+  if (isInCollision(joint_pose))
+  {
+    CONSOLE_BRIDGE_logDebug("MoveitStateAdapter.isValid: Joint pose is in collision");
+    return false;
+  }
+
+  return true;
 }
 
 bool MoveitStateAdapter::isValid(const Eigen::Isometry3d& pose) const
@@ -335,10 +361,31 @@ std::vector<double> MoveitStateAdapter::getJointVelocityLimits() const
 
 void MoveitStateAdapter::setState(const moveit::core::RobotState& state)
 {
-  ROS_ASSERT_MSG(static_cast<bool>(robot_state_), "'robot_state_' member pointer is null. Have you called "
+  if(static_cast<bool>(robot_state_)){
+    CONSOLE_BRIDGE_logDebug("'robot_state_' member pointer is null. Have you called "
                                                   "initialize()?");
+  }
   *robot_state_ = state;
-  planning_scene_->setCurrentState(state);
+  robot_state_->update();
+  planning_scene_monitor::LockedPlanningSceneRW(planning_scene_monitor_)->setCurrentState(state);
+}
+
+bool MoveitStateAdapter::getCurrentRobotState() const
+{
+  planning_scene_monitor_->updateFrameTransforms();
+  std::unique_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
+
+  if (!(*ls))
+  {
+    CONSOLE_BRIDGE_logWarn("MoveitStateAdapter.getCurrentRobotState: Failed to get locked planning scene.");
+    return false;
+  }
+  else
+  {
+    *robot_state_ = (*ls)->getCurrentState();
+    robot_state_->update();
+    return true;
+  }
 }
 
 }  // descartes_moveit

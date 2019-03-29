@@ -30,7 +30,7 @@ bool doFK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* 
     return false;
   }
 
-  result = toIsometry(state.getFrameTransform(tool));
+  result = Eigen::Isometry3d(state.getFrameTransform(tool));
   return true;
 }
 
@@ -41,11 +41,10 @@ bool doFK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* 
 bool doIK(moveit::core::RobotState& state, const moveit::core::JointModelGroup* group, const std::string& group_name,
           const std::string& tool, const Eigen::Isometry3d& pose, const JointConfig& seed, JointConfig& result)
 {
-  const static int N_ATTEMPTS = 1;
   const static double IK_TIMEOUT = 0.01;
 
   state.setJointGroupPositions(group_name, seed);
-  if (!state.setFromIK(group, pose, tool, N_ATTEMPTS, IK_TIMEOUT))
+  if (!state.setFromIK(group, pose, tool, IK_TIMEOUT))
   {
     return false;
   }

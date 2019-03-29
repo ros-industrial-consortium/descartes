@@ -23,6 +23,7 @@
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/utils.h"
 
+
 namespace descartes_core
 {
 DESCARTES_CLASS_FORWARD(RobotModel);
@@ -150,6 +151,7 @@ protected:
   }
 
   bool check_collisions_;
+
 };
 
 }  // descartes_core

@@ -83,7 +83,7 @@ EigenSTL::vector_Isometry3d uniform(const TolerancedFrame &frame, const double o
   // Estimating the number of samples base on tolerance zones and sampling increment.
   size_t est_num_samples = ntx * nty * ntz * nrx * nry * nrz;
 
-  ROS_DEBUG_STREAM("Estimated number of samples: " << est_num_samples << ", reserving space");
+  ROS_DEBUG_STREAM_NAMED("Descartes", "Estimated number of samples: " << est_num_samples << ", reserving space");
   rtn.reserve(est_num_samples);
 
   // TODO: The following for loops do not ensure that the rull range is sample (lower to upper)
@@ -124,9 +124,10 @@ EigenSTL::vector_Isometry3d uniform(const TolerancedFrame &frame, const double o
       }
     }
   }
-  ROS_DEBUG_STREAM("Uniform sampling of frame, utilizing orientation increment: "
-                   << orient_increment << ", and position increment: " << pos_increment << " resulted in " << rtn.size()
-                   << " samples");
+  ROS_DEBUG_STREAM_NAMED("Descartes",
+                         "Uniform sampling of frame, utilizing orientation increment: " << orient_increment <<
+                         ", and position increment: " << pos_increment <<
+                         " resulted in " << rtn.size() << " samples");
   return rtn;
 }
 
@@ -260,8 +261,8 @@ void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vect
   }
   else
   {
-    ROS_DEBUG_STREAM("Get cartesian poses, sampled: " << all_poses.size() << ", with " << poses.size()
-                                                      << " valid(returned) poses");
+    ROS_DEBUG_STREAM_NAMED("Descartes", "Get cartesian poses, sampled: " << all_poses.size() << ", with " << poses.size()
+                                                                         << " valid(returned) poses");
   }
 }
 
@@ -397,8 +398,8 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
   }
   else
   {
-    ROS_DEBUG_STREAM("Get joint poses, sampled: " << poses.size() << ", with " << joint_poses.size()
-                                                  << " valid(returned) poses");
+    ROS_DEBUG_STREAM_NAMED("Descartes", "Get joint poses, sampled: " << poses.size() << ", with " << joint_poses.size()
+                                                                     << " valid(returned) poses");
   }
 }
 
