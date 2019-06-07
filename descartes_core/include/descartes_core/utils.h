@@ -57,7 +57,7 @@ typedef EulerConventions::EulerConvention EulerConvention;
 
 // Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
 static Eigen::Isometry3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz,
-                               int convention = int(EulerConventions::ZYX)) __attribute__((unused));
+                               int convention = int(EulerConventions::ZYX)) [[gnu::unused]];
 
 static Eigen::Isometry3d toFrame(double tx, double ty, double tz, double rx, double ry, double rz, int convention)
 {
@@ -97,7 +97,7 @@ static Eigen::Isometry3d toFrame(double tx, double ty, double tz, double rx, dou
 
 // Use a function declaration so that we can add the 'unused' attribute, which prevents compiler warnings
 static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs, const double tol)
-    __attribute__((unused));
+    [[gnu::unused]];
 
 static bool equal(const std::vector<double> &lhs, const std::vector<double> &rhs, const double tol)
 {

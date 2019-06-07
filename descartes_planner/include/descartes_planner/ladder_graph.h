@@ -22,10 +22,16 @@
 #include "descartes_core/trajectory_id.h"
 #include "descartes_core/trajectory_timing_constraint.h"
 
+#ifndef _MSC_VER
+  #define COMPILER_PACKED __attribute__ ((__packed__))
+#else
+  #define COMPILER_PACKED
+#endif
+
 namespace descartes_planner
 {
 
-struct __attribute__ ((__packed__)) Edge
+struct COMPILER_PACKED Edge
 {
   double cost; // transition cost from vertex who owns this object to 'idx' in next rung
   unsigned idx; // from THIS rung to 'idx' into the NEXT rung

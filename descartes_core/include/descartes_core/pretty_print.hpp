@@ -12,7 +12,7 @@
 #include <iterator>
 #include <set>
 
-#ifndef NO_TR1
+#if !defined(NO_TR1) && (__cplusplus <= 199711L)
 #include <tr1/tuple>
 #include <tr1/unordered_set>
 #endif
@@ -199,7 +199,7 @@ template <typename T, typename TComp, typename TAllocator>
 const delimiters_values<wchar_t> delimiters< ::std::multiset<T, TComp, TAllocator>, wchar_t>::values = { L"{", L", ",
                                                                                                          L"}" };
 
-#ifndef NO_TR1
+#if !defined(NO_TR1) && (__cplusplus <= 199711L)
 template <typename T, typename THash, typename TEqual, typename TAllocator>
 struct delimiters< ::std::tr1::unordered_set<T, THash, TEqual, TAllocator>, char>
 {
@@ -444,7 +444,7 @@ inline basic_ostream<TChar, TCharTraits> &operator<<(basic_ostream<TChar, TCharT
 }
 }  // namespace std
 
-#ifndef NO_TR1
+#if !defined(NO_TR1) && (__cplusplus <= 199711L)
 
 // Prints a tuple to the stream using delimiters from delimiters<std::pair<tuple_dummy_t, tuple_dummy_t>>.
 
