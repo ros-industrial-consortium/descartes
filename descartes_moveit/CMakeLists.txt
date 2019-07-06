@@ -51,6 +51,7 @@ include_directories(include
 ## Descartes MoveIt lib
 add_library(${PROJECT_NAME}
             src/ikfast_moveit_state_adapter.cpp
+            src/jaco3_moveit_state_adapter.cpp
             src/moveit_state_adapter.cpp
             src/plugin_init.cpp
             src/seed_search.cpp
