@@ -50,11 +50,27 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::initialize(const std::string& ro
   return computeJaco3Transforms();
 }
 
+bool descartes_moveit::Jaco3MoveitStateAdapter::sampleRedundantJoint(std::vector<double>& sampled_joint_vals) const
+{
+  // all discretized
+  double joint_dscrt = 0.05;
+  double joint_min = -3.14;
+  double joint_max = 3.14;
+  size_t steps = std::ceil((joint_max - joint_min) / joint_dscrt);
+  for (size_t i = 0; i < steps; i++)
+  {
+    sampled_joint_vals.push_back(joint_min + joint_dscrt * i);
+  }
+  sampled_joint_vals.push_back(joint_max);
+
+  return true;
+}
+
 bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
   joint_poses.clear();
-  const auto& solver = joint_group_->getSolverInstance();
+//  const auto& solver = joint_group_->getSolverInstance();
 
   // Transform input pose (given in reference frame world to be reached by the tip, so transform to base and tool)
   // math: pose = H_w_b * tool_pose * H_tip_tool0 (pose = H_w_pose; tool_pose = H_b_tip, with tip st tool is at pose)
@@ -62,19 +78,44 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& 
   // for now disable the above since we're just going to feed it in exactly what it needs:
   Eigen::Affine3d tool_pose = pose;
 
-  // convert to geometry_msgs ...
-  geometry_msgs::Pose geometry_pose;
-  tf::poseEigenToMsg(tool_pose, geometry_pose);
-  std::vector<geometry_msgs::Pose> poses = { geometry_pose };
+//  // convert to geometry_msgs ...
+//  geometry_msgs::Pose geometry_pose;
+//  tf::poseEigenToMsg(tool_pose, geometry_pose);
+//  std::vector<geometry_msgs::Pose> poses = { geometry_pose };
+//
+//  std::vector<double> dummy_seed(getDOF(), 0.0);
+//  std::vector<std::vector<double>> joint_results;
+//  kinematics::KinematicsResult result;
+//  kinematics::KinematicsQueryOptions options;  // defaults are reasonable as of Indigo
+//
+//  if (!solver->getPositionIK(poses, dummy_seed, joint_results, result, options))
+//  {
+//    return false;
+//  }
 
-  std::vector<double> dummy_seed(getDOF(), 0.0);
-  std::vector<std::vector<double>> joint_results;
-  kinematics::KinematicsResult result;
-  kinematics::KinematicsQueryOptions options;  // defaults are reasonable as of Indigo
-
-  if (!solver->getPositionIK(poses, dummy_seed, joint_results, result, options))
+  // sample redundant joints
+  std::vector<double> sampled_joint_vals;
+  if (!sampleRedundantJoint(sampled_joint_vals))
   {
     return false;
+  }
+
+  // find IK solutions for each sampled redundant parameter
+  int nb_solutions;
+  Eigen::Matrix4d T = pose.matrix();
+  std::vector<std::vector<double>> joint_results;
+
+  for (auto& redundant_param : sampled_joint_vals)
+  {
+    Eigen::MatrixXd q_solns(16, 7);
+    nb_solutions = jaco3_kinematics::ik_with_redundant_param(T, q_solns, redundant_param);
+
+    // convert and add to solutions matrix
+    for (int i=0; i<nb_solutions; i++)
+    {
+      std::vector<double> config(q_solns.row(i).data(), q_solns.row(i).data() + q_solns.row(i).size());
+      joint_results.push_back(config);
+    }
   }
 
   for (auto& sol : joint_results)

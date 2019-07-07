@@ -55,6 +55,7 @@ add_library(${PROJECT_NAME}
             src/moveit_state_adapter.cpp
             src/plugin_init.cpp
             src/seed_search.cpp
+            src/jaco3_ik.cpp
 )
 target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
