@@ -56,8 +56,11 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& 
   joint_poses.clear();
   const auto& solver = joint_group_->getSolverInstance();
 
-  // Transform input pose
-  Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
+  // Transform input pose (given in reference frame world to be reached by the tip, so transform to base and tool)
+  // math: pose = H_w_b * tool_pose * H_tip_tool0 (pose = H_w_pose; tool_pose = H_b_tip, with tip st tool is at pose)
+//  Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
+  // for now disable the above since we're just going to feed it in exactly what it needs:
+  Eigen::Affine3d tool_pose = pose;
 
   // convert to geometry_msgs ...
   geometry_msgs::Pose geometry_pose;
