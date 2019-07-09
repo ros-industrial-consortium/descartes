@@ -53,7 +53,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::initialize(const std::string& ro
 bool descartes_moveit::Jaco3MoveitStateAdapter::sampleRedundantJoint(std::vector<double>& sampled_joint_vals) const
 {
   // all discretized
-  double joint_dscrt = 0.3;
+  double joint_dscrt = 0.1;
   double joint_min = -3.14;
   double joint_max = 3.14;
   size_t steps = std::ceil((joint_max - joint_min) / joint_dscrt);
@@ -70,28 +70,12 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& 
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
   joint_poses.clear();
-//  const auto& solver = joint_group_->getSolverInstance();
 
   // Transform input pose (given in reference frame world to be reached by the tip, so transform to base and tool)
   // math: pose = H_w_b * tool_pose * H_tip_tool0 (pose = H_w_pose; tool_pose = H_b_tip, with tip st tool is at pose)
 //  Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
   // for now disable the above since we're just going to feed it in exactly what it needs:
   Eigen::Affine3d tool_pose = pose;
-
-//  // convert to geometry_msgs ...
-//  geometry_msgs::Pose geometry_pose;
-//  tf::poseEigenToMsg(tool_pose, geometry_pose);
-//  std::vector<geometry_msgs::Pose> poses = { geometry_pose };
-//
-//  std::vector<double> dummy_seed(getDOF(), 0.0);
-//  std::vector<std::vector<double>> joint_results;
-//  kinematics::KinematicsResult result;
-//  kinematics::KinematicsQueryOptions options;  // defaults are reasonable as of Indigo
-//
-//  if (!solver->getPositionIK(poses, dummy_seed, joint_results, result, options))
-//  {
-//    return false;
-//  }
 
   // sample redundant joints
   std::vector<double> sampled_joint_vals;
@@ -107,43 +91,20 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& 
 
   for (auto& redundant_param : sampled_joint_vals)
   {
-    Eigen::Matrix<double, 16, 7> q_solns;
+    Eigen::Matrix<double, 16, 7, Eigen::RowMajor> q_solns;
     nb_solutions = jaco3_kinematics::ik_with_redundant_param(T, q_solns, redundant_param);
 
-    // convert and add to solutions matrix
-    for (int row=0; row<nb_solutions; ++row)
+    for (unsigned int i=0; i < nb_solutions; i++)
     {
-      std::vector<double> intermed;
-      for (unsigned int col = 0; col < 7; col++)
+      // convert 16 solutions to a vector of vectors
+      Eigen::Matrix<double, 1, 7, Eigen::RowMajor> q_soln_i = q_solns.row(i);
+      std::vector<double> sol(q_soln_i.data(), q_soln_i.data() + q_soln_i.size());
+      // so we can check the solutions
+      if (isValid(sol))
       {
-        intermed.push_back(q_solns(row, col));
+        // and add them to the list of valid solutions
+        joint_poses.push_back(std::move(sol));
       }
-    joint_results.push_back(intermed);
-    }
-
-//    std::cout << "IK res: " << q_solns.row(row) << std::endl;
-//    // print out the vector
-//    std::cout << "converted: ";
-//    for (auto i = intermed.begin(); i != intermed.end(); ++i)
-//      std::cout << *i << ' ';
-//    std::cout << std::endl;
-  }
-
-  for (auto& sol : joint_results)
-  {
-    if (isValid(sol))
-    {
-      joint_poses.push_back(std::move(sol));
-       // test
-//      Eigen::Affine3d res_pose;
-//      if (!getFK(sol, res_pose))
-//      {
-//        CONSOLE_BRIDGE_logError("FK failed on joints that should have worked!");
-//      }
-//      else
-//      {
-//        std::cout << res_pose.translation() << std::endl;
-//      }
     }
   }
 
