@@ -31,7 +31,7 @@ namespace jaco3_kinematics {
     // @param qs                    A 16 by 7 array containing angles that would get the arm to T
     // @param redundant_parameter   Value of the redundant parameter (null space)
     // @return                      number of solutions (0 -> 16)
-    int ik_with_redundant_param(Eigen::Matrix4d& T, Eigen::Matrix<double, 16, 7>& qs, const double redundant_parameter);
+    int ik_with_redundant_param(Eigen::Matrix4d& T, Eigen::Matrix<double, 16, 7, Eigen::RowMajor>& qs, const double redundant_parameter);
 
     // @param a, alpha, d, theta    DH parameters
     // @param A                     resulting homogeneous transformation matrix
