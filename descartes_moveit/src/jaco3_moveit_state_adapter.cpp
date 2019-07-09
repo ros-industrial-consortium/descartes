@@ -53,7 +53,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::initialize(const std::string& ro
 bool descartes_moveit::Jaco3MoveitStateAdapter::sampleRedundantJoint(std::vector<double>& sampled_joint_vals) const
 {
   // all discretized
-  double joint_dscrt = 0.05;
+  double joint_dscrt = 0.3;
   double joint_min = -3.14;
   double joint_max = 3.14;
   size_t steps = std::ceil((joint_max - joint_min) / joint_dscrt);
@@ -107,21 +107,44 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& 
 
   for (auto& redundant_param : sampled_joint_vals)
   {
-    Eigen::MatrixXd q_solns(16, 7);
+    Eigen::Matrix<double, 16, 7> q_solns;
     nb_solutions = jaco3_kinematics::ik_with_redundant_param(T, q_solns, redundant_param);
 
     // convert and add to solutions matrix
-    for (int i=0; i<nb_solutions; i++)
+    for (int row=0; row<nb_solutions; ++row)
     {
-      std::vector<double> config(q_solns.row(i).data(), q_solns.row(i).data() + q_solns.row(i).size());
-      joint_results.push_back(config);
+      std::vector<double> intermed;
+      for (unsigned int col = 0; col < 7; col++)
+      {
+        intermed.push_back(q_solns(row, col));
+      }
+    joint_results.push_back(intermed);
     }
+
+//    std::cout << "IK res: " << q_solns.row(row) << std::endl;
+//    // print out the vector
+//    std::cout << "converted: ";
+//    for (auto i = intermed.begin(); i != intermed.end(); ++i)
+//      std::cout << *i << ' ';
+//    std::cout << std::endl;
   }
 
   for (auto& sol : joint_results)
   {
     if (isValid(sol))
+    {
       joint_poses.push_back(std::move(sol));
+       // test
+//      Eigen::Affine3d res_pose;
+//      if (!getFK(sol, res_pose))
+//      {
+//        CONSOLE_BRIDGE_logError("FK failed on joints that should have worked!");
+//      }
+//      else
+//      {
+//        std::cout << res_pose.translation() << std::endl;
+//      }
+    }
   }
 
   return joint_poses.size() > 0;
@@ -151,11 +174,12 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getFK(const std::vector<double>&
   if (!isValid(joint_pose))
     return false;
 
+  // tip frame is end-effector-link (Achille)
   if (!solver->getPositionFK(tip_frame, joint_pose, output))
     return false;
 
   tf::poseMsgToEigen(output[0], pose);  // pose in frame of IkFast base
-  pose = world_to_base_.frame * pose * tool0_to_tip_.frame_inv;
+//  pose = world_to_base_.frame * pose * tool0_to_tip_.frame_inv;
   return true;
 }
 
