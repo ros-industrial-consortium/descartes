@@ -32,7 +32,7 @@ namespace jaco3_kinematics {
         H_0_7 = H_0_6 * A7;
     }
 
-    int ik_with_redundant_param(Eigen::Matrix4d& T, Eigen::MatrixXd& qs, const double redundant_parameter) {
+    int ik_with_redundant_param(Eigen::Matrix4d& T, Eigen::Matrix<double, 16, 7>& qs, const double redundant_parameter) {
 
         // backtrack the wrist position (origin frame 5 and 6) from the end-effector pose (kinematic decoupling)
         Eigen::Vector4d wrist_position(0,0,0,1);
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
     std::cout << H_0_7 << std::endl;
 
     // test IK
-    Eigen::MatrixXd q_solns(16, 7);
+    Eigen::Matrix<double, 16, 7> q_solns;
     int nb_solutions;
     double redundant_param;
     redundant_param = q[0];
