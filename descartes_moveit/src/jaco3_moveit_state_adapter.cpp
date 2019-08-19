@@ -107,7 +107,9 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::getAllIK(const Eigen::Affine3d& 
       }
     }
   }
-
+  if (joint_poses.size() == 0){
+    ROS_ERROR_STREAM("All solutions for pose are invalid \n"<<T);
+  }
   return joint_poses.size() > 0;
 }
 
