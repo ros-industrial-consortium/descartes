@@ -6,7 +6,7 @@
 #define JACO3_MOVEIT_STATE_ADAPTER_H
 
 #include "descartes_moveit/moveit_state_adapter.h"
-#include "descartes_moveit/jaco3_ik.h"
+#include <peanut_kinematics/jaco3_ik.h>
 
 namespace descartes_moveit
 {
