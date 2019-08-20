@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   rosconsole_bridge
   tf
+  peanut_kinematics
 )
 
 find_package(Boost REQUIRED)
@@ -34,6 +35,7 @@ catkin_package(
     moveit_core
     rosconsole_bridge
     tf
+    peanut_kinematics
   DEPENDS
     Boost
     EIGEN3
@@ -46,6 +48,7 @@ include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
                     ${EIGEN3_INCLUDE_DIRS}
+                    ${peanut_kinematics_INCLUDE_DIRS}
 )
 
 ## Descartes MoveIt lib
@@ -55,7 +58,6 @@ add_library(${PROJECT_NAME}
             src/moveit_state_adapter.cpp
             src/plugin_init.cpp
             src/seed_search.cpp
-            src/jaco3_ik.cpp
 )
 target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
