@@ -29,12 +29,16 @@ public:
 
   virtual bool getFK(const std::vector<double>& joint_pose, Eigen::Affine3d& pose) const;
 
+  virtual bool isValid(const std::vector<double>& joint_pose) const;
+
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,
    * it also recomputes the transformations to/from the IKFast reference frames.
    */
   void setState(const moveit::core::RobotState& state);
 
+  bool hasNaN(const std::vector<double> &joint_pose) const;
+  
 protected:
   bool computeJaco3Transforms();
 
