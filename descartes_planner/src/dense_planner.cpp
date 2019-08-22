@@ -91,6 +91,7 @@ bool DensePlanner::updatePath()
   }
   else
   {
+    ROS_ERROR("Unknown Error while updating path. Possibly an infinite cost");
     error_code_ = descartes_core::PlannerErrors::UKNOWN;
     return false;
   }
@@ -155,6 +156,7 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
   else
   {
     error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
+    ROS_ERROR("IK not available");
   }
 
   return descartes_core::PlannerError::OK == error_code_;
