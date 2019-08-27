@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (Apache License)
  *
- * Copyright (c) 2014, Southwest Research Institute
+ * Copyright (c) 2018, Southwest Research Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 #ifndef ROBOT_MODEL_TEST_HPP_
 #define ROBOT_MODEL_TEST_HPP_
 
-#include "descartes_core/pretty_print.hpp"
 #include "descartes_core/robot_model.h"
 #include "ros/console.h"
 #include <gtest/gtest.h>
@@ -106,7 +105,6 @@ TYPED_TEST_P(RobotModelTest, getAllIK)
   std::vector<std::vector<double> >::iterator it;
   for (it = joint_poses.begin(); it != joint_poses.end(); ++it)
   {
-    ROS_INFO_STREAM("GetIK joint solution: " << *it);
     EXPECT_TRUE(this->model_->getFK(*it, fk_pose));
     EXPECT_TRUE(ik_pose.matrix().isApprox(fk_pose.matrix(), TF_EQ_TOL));
   }
