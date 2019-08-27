@@ -17,7 +17,6 @@
  */
 
 #include "descartes_tests/cartesian_robot.h"
-#include "descartes_core/pretty_print.hpp"
 #include "eigen_conversions/eigen_kdl.h"
 #include "ros/console.h"
 #include "ros/assert.h"
@@ -108,7 +107,6 @@ bool CartesianRobot::getFK(const std::vector<double> &joint_pose, Eigen::Affine3
   }
   else
   {
-    ROS_WARN_STREAM("Invalid joint pose passed to get FK, joint pose" << joint_pose);
     rtn = false;
   }
 
