@@ -21,42 +21,9 @@ using descartes_trajectory::TolerancedFrame;
 using descartes_trajectory::AxialSymmetricPt;
 using namespace descartes_core::utils;
 
-static TolerancedFrame makeUnconstrainedRotation(double x, double y, double z, double rx, double ry, double rz,
-                                                 AxialSymmetricPt::FreeAxis axis)
-{
-  using namespace descartes_trajectory;
-
-  Eigen::Affine3d pose = toFrame(x, y, z, rx, ry, rz, EulerConventions::XYZ);
-  PositionTolerance pos_tol = ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z);
-  OrientationTolerance orient_tol = ToleranceBase::createSymmetric<OrientationTolerance>(
-      ((axis == AxialSymmetricPt::X_AXIS) ? 0.0 : rx), ((axis == AxialSymmetricPt::Y_AXIS) ? 0.0 : ry),
-      ((axis == AxialSymmetricPt::Z_AXIS) ? 0.0 : rz), ((axis == AxialSymmetricPt::X_AXIS) ? 2 * M_PI : 0.0),
-      ((axis == AxialSymmetricPt::Y_AXIS) ? 2 * M_PI : 0.0), ((axis == AxialSymmetricPt::Z_AXIS) ? 2 * M_PI : 0.0));
-  return TolerancedFrame(pose, pos_tol, orient_tol);
-}
-
-static TolerancedFrame makeUnconstrainedRotation(const Eigen::Affine3d& pose, AxialSymmetricPt::FreeAxis axis)
-{
-  using namespace descartes_trajectory;
-
-  Eigen::Vector3d rpy = pose.rotation().eulerAngles(0, 1, 2);
-  double rx = rpy(0);
-  double ry = rpy(1);
-  double rz = rpy(2);
-  double x = pose.translation()(0);
-  double y = pose.translation()(1);
-  double z = pose.translation()(2);
-
-  PositionTolerance pos_tol = ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z);
-  OrientationTolerance orient_tol = ToleranceBase::createSymmetric<OrientationTolerance>(
-      ((axis == AxialSymmetricPt::X_AXIS) ? 0.0 : rx), ((axis == AxialSymmetricPt::Y_AXIS) ? 0.0 : ry),
-      ((axis == AxialSymmetricPt::Z_AXIS) ? 0.0 : rz), ((axis == AxialSymmetricPt::X_AXIS) ? 2 * M_PI : 0.0),
-      ((axis == AxialSymmetricPt::Y_AXIS) ? 2 * M_PI : 0.0), ((axis == AxialSymmetricPt::Z_AXIS) ? 2 * M_PI : 0.0));
-  return TolerancedFrame(pose, pos_tol, orient_tol);
-}
-
 namespace descartes_trajectory
 {
+
 AxialSymmetricPt::AxialSymmetricPt(const descartes_core::TimingConstraint& timing) : CartTrajectoryPt(timing)
 {
 }
@@ -64,20 +31,89 @@ AxialSymmetricPt::AxialSymmetricPt(const descartes_core::TimingConstraint& timin
 AxialSymmetricPt::AxialSymmetricPt(double x, double y, double z, double rx, double ry, double rz,
                                    double orient_increment, FreeAxis axis,
                                    const descartes_core::TimingConstraint& timing)
-  : CartTrajectoryPt(makeUnconstrainedRotation(x, y, z, rx, ry, rz, axis),
+  : CartTrajectoryPt(TolerancedFrame(toFrame(x, y, z, rx, ry, rz)),
                      0.0,               // The position discretization
                      orient_increment,  // Orientation discretization (starting at -2Pi and marching to 2Pi)
                      timing)
-{
-}
+  , axis_{axis}
+{}
 
 AxialSymmetricPt::AxialSymmetricPt(const Eigen::Affine3d& pose, double orient_increment, FreeAxis axis,
                                    const descartes_core::TimingConstraint& timing)
-  : CartTrajectoryPt(makeUnconstrainedRotation(pose, axis),
+  : CartTrajectoryPt(TolerancedFrame(pose),
                      0.0,               // The position discretization
                      orient_increment,  // Orientation discretization (starting at -2Pi and marching to 2Pi)
                      timing)
+  , axis_{axis}
+{}
+
+static void computePoses(const Eigen::Affine3d& origin, const AxialSymmetricPt::FreeAxis& axis,
+                         const double orientation_step, EigenSTL::vector_Affine3d& out)
 {
+  Eigen::Vector3d rot_axis;
+  switch (axis)
+  {
+  case AxialSymmetricPt::FreeAxis::X_AXIS:
+    rot_axis = Eigen::Vector3d::UnitX();
+    break;
+  case AxialSymmetricPt::FreeAxis::Y_AXIS:
+    rot_axis = Eigen::Vector3d::UnitY();
+    break;
+  case AxialSymmetricPt::FreeAxis::Z_AXIS:
+    rot_axis = Eigen::Vector3d::UnitZ();
+    break;
+  }
+
+  const static double lower_limit = -M_PI;
+  const static double upper_limit = M_PI;
+
+  out.clear();
+
+  const auto n_elements = static_cast<std::size_t>((upper_limit - lower_limit) / orientation_step) + 1u;
+  out.reserve(n_elements);
+
+  double s = lower_limit;
+  for (std::size_t i = 0; i < n_elements; ++i)
+  {
+    out.push_back(origin * Eigen::AngleAxisd(s, rot_axis));
+    s += orientation_step;
+  }
+}
+
+void AxialSymmetricPt::getJointPoses(const descartes_core::RobotModel &model,
+                                     std::vector<std::vector<double>>& joint_poses) const
+{
+  joint_poses.clear();
+
+  EigenSTL::vector_Affine3d poses;
+  computePoses(this->wobj_pt_.frame, axis_, this->orient_increment_, poses);
+
+  joint_poses.reserve(poses.size());
+  for (const auto& pose : poses)
+  {
+    std::vector<std::vector<double>> sols;
+    if (model.getAllIK(pose, sols))
+    {
+      joint_poses.insert(joint_poses.end(), std::make_move_iterator(sols.begin()),
+                         std::make_move_iterator(sols.end()));
+    }
+  }
+}
+
+void AxialSymmetricPt::getCartesianPoses(const descartes_core::RobotModel &model,
+                                         EigenSTL::vector_Affine3d &poses) const
+{
+  // Computes all of the candidate poses then filters them based on IK - not sure how I feel about this but I'll keep
+  // the behaviour already present in getCartesianPoses
+  poses.clear();
+  EigenSTL::vector_Affine3d all_poses;
+  computePoses(wobj_pt_.frame, axis_, orient_increment_, all_poses);
+
+  poses.reserve(all_poses.size());
+  for (const auto& pose : all_poses)
+  {
+    if (model.isValid(pose)) poses.push_back(pose);
+  }
 }
 
 }  // end of namespace descartes_trajectory
