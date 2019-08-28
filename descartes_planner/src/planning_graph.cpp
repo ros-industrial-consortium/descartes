@@ -163,8 +163,11 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
 {
   DAGSearch search (graph_);
   cost = search.run();
-  if (cost == std::numeric_limits<double>::max()) return false;
 
+  if (cost == std::numeric_limits<double>::max()){
+    ROS_ERROR("Infinite path cost found");
+    return false;
+  }
   auto path_idxs = search.shortestPath();
   const auto dof = graph_.dof();
 
