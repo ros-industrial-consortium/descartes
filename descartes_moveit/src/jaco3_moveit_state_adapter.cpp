@@ -184,3 +184,16 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::computeJaco3Transforms()
             jaco3_tool_frame.c_str(), jaco3_base_frame.c_str());
   return true;
 }
+
+bool descartes_moveit::Jaco3MoveitStateAdapter::hasNaN(const std::vector<double>& joint_pose) const{
+  for(const auto&val : joint_pose){
+    if(std::isnan(val)){
+      return true;
+    }
+  }
+  return false;
+}
+
+bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const{
+  return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
+}
