@@ -7,6 +7,8 @@
 
 #include "descartes_moveit/moveit_state_adapter.h"
 #include <peanut_kinematics/jaco3_ik.h>
+#include <moveit_msgs/GetPlanningScene.h>
+#include <moveit_msgs/PlanningScene.h>
 
 namespace descartes_moveit
 {
@@ -30,6 +32,16 @@ public:
   virtual bool getFK(const std::vector<double>& joint_pose, Eigen::Affine3d& pose) const;
 
   virtual bool isValid(const std::vector<double>& joint_pose) const;
+
+  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene);
+
+  /**
+   * @brief Returns the underlying moveit state object so it can be used to generate seeds
+   */
+  moveit::core::RobotStatePtr getState()
+  {
+    return robot_state_;
+  }
 
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,

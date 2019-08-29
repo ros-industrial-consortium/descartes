@@ -197,3 +197,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::hasNaN(const std::vector<double>
 bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const{
   return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
 }
+
+bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    planning_scene_->setPlanningSceneMsg(scene);
+}

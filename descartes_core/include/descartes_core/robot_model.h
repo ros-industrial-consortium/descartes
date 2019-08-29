@@ -22,6 +22,7 @@
 // TODO: The include below picks up Eigen::Affine3d, but there is probably a better way
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/utils.h"
+#include <moveit_msgs/PlanningScene.h>
 
 namespace descartes_core
 {
@@ -144,6 +145,10 @@ public:
 
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
+  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){}
+
+  virtual moveit::core::RobotStatePtr getState(){};
+  
 protected:
   RobotModel() : check_collisions_(false)
   {

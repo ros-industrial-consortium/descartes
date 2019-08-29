@@ -36,6 +36,7 @@ catkin_package(
     rosconsole_bridge
     tf
     peanut_kinematics
+    moveit_msgs
   DEPENDS
     Boost
     EIGEN3

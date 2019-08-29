@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   moveit_core
   roscpp
+  moveit_msgs
 )
 
 find_package(Boost REQUIRED)
