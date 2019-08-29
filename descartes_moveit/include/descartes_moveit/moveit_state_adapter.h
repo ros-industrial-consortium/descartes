@@ -110,7 +110,7 @@ protected:
    * called previously in order to enable collision checks, otherwise it will return false.
    * @param joint_pose the joint values at which check for collisions will be made
    */
-  bool isInCollision(const std::vector<double>& joint_pose) const;
+  virtual bool isInCollision(const std::vector<double>& joint_pose) const;
 
   /**
    * @brief Checks to see if the given joint_pose state is inside the bounds for the initialized
