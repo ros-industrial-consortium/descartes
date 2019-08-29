@@ -244,29 +244,12 @@ bool MoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose, std::vector<std::
 bool MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
 {
   bool in_collision = false;
-  collision_detection::CollisionRequest collision_request;
-  collision_detection::CollisionResult collision_result;
-  collision_detection::AllowedCollisionMatrix acm;
-
   if (check_collisions_)
-  { 
-    moveit::core::RobotState state = planning_scene_->getCurrentStateNonConst();
+  {
+    moveit::core::RobotState state (robot_model_ptr_);
+    state.setToDefaultValues();
     state.setJointGroupPositions(joint_group_, joint_pose);
-    
-    acm = planning_scene_->getAllowedCollisionMatrix();
-    //collision_request.group_name = group_name_;
-    collision_request.contacts = true;
-
-    planning_scene_->checkCollision(collision_request, collision_result, state, acm);
-    in_collision = collision_result.collision;
-  }
-  
-  if (in_collision){
-    collision_detection::CollisionResult::ContactMap::const_iterator it;
-    for ( it = collision_result.contacts.begin(); it != collision_result.contacts.end(); it++ )
-    {
-        ROS_DEBUG("Contact between: %s and %s", it->first.first.c_str(), it->first.second.c_str());
-    }
+    in_collision = planning_scene_->isStateColliding(state, group_name_);
   }
   return in_collision;
 }
