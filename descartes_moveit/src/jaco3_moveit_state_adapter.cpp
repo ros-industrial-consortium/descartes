@@ -199,5 +199,6 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double
 }
 
 bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    ROS_INFO("Updating descrates planning scene");
     planning_scene_->setPlanningSceneMsg(scene);
 }
