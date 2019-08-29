@@ -36,14 +36,6 @@ public:
   virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene);
 
   /**
-   * @brief Returns the underlying moveit state object so it can be used to generate seeds
-   */
-  moveit::core::RobotStatePtr getState()
-  {
-    return robot_state_;
-  }
-
-  /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,
    * it also recomputes the transformations to/from the IKFast reference frames.
    */

@@ -147,8 +147,6 @@ public:
 
   virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){}
 
-  virtual moveit::core::RobotStatePtr getState(){};
-  
 protected:
   RobotModel() : check_collisions_(false)
   {
