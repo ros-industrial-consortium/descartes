@@ -207,11 +207,12 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit
 bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
 {
   bool in_collision = false;
-  collision_detection::CollisionRequest collision_request;
-  collision_detection::CollisionResult collision_result;
 
   if (check_collisions_)
-  { 
+  {
+    collision_detection::CollisionRequest collision_request;
+    collision_detection::CollisionResult collision_result; 
+    
     moveit::core::RobotState state = planning_scene_->getCurrentStateNonConst();
     state.setJointGroupPositions(joint_group_, joint_pose);
     
@@ -220,14 +221,16 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<
 
     planning_scene_->checkCollision(collision_request, collision_result, state, acm_);
     in_collision = collision_result.collision;
+
+    if (in_collision){
+      collision_detection::CollisionResult::ContactMap::const_iterator it;
+      for ( it = collision_result.contacts.begin(); it != collision_result.contacts.end(); it++ )
+      {
+        ROS_DEBUG("Contact between: %s and %s", it->first.first.c_str(), it->first.second.c_str());
+      }
+    }
+
   }
   
-  if (in_collision){
-    collision_detection::CollisionResult::ContactMap::const_iterator it;
-    for ( it = collision_result.contacts.begin(); it != collision_result.contacts.end(); it++ )
-    {
-        ROS_DEBUG("Contact between: %s and %s", it->first.first.c_str(), it->first.second.c_str());
-    }
-  }
   return in_collision;
 }
