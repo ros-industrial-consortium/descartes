@@ -116,6 +116,7 @@ public:
    */
   virtual void setCheckCollisions(bool check_collisions)
   {
+    ROS_INFO("Collision checking enabled");
     check_collisions_ = check_collisions;
   }
 
