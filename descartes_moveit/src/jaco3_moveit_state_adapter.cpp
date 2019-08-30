@@ -201,6 +201,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double
 bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit_msgs::PlanningScene &scene){
     ROS_INFO("Updating descrates planning scene");
     planning_scene_->setPlanningSceneMsg(scene);
+    acm_ = planning_scene_->getAllowedCollisionMatrix();
 }
 
 bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
@@ -208,18 +209,16 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<
   bool in_collision = false;
   collision_detection::CollisionRequest collision_request;
   collision_detection::CollisionResult collision_result;
-  collision_detection::AllowedCollisionMatrix acm;
 
   if (check_collisions_)
   { 
     moveit::core::RobotState state = planning_scene_->getCurrentStateNonConst();
     state.setJointGroupPositions(joint_group_, joint_pose);
     
-    acm = planning_scene_->getAllowedCollisionMatrix();
     //collision_request.group_name = group_name_;
     collision_request.contacts = true;
 
-    planning_scene_->checkCollision(collision_request, collision_result, state, acm);
+    planning_scene_->checkCollision(collision_request, collision_result, state, acm_);
     in_collision = collision_result.collision;
   }
   

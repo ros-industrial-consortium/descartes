@@ -61,6 +61,9 @@ protected:
    * of the IKFast solver and the base of the MoveIt move group.
    */
   descartes_core::Frame world_to_base_;
+
+  collision_detection::AllowedCollisionMatrix acm_;
+
 };
 
 }  // end namespace 'descartes_moveit'
