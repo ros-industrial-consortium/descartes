@@ -63,6 +63,9 @@ protected:
   descartes_core::Frame world_to_base_;
 
   collision_detection::AllowedCollisionMatrix acm_;
+  collision_detection::CollisionRequest collision_request_;
+  std::string octomap_name_ = "<octomap>";
+  std::vector<std::string> check_collision_links_ = {"shoulder_link", "half_arm_1_link", "half_arm_2_link", "forearm_link", "end_effector_link"};
 
 };
 

@@ -199,15 +199,15 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double
 }
 
 bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    // Initialize planning scene
     ROS_INFO("Updating descrates planning scene");
     planning_scene_->setPlanningSceneMsg(scene);
+    
+    // Update ACM
     acm_ = planning_scene_->getAllowedCollisionMatrix();
-
-    // Initialize planning scene
-    std::string octomap_name = "<octomap>";
-    std::vector<std::string> check_collision_links = {"shoulder_link", "half_arm_1_link", "half_arm_2_link", "forearm_link", "end_effector_link"};
     acm_.setEntry(true);
-    acm_.setEntry(octomap_name, check_collision_links, false);
+    acm_.setEntry(octomap_name_, check_collision_links_, false);
+    collision_request_.contacts = true;
 }
 
 bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
@@ -216,16 +216,12 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<
 
   if (check_collisions_)
   {
-    collision_detection::CollisionRequest collision_request;
     collision_detection::CollisionResult collision_result; 
     
     moveit::core::RobotState state = planning_scene_->getCurrentStateNonConst();
     state.setJointGroupPositions(joint_group_, joint_pose);
-    
-    //collision_request.group_name = group_name_;
-    collision_request.contacts = true;
 
-    planning_scene_->checkCollision(collision_request, collision_result, state, acm_);
+    planning_scene_->checkCollision(collision_request_, collision_result, state, acm_);
     in_collision = collision_result.collision;
 
     if (in_collision){
