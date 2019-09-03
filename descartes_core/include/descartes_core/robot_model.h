@@ -116,7 +116,7 @@ public:
    */
   virtual void setCheckCollisions(bool check_collisions)
   {
-    ROS_INFO("Collision checking enabled");
+    ROS_INFO_STREAM("Check collisions set to "<<check_collisions);
     check_collisions_ = check_collisions;
   }
 
@@ -146,7 +146,10 @@ public:
 
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
-  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){}
+  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    ROS_ERROR("updatePlanningScene() method not implemented");
+    return false;
+  }
 
 protected:
   RobotModel() : check_collisions_(false)

@@ -7,7 +7,6 @@
 
 #include "descartes_moveit/moveit_state_adapter.h"
 #include <peanut_kinematics/jaco3_ik.h>
-#include <moveit_msgs/GetPlanningScene.h>
 #include <moveit_msgs/PlanningScene.h>
 
 namespace descartes_moveit
