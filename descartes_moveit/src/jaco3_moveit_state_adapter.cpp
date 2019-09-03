@@ -202,6 +202,12 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit
     ROS_INFO("Updating descrates planning scene");
     planning_scene_->setPlanningSceneMsg(scene);
     acm_ = planning_scene_->getAllowedCollisionMatrix();
+
+    // Initialize planning scene
+    std::string octomap_name = "<octomap>";
+    std::vector<std::string> check_collision_links = {"shoulder_link", "half_arm_1_link", "half_arm_2_link", "forearm_link", "end_effector_link"};
+    acm_.setEntry(true);
+    acm_.setEntry(octomap_name, check_collision_links, false);
 }
 
 bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
