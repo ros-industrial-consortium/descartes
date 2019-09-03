@@ -205,8 +205,15 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit
     
     // Update ACM
     acm_ = planning_scene_->getAllowedCollisionMatrix();
+    // Disable all collision checking
     acm_.setEntry(true);
-    acm_.setEntry(octomap_name_, check_collision_links_, false);
+    // Collision check selected arm links with octomap
+    acm_.setEntry(octomap_link_, collision_arm_links_, false);
+    // Collision check selected arm links with selected robot links
+    acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
+
+    // Initialize collision request message. 
+    // Setting this to false could descrease collision checking speed
     collision_request_.contacts = true;
 }
 
@@ -228,7 +235,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<
       collision_detection::CollisionResult::ContactMap::const_iterator it;
       for ( it = collision_result.contacts.begin(); it != collision_result.contacts.end(); it++ )
       {
-        ROS_DEBUG("Contact between: %s and %s", it->first.first.c_str(), it->first.second.c_str());
+        ROS_ERROR("Contact between: %s and %s", it->first.first.c_str(), it->first.second.c_str());
       }
     }
 
