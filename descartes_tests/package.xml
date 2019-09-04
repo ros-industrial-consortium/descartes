@@ -20,6 +20,9 @@
   <depend>descartes_planner</depend>
   <depend>descartes_trajectory</depend>
   <depend>eigen_conversions</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_ros_planning</depend>
+  <depend>trac_ik_lib</depend>
  
 
 </package>

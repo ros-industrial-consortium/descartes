@@ -8,7 +8,12 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_planner
   descartes_trajectory
   eigen_conversions
+  moveit_core
+  moveit_ros_planning
+  trac_ik_lib
 )
+
+find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   INCLUDE_DIRS
@@ -20,6 +25,8 @@ catkin_package(
     descartes_planner
     descartes_trajectory
     eigen_conversions
+  DEPENDS
+    Boost    
 )
 
 include_directories(
@@ -35,6 +42,12 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+)
+
+## add descartes graph solver test
+add_executable(test_graph_solver src/test_graph_solver.cpp)
+target_link_libraries(test_graph_solver ${PROJECT_NAME}
+  ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
 
 install(TARGETS ${PROJECT_NAME}
