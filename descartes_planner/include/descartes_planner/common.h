@@ -22,7 +22,7 @@ namespace descartes_planner
     std::size_t num_dofs;         /** the number of dofs per sample */
     std::vector<FloatT> values;   /** the samples data where each sample contains `num_dofs` elements*/
 
-    descartes_core::TrajectoryID point_id;
+    int point_id;
     typedef typename std::shared_ptr<PointSampleGroup> Ptr;
     typedef typename std::shared_ptr<const PointSampleGroup> ConstPtr;
   };
@@ -90,8 +90,7 @@ namespace descartes_planner
   {
   public:
 
-    EdgeEvaluator();
-    virtual ~EdgeEvaluator();
+    virtual ~EdgeEvaluator(){}
 
     /**
      * @brief evaluates all the edges between the samples of s1 and s2.

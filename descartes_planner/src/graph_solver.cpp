@@ -123,7 +123,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
 
         if(i == 1)
         {
-          // TODO: add virtual vertex at the beginning
           VertexProperties virtual_vertex_props;
           virtual_vertex_props.point_id = -1;
           virtual_vertex_props.sample_index = 0;
