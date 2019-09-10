@@ -39,12 +39,12 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
   typename PointSampleGroup<FloatT>::Ptr samples1 = nullptr;
   typename PointSampleGroup<FloatT>::Ptr samples2 = nullptr;
 
-  auto gather_samples = [](typename PointSampleGroup<FloatT>::Ptr samples,typename  PointSampler<FloatT>::Ptr sampler)
+  auto gather_samples = [](typename PointSampleGroup<FloatT>::Ptr& samples,typename  PointSampler<FloatT>::Ptr sampler) -> bool
   {
     if(samples == nullptr)
     {
       samples = sampler->getSamples();
-      return;
+      return samples!=nullptr;
     }
 
     // preallocating
@@ -55,7 +55,7 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
       samples->values.resize(samples->num_samples * samples->num_dofs);
     }
 
-    sampler->getSamples(samples);
+    return sampler->getSamples(samples);
   };
 
   std::size_t vertex_count = 1; // starting at 1 to account for initial virtual vertex
@@ -74,17 +74,29 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     }
     else
     {
-      gather_samples(samples1,sampler1);
+      if(!gather_samples(samples1,sampler1))
+      {
+        CONSOLE_BRIDGE_logError("No samples were produced for point 1 with index%lu",p1_idx);
+        return false;
+      }
     }
 
     // always recompute samples for the next point
-    gather_samples(samples2,sampler2);
+    if(!gather_samples(samples2,sampler2))
+    {
+      CONSOLE_BRIDGE_logError("No samples were produced for point 2 with index %lu",p2_idx);
+      return false;
+    }
 
     // validating vertex samples
     using SampleMap = std::map< std::size_t, typename PointSampleGroup<FloatT>::Ptr >;
     SampleMap sample_groups = {{p1_idx, samples1}, {p2_idx, samples2}};
     if(!std::all_of(sample_groups.begin(), sample_groups.end(),[](typename SampleMap::value_type& kv){
-
+      if(kv.second == nullptr)
+      {
+        CONSOLE_BRIDGE_logError("Invalid samples received for point with index %lu",kv.first);
+        return false;
+      }
       if(kv.second->values.empty())
       {
         CONSOLE_BRIDGE_logError("No valid samples were found in point %lu",kv.first);
@@ -134,6 +146,7 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
       }
     }
   }
+  return true;
 }
 
 template<typename FloatT>

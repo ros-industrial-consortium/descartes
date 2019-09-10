@@ -41,7 +41,6 @@ namespace descartes_planner
 
     virtual std::size_t getNumSamples() = 0;
     virtual std::size_t getDofs() = 0;
-    virtual descartes_core::TrajectoryID getID() = 0;
 
     /**
      * @brief Computes the samples

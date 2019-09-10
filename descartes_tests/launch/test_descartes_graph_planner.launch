@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find industrial_moveit_test_moveit_config)/launch/planning_context.launch">
+  	<arg name="load_robot_description" value="true"/>
+  </include>
+  
+  <!-- We do not have a robot connected, so publish fake joint states -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/> 
+    <rosparam param="/source_list">[/move_group/fake_controller_joint_states]</rosparam>
+  </node>
+  
+  <!-- Given the published joint states, publish tf for the robot links -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+  
+  <node name="test_graph_solver" type="test_graph_solver" pkg="descartes_tests" launch-prefix="xterm -e gdb --args">
+  	<rosparam param="robot_info">
+      base_link: base_link
+      tip_link: tcp_frame
+      group_name: manipulator
+      reference_joint_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    </rosparam>
+    <rosparam param="traj_generation">
+      grid_dims: [1.0, 1.0]
+      grid_lines: [10, 10]
+      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.0, 0.0]
+      local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
+      curvature: 1.0
+    </rosparam>
+  </node>
+</launch>
