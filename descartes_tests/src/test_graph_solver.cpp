@@ -150,9 +150,18 @@ public:
     }
   }
 
+  bool generate() override
+  {
+    if(samples_ == nullptr)
+    {
+      samples_ = computeSamples();
+    }
+    return samples_ != nullptr;
+  }
+
   std::size_t getNumSamples() override
   {
-    return num_samples_;
+    return samples_ == nullptr ? 0 : samples_->num_samples;
   }
 
   std::size_t getDofs() override
@@ -169,8 +178,7 @@ public:
   bool getSamples(PointSampleGroupT::Ptr g) override
   {
     // check if samples have been preallocated
-    samples_ = samples_ == nullptr ? computeSamples() : samples_;
-    if(samples_ == nullptr)
+    if(!generate())
     {
       CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
       g->num_samples = 0;
@@ -182,8 +190,7 @@ public:
 
   PointSampleGroupT::Ptr getSamples() override
   {
-    samples_ = samples_ == nullptr ? computeSamples() : samples_;
-    if(samples_ == nullptr)
+    if(!generate())
     {
       CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
       return false;
@@ -194,8 +201,7 @@ public:
 
   PointSampleGroupT::Ptr getSample(std::size_t idx) override
   {
-    samples_ = samples_ == nullptr ? computeSamples() : samples_;
-    if(samples_ == nullptr)
+    if(!generate())
     {
       CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
       return nullptr;
@@ -584,15 +590,17 @@ int main(int argc, char** argv)
 
 
   std::vector<PointSampleGroupT::ConstPtr> sol;
+  ros::Time start_time = ros::Time::now();
   if(!planner.plan(samplers,sol))
   {
    return -1;
   }
+  ros::Duration solve_time = ros::Time::now() - start_time;
 
   // publishing trajectory
   moveit_msgs::DisplayTrajectory disp_traj = toRobotTrajectory(model_loader.getModel(),group_name,sol);
   disp_traj_pub.publish(disp_traj);
-  ROS_INFO_STREAM("Found solution");
+  ROS_INFO("Found solution in %f seconds", solve_time.toSec());
 
   ros::waitForShutdown();
 

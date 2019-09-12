@@ -38,6 +38,16 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
   points_.clear();
   std::copy(points.begin(),points.end(),std::back_inserter(points_));
 
+  // generating samples now
+  for(std::size_t  i = 0; i < points_.size(); i++)
+  {
+    if(!points_[i]->generate())
+    {
+      CONSOLE_BRIDGE_logError("Failed to generate samples for point %lu",i);
+      return false;
+    }
+  }
+
   // build the graph now
   typename PointSampleGroup<FloatT>::Ptr samples1 = nullptr;
   typename PointSampleGroup<FloatT>::Ptr samples2 = nullptr;

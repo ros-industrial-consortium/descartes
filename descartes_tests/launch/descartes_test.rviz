@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /RobotModel1
         - /Axes1
         - /Trajectory1
         - /MarkerArray1
@@ -53,7 +54,7 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
+    - Alpha: 0.5
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -155,7 +156,7 @@ Visualization Manager:
     - Class: moveit_rviz_plugin/Trajectory
       Color Enabled: false
       Enabled: true
-      Interrupt Display: false
+      Interrupt Display: true
       Links:
         All Links Enabled: true
         Expand Joint Details: false
@@ -238,9 +239,9 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-      Loop Animation: false
+      Loop Animation: true
       Name: Trajectory
-      Robot Alpha: 0.5
+      Robot Alpha: 1
       Robot Color: 150; 50; 150
       Robot Description: robot_description
       Show Robot Collision: false
@@ -284,25 +285,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.62569808959961
+      Distance: 7.221528053283691
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.0394446849822998
-        Y: 0.03012903966009617
-        Z: 0.4662790298461914
+        X: 1.478391408920288
+        Y: -1.5831077098846436
+        Z: 0.5683901309967041
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5303976535797119
+      Pitch: 0.7103975415229797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.7604272365570068
+      Yaw: 0.8954271078109741
     Saved: ~
 Window Geometry:
   Displays:
