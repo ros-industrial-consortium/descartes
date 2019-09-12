@@ -96,7 +96,7 @@ class ZAxixSampler: public PointSamplerT
 {
 public:
   ZAxixSampler(const IsometryT& pose, moveit::core::RobotModelConstPtr model, TracIKPtr ik_solver,
-               const std::vector<FloatT>& seed, std::size_t num_samples = 4):
+               const std::vector<FloatT>& seed, std::size_t num_samples = 10):
      pose_(pose),
      model_(model),
      ik_solver_(ik_solver),
@@ -440,24 +440,6 @@ protected:
   descartes_planner::GraphSolver<FloatT> solver_;
 
 };
-
-static std::vector<Eigen::Isometry3d> createGridToolPath(moveit::core::RobotModelConstPtr model,
-                                                         const std::string& group_name,
-                                                         const std::vector<double>& ref_pose,
-                                                         const std::vector<double>& grid_dims,
-                                                         const std::vector<int>& grid_lines)
-{
-  using namespace moveit::core;
-  std::vector<Eigen::Isometry3d> tool_poses;
-  const moveit::core::JointModelGroup* jgroup = model->getJointModelGroup(group_name);
-  RobotStatePtr rstate = std::make_shared<RobotState>(model);
-  rstate->setToDefaultValues();
-  rstate->setJointGroupPositions(jgroup,ref_pose);
-
-  Eigen::Affine3d toolpath_transform = rstate->getFrameTransform(jgroup->getOnlyOneEndEffectorTip()->getName());
-
-  return {};
-}
 
 int main(int argc, char** argv)
 {
