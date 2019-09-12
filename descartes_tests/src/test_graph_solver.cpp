@@ -209,8 +209,8 @@ public:
 
     PointSampleGroupT::Ptr samples = std::make_shared<PointSampleGroupT>();
     std::size_t start_loc = idx * getDofs();
-    std::size_t end_loc = (idx + 1 )* getDofs();
-    if(end_loc > samples_->values.size())
+    std::size_t end_loc = start_loc + getDofs() - 1;
+    if(end_loc >= samples_->values.size())
     {
       CONSOLE_BRIDGE_logError("Requested Index %lu exceeds sample size %lu", idx, samples_->values.size());
       return nullptr;
@@ -283,7 +283,7 @@ protected:
 
       //sample_group->values.insert(sample_group->values.begin() + actual_num_samples * getDofs(),sol.begin(),sol.end());
       sample_group->values.insert(sample_group->values.end(),sol.begin(),sol.end());
-      actual_num_samples += num_sol;
+      actual_num_samples += static_cast<int>(joint_sol.rows()/getDofs());
     }
 
     if(actual_num_samples == 0)
@@ -590,6 +590,7 @@ int main(int argc, char** argv)
 
 
   std::vector<PointSampleGroupT::ConstPtr> sol;
+  ROS_INFO("Planning now for traj with %lu points ...", samplers.size());
   ros::Time start_time = ros::Time::now();
   if(!planner.plan(samplers,sol))
   {

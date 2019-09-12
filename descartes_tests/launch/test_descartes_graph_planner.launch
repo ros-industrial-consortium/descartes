@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="rviz" default="true"/>
   <include file="$(find industrial_moveit_test_moveit_config)/launch/planning_context.launch">
   	<arg name="load_robot_description" value="true"/>
   </include>
@@ -22,13 +23,14 @@
     </rosparam>
     <rosparam param="traj_generation">
       grid_dims: [1.0, 1.0]
-      grid_lines: [20, 20]
-      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.4, 0.0]
+      grid_lines: [40, 40]
+      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.4, 0.78]
       local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
       curvature: 1.0
     </rosparam>
     <rosparam param="planning_config">
-      num_samples: 5
+      num_samples: 10
     </rosparam>
   </node>
+  <node if="$(arg rviz)" name="rviz" type="rviz" pkg="rviz" args="-d $(find descartes_tests)/launch/descartes_test.rviz"/>
 </launch>
