@@ -22,10 +22,13 @@
     </rosparam>
     <rosparam param="traj_generation">
       grid_dims: [1.0, 1.0]
-      grid_lines: [20, 20]
+      grid_lines: [40, 40]
       nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.0, 0.0]
       local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
       curvature: 1.0
+    </rosparam>
+    <rosparam param="planning_config">
+      num_samples: 10
     </rosparam>
   </node>
 </launch>

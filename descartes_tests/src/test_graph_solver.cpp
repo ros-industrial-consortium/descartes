@@ -17,6 +17,8 @@
 #include <console_bridge/console.h>
 #include <boost/format.hpp>
 #include <eigen_conversions/eigen_msg.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+#include <moveit/robot_state/conversions.h>
 #include "descartes_tests/utils.h"
 
 using TracIKPtr = std::shared_ptr<TRAC_IK::TRAC_IK>;
@@ -36,6 +38,37 @@ static const double ROT_TOLERANCE = 1e-3; // radians
 static const std::string ROBOT_MODEL_PARAM = "robot_description";
 static const int MAX_ITERATIONS = 50;
 static const double EPS = 1e-5;
+
+moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotModelPtr model, const std::string& group_name, std::vector<PointSampleGroupT::ConstPtr>& sol)
+{
+  moveit_msgs::DisplayTrajectory disp_traj;
+  disp_traj.trajectory.resize(1);
+  moveit_msgs::RobotTrajectory& traj = disp_traj.trajectory.front();
+  moveit::core::RobotStatePtr rstate = std::make_shared<moveit::core::RobotState>(model);
+  rstate->setToDefaultValues();
+  const moveit::core::JointModelGroup* group = model->getJointModelGroup(group_name);
+  traj.joint_trajectory.joint_names = group->getActiveJointModelNames();
+  trajectory_msgs::JointTrajectoryPoint jp;
+  jp.positions.resize(sol.front()->num_dofs, 0.0);
+  jp.velocities.resize(sol.front()->num_dofs, 0.0);
+  jp.accelerations.resize(sol.front()->num_dofs, 0.0);
+  jp.effort.resize(sol.front()->num_dofs, 0.0);
+  for(std::size_t i =0; i < sol.size(); i++)
+  {
+    jp.positions.assign(sol[i]->values.begin(),sol[i]->values.end());
+    traj.joint_trajectory.points.push_back(jp);
+  }
+
+  // start state
+  std::vector<double> vals;
+  std::transform(sol.front()->values.begin(), sol.front()->values.end(),std::back_inserter(vals),
+                 [](const decltype(sol.front()->values)::value_type& v){
+    return static_cast<double>(v);
+  });
+  rstate->setJointGroupPositions(group,vals);
+  moveit::core::robotStateToRobotStateMsg(*rstate,disp_traj.trajectory_start);
+  return std::move(disp_traj);
+}
 
 
 EigenSTL::vector_Isometry3f generateTrajectory(const Eigen::Isometry3f& nominal_pose,
@@ -444,12 +477,13 @@ protected:
 int main(int argc, char** argv)
 {
   ros::init(argc,argv,"test_descartes_graph_solver");
-  ros::NodeHandle nh, ph1("~/robot_info"), ph2("~/traj_generation");
+  ros::NodeHandle nh, ph1("~/robot_info"), ph2("~/traj_generation"),  ph3("~/planning_config");
   ros::AsyncSpinner spinner(2);
   spinner.start();
 
   // ros comm
   ros::Publisher traj_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("descartes_test_traj",1);
+  ros::Publisher disp_traj_pub = nh.advertise<moveit_msgs::DisplayTrajectory>("descartes_solution",1);
 
 
   // loading required robot parameters
@@ -476,6 +510,14 @@ int main(int argc, char** argv)
       !ph2.getParam("curvature",curvature) ))
   {
     ROS_ERROR("Failed to load traj_generation parameters");
+    return -1;
+  }
+
+  // loading planning parameters
+  int num_samples; // per waypoint
+  if(!ph3.getParam("num_samples", num_samples))
+  {
+    ROS_ERROR("Failed to load planning_config parameters");
     return -1;
   }
 
@@ -536,7 +578,7 @@ int main(int argc, char** argv)
     return static_cast<float>(v);
   });
   std::transform(traj_waypoints.begin(),traj_waypoints.end(),std::back_inserter(samplers),[&](const Eigen::Isometry3f& wp){
-    ZAxixSampler::Ptr sampler = std::make_shared<ZAxixSampler>(wp,model_loader.getModel(),ik_solver,seed_pose);
+    ZAxixSampler::Ptr sampler = std::make_shared<ZAxixSampler>(wp,model_loader.getModel(),ik_solver,seed_pose, num_samples);
     return sampler;
   });
 
@@ -546,6 +588,10 @@ int main(int argc, char** argv)
   {
    return -1;
   }
+
+  // publishing trajectory
+  moveit_msgs::DisplayTrajectory disp_traj = toRobotTrajectory(model_loader.getModel(),group_name,sol);
+  disp_traj_pub.publish(disp_traj);
   ROS_INFO_STREAM("Found solution");
 
   ros::waitForShutdown();
