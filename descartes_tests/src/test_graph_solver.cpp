@@ -293,8 +293,8 @@ public:
                                           PointSampleGroupT::ConstPtr s2) const
   {
     using namespace Eigen;
-    std::vector< EdgePropertiesF > valid_edges;
-    valid_edges.reserve(s1->num_samples * s2->num_samples);
+    std::vector< EdgePropertiesF > edges;
+    edges.reserve(s1->num_samples * s2->num_samples);
     EdgePropertiesF edge;
     KDL::JntArray jpos1(s1->num_dofs);
     KDL::JntArray jpos2(s2->num_dofs);
@@ -317,24 +317,32 @@ public:
         cart_time[0] = cart_disp[0]/tool_speed_[0];
         cart_time[1] = cart_disp[1]/tool_speed_[1];
 
-        double min_time = *std::min_element(cart_time.begin(),cart_time.end());
-        if(!isWithinSpeedLimits(jpos1, jpos2, min_time))
-        {
-          CONSOLE_BRIDGE_logDebug("Velocity exceeded for points (%i: %lu, %i: %lu)",
-                                  s1->point_id, i1, s2->point_id, i2);
-          continue;
-        }
 
         edge.src_vtx.point_id = s1->point_id;
         edge.src_vtx.sample_index = i1;
         edge.dst_vtx.point_id = s2->point_id;
         edge.dst_vtx.sample_index = i2;
         edge.valid = true;
-        edge.weight = (jpos1.data - jpos2.data).norm();
-        valid_edges.push_back(edge);
+        Eigen::VectorXd diff = jpos1.data - jpos2.data;
+        double sum = std::abs(diff.sum());
+        edge.weight = (sum < 1e-6) ? 0 : diff.norm();
+
+        double min_time = *std::min_element(cart_time.begin(),cart_time.end());
+        if(!isWithinSpeedLimits(jpos1, jpos2, min_time))
+        {
+          CONSOLE_BRIDGE_logDebug("Velocity exceeded for points (%i: %lu, %i: %lu)",
+                                  s1->point_id, i1, s2->point_id, i2);
+          edge.valid = false;
+        }
+        else
+        {
+          edge.valid = true;
+        }
+
+        edges.push_back(edge);
       }
     }
-    return {};
+    return std::move(edges);
   }
 
 protected:

@@ -13,7 +13,7 @@
   <!-- Given the published joint states, publish tf for the robot links -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
   
-  <node name="test_graph_solver" type="test_graph_solver" pkg="descartes_tests" launch-prefix="xterm -e gdb --args">
+  <node name="test_graph_solver" type="test_graph_solver" pkg="descartes_tests" output="screen" launch-prefix="">
   	<rosparam param="robot_info">
       base_link: base_link
       tip_link: tcp_frame
@@ -23,7 +23,7 @@
     <rosparam param="traj_generation">
       grid_dims: [1.0, 1.0]
       grid_lines: [10, 10]
-      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.0, 0.0]
+      nominal_pose: [2.2, 0.0, 0.5, 0.0, 0.0, 0.0]
       local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
       curvature: 1.0
     </rosparam>
