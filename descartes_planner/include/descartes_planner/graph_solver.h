@@ -35,6 +35,7 @@ private:
   GraphT graph_;
   std::vector< typename PointSampler<FloatT>::Ptr > points_;
   typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator_;
+  std::map<std::size_t, VertexProperties> end_vertices_;
 
 
 };

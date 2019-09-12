@@ -170,13 +170,14 @@ public:
 
     PointSampleGroupT::Ptr samples = std::make_shared<PointSampleGroupT>();
     std::size_t start_loc = idx * getDofs();
-    std::size_t end_loc = (idx + 1 * getDofs());
+    std::size_t end_loc = (idx + 1 )* getDofs();
     if(end_loc > samples_->values.size())
     {
       CONSOLE_BRIDGE_logError("Requested Index %lu exceeds sample size %lu", idx, samples_->values.size());
       return nullptr;
     }
-    samples->values.insert(samples->values.begin(),samples_->values.begin() + start_loc,
+    samples->values.clear();
+    samples->values.insert(samples->values.end(),samples_->values.begin() + start_loc,
                     samples_->values.begin() + end_loc);
     samples->num_dofs = getDofs();
     samples->num_samples = 1;
@@ -563,6 +564,7 @@ int main(int argc, char** argv)
   {
    return -1;
   }
+  ROS_INFO_STREAM("Found solution");
 
   ros::waitForShutdown();
 

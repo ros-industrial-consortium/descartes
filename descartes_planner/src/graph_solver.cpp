@@ -66,27 +66,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
   std::map<std::size_t, VertexProperties> src_vertices_added;
   std::map<std::size_t, VertexProperties> dst_vertices_added;
 
-  auto add_vertices = [this](const std::map<std::size_t, VertexProperties>& vertex_map)
-  {
-    std::size_t num_vertices = boost::num_vertices(graph_);
-    for(const std::map<std::size_t, VertexProperties>::value_type& kv : vertex_map)
-    {
-      if(kv.first >= num_vertices)
-      {
-        auto v = boost::add_vertex(kv.second,graph_);
-        CONSOLE_BRIDGE_logInform("Added vertex %lu",kv.first);
-      }
-      else
-      {
-/*        typename GraphT::vertex_descriptor v = boost::vertex(kv.first, graph_);
-        graph_[v] = kv.second;
-        CONSOLE_BRIDGE_logInform("Updated vertex %lu",kv.first);*/
-      }
-    }
-  };
-
-  // convenience function to add vertices to graph
-
   // clearing graph
   graph_.clear();
 
@@ -200,25 +179,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
         CONSOLE_BRIDGE_logInform("Added edge (0, %lu) to virtual vertex",src_vtx_index);
       }
 
-      // now adding edge
-/*      if(edge.valid)
-      {
-        boost::tie(e,added) = boost::add_edge(src_vtx_index, dst_vtx_index, graph_);
-        CONSOLE_BRIDGE_logInform("Added edge (%lu, %lu)",src_vtx_index, dst_vtx_index);
-        if(!added)
-        {
-          CONSOLE_BRIDGE_logWarn("Edge (%lu, %lu) has already been added to the graphs",src_vtx_index,
-                                  dst_vtx_index);
-          return false;
-        }
-        else
-        {
-          // setting edge properties
-          graph_[e] = edge;
-        }
-      }
-      */
-
       boost::tie(e,added) = boost::add_edge(src_vtx_index, dst_vtx_index, graph_);
       CONSOLE_BRIDGE_logInform("Added edge (%lu, %lu)",src_vtx_index, dst_vtx_index);
       if(!added)
@@ -236,38 +196,15 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
 
       src_vertices_added[src_vtx_index] = edge.src_vtx;
       dst_vertices_added[dst_vtx_index] = edge.dst_vtx;
-
-      // now adding vertices
-      //add_new_vertex(src_vertices_added,src_vtx_index, edge.src_vtx);
-      //add_new_vertex(dst_vertices_added,dst_vtx_index,edge.dst_vtx);
-
     }
 
-    // adding virtual vertex first
-/*    if(add_virtual_vertex)
-    {
-      VertexProperties virtual_vertex_props;
-      virtual_vertex_props.point_id = VIRTUAL_VERTEX_INDEX;
-      virtual_vertex_props.sample_index = 0;
-      typename GraphT::edge_descriptor e;
-      bool added;
-      for(std::map<std::size_t, VertexProperties>::value_type& kv : src_vertices_added)
-      {
-        EdgeProperties<FloatT> virtual_edge= {.src_vtx = virtual_vertex_props, .dst_vtx = kv.second,
-          .valid = true, .weight = 0.0};
-
-        boost::tie(e,added) = boost::add_edge(0, kv.first, graph_);
-        graph_[e] = virtual_edge;
-      }
-    }*/
     add_virtual_vertex = false; // do not add edges for the virtual vertex anymore
-
-    //add_vertices(src_vertices_added);
-    //add_vertices(dst_vertices_added);
 
     // incrementing counter
     vertex_count += src_vertices_added.size();
   }
+  end_vertices_ = dst_vertices_added;
+
   return true;
 }
 
@@ -288,7 +225,7 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
   // iterating through out edges while inspecting the predecessor
   typedef boost::graph_traits<GraphT> GraphTraits;
 
-  current_vertex = virtual_vertex;
+  //current_vertex = virtual_vertex;
   solution_points.resize(points_.size(), nullptr);
   bool found_next = false;
   CONSOLE_BRIDGE_logInform("Predecessor array size %lu",predecessors.size());
@@ -298,51 +235,76 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
     std::cout<< "[" << i << "]: " <<predecessors[i]<<std::endl;
   }
 
-  do
+  typename GraphT::vertex_descriptor cheapest_end_vertex;
+  double cost = std::numeric_limits<double>::max();
+  for(std::map<std::size_t, VertexProperties>::value_type& kv: end_vertices_)
   {
-    found_next = false;
+    if(weights[kv.first] < cost)
+    {
+      cheapest_end_vertex = kv.first;
+    }
+  }
+  current_vertex = cheapest_end_vertex;
+
+  auto add_solution = [&](VertexProperties& vp) -> bool{
+
+    if(vp.point_id  == VIRTUAL_VERTEX_INDEX)
+    {
+      // found virtual index, just return
+      return true;
+    }
+
+    if(vp.point_id >= points_.size())
+    {
+      CONSOLE_BRIDGE_logError("Source vertex index %i exceeds point buffer of size %lu",vp.point_id, points_.size());
+      return false;
+    }
+
+    typename PointSampler<FloatT>::Ptr  sampler = points_[vp.point_id];
+
+    // recompute or retrieve the sample and storing it
+    if(solution_points[vp.point_id] != nullptr) // can not have more than one solutions
+    {
+      CONSOLE_BRIDGE_logDebug("Sample for point %i has already been assigned", vp.point_id);
+      return true;
+    }
+
+    typename PointSampleGroup<FloatT>::Ptr sample = sampler->getSample(vp.sample_index);
+    solution_points[vp.point_id] = sample;
+    CONSOLE_BRIDGE_logInform("Added %s solution point %i of %lu points",(sample != nullptr ? "valid" : "null"),
+                             vp.point_id, solution_points.size());
+    return true;
+  };
+
+  while(current_vertex != virtual_vertex)
+  {
+    typename GraphT::vertex_descriptor prev_vertex = predecessors[current_vertex];
     typename GraphTraits::out_edge_iterator out_i, out_end;
-    for(boost::tie(out_i, out_end)= boost::out_edges(current_vertex, graph_); out_i != out_end; out_i++)
+    bool found_next = false;
+    for(boost::tie(out_i, out_end)= boost::out_edges(prev_vertex, graph_); out_i != out_end; out_i++)
     {
       typename GraphTraits::edge_descriptor e = *out_i;
-      current_vertex = boost::source(e, graph_);
       typename GraphT::vertex_descriptor targ = boost::target(e, graph_);
-      if(predecessors[targ] == current_vertex)
+      if(targ == current_vertex)
       {
-        std::cout<<"Found edge ("<<current_vertex <<", "<<targ<<")"<<std::endl;
-        current_vertex = targ;
+        found_next = true;
+        std::cout<<"Found edge ("<<prev_vertex <<", "<<targ<<")"<<std::endl;
+        current_vertex = prev_vertex;
 
         // grab sampler
         EdgeProperties<FloatT> edge_props = graph_[e];
-        if(edge_props.src_vtx.point_id == VIRTUAL_VERTEX_INDEX)
+        if(!add_solution(edge_props.src_vtx) || !add_solution(edge_props.dst_vtx))
         {
-          CONSOLE_BRIDGE_logInform("Found virtual vertex, skipping ...");
-          found_next = true;
           break;
         }
-        else if(edge_props.src_vtx.point_id >= points_.size())
-        {
-          CONSOLE_BRIDGE_logError("Source vertex index %i exceeds point buffer of size %lu",edge_props.src_vtx.point_id, points_.size());
-          break;
-        }
-
-        typename PointSampler<FloatT>::Ptr  sampler = points_[edge_props.src_vtx.point_id];
-
-        // recompute or retrieve the sample and storing it
-        if(solution_points[edge_props.src_vtx.point_id] != nullptr) // can not have more than one solutions
-        {
-          CONSOLE_BRIDGE_logError("Sample for point %i has already been assigned", edge_props.src_vtx.point_id);
-          break;
-        }
-        typename PointSampleGroup<FloatT>::Ptr sample = sampler->getSample(edge_props.src_vtx.sample_index);
-        solution_points[edge_props.src_vtx.point_id] = sample;
-        CONSOLE_BRIDGE_logInform("Added %s solution point %i of %lu points",(sample != nullptr ? "valid" : "null"),
-                                 edge_props.src_vtx.point_id, solution_points.size());
-        found_next = true;
-        break;
       }
     }
-  } while(found_next);
+
+    if(!found_next )
+    {
+      break;
+    }
+  }
 
   for(std::size_t i = 0; i < solution_points.size(); i++)
   {
