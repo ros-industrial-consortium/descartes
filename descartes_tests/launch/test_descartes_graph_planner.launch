@@ -22,9 +22,9 @@
       reference_joint_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     </rosparam>
     <rosparam param="traj_generation">
-      grid_dims: [1.0, 1.0]
+      grid_dims: [1.2, 1.0]
       grid_lines: [40, 40]
-      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.4, 0.78]
+      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.2, 0.78]
       local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
       curvature: 1.0
     </rosparam>

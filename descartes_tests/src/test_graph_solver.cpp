@@ -193,7 +193,7 @@ public:
     if(!generate())
     {
       CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
-      return false;
+      return nullptr;
     }
     PointSampleGroupT::Ptr samples = std::make_shared<PointSampleGroupT>(*samples_);
     return std::move(samples);

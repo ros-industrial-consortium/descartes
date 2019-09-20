@@ -15,10 +15,6 @@ static const int VIRTUAL_VERTEX_INDEX = -1;
 namespace descartes_planner
 {
 
-// explicit especializations
-template class GraphSolver<float>;
-template class GraphSolver<double>;
-
 template<typename FloatT>
 descartes_planner::GraphSolver<FloatT>::GraphSolver(typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator):
   edge_evaluator_(edge_evaluator)
@@ -183,7 +179,7 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
         virtual_vertex_props.point_id = VIRTUAL_VERTEX_INDEX;
         virtual_vertex_props.sample_index = 0;
         EdgeProperties<FloatT> virtual_edge= {.src_vtx = virtual_vertex_props, .dst_vtx = edge.src_vtx,
-          .valid = true, .weight = (edge.valid ? 0.0 : std::numeric_limits<FloatT>::infinity())};
+          .valid = true, .weight = (edge.valid ? static_cast<FloatT>(0) : std::numeric_limits<FloatT>::infinity())};
         boost::tie(e,added) = boost::add_edge(0, src_vtx_index, graph_);
         graph_[e] = virtual_edge;
         CONSOLE_BRIDGE_logDebug("Added edge (0, %lu) to virtual vertex",src_vtx_index);
@@ -322,5 +318,9 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
   }
   return true;
 }
+
+// explicit especializations
+template class GraphSolver<float>;
+template class GraphSolver<double>;
 
 } /* namespace descartes_planner */
