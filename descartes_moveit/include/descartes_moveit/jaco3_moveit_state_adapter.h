@@ -64,8 +64,8 @@ protected:
   collision_detection::AllowedCollisionMatrix acm_;
   collision_detection::CollisionRequest collision_request_;
   std::string octomap_link_ = "<octomap>";
-  std::vector<std::string> collision_arm_links_ = {"forearm_link", "half_arm_1_link", "spherical_wrist_2_link"};
-  std::vector<std::string> collision_robot_links_ = {"tower_link", "arm_base_cover", "camera_box", "mobile_base_link"};
+  std::vector<std::string> collision_arm_links_ = {"half_arm_2_link", "forearm_link"};
+  std::vector<std::string> collision_robot_links_ = {"tower_link", "camera_box"};
 };
 
 }  // end namespace 'descartes_moveit'

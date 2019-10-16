@@ -207,8 +207,6 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit
     acm_ = planning_scene_->getAllowedCollisionMatrix();
     // Disable all collision checking
     acm_.setEntry(true);
-    // Collision check selected arm links with octomap
-    acm_.setEntry(octomap_link_, collision_arm_links_, false);
     // Collision check selected arm links with selected robot links
     acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
 
