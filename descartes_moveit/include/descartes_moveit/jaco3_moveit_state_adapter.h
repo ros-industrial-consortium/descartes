@@ -7,6 +7,7 @@
 
 #include "descartes_moveit/moveit_state_adapter.h"
 #include <peanut_kinematics/jaco3_ik.h>
+#include <moveit_msgs/PlanningScene.h>
 
 namespace descartes_moveit
 {
@@ -31,6 +32,8 @@ public:
 
   virtual bool isValid(const std::vector<double>& joint_pose) const;
 
+  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene);
+
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,
    * it also recomputes the transformations to/from the IKFast reference frames.
@@ -41,6 +44,7 @@ public:
   
 protected:
   bool computeJaco3Transforms();
+  virtual bool isInCollision(const std::vector<double>& joint_pose) const;
 
   /**
    * The IKFast implementation commonly solves between 'base_link' of a robot
@@ -56,6 +60,12 @@ protected:
    * of the IKFast solver and the base of the MoveIt move group.
    */
   descartes_core::Frame world_to_base_;
+
+  collision_detection::AllowedCollisionMatrix acm_;
+  collision_detection::CollisionRequest collision_request_;
+  std::string octomap_link_ = "<octomap>";
+  std::vector<std::string> collision_arm_links_ = {"half_arm_2_link", "forearm_link"};
+  std::vector<std::string> collision_robot_links_ = {"tower_link", "camera_box"};
 };
 
 }  // end namespace 'descartes_moveit'
