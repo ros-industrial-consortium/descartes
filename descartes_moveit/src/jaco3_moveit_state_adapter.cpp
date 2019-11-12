@@ -194,7 +194,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::hasNaN(const std::vector<double>
   return false;
 }
 
-void descartes_moveit::Jaco3MoveitStateAdapter::updateCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
+void descartes_moveit::Jaco3MoveitStateAdapter::setCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
   collision_arm_links_ = arm_links;
   collision_robot_links_ = robot_links;
 

@@ -48,9 +48,9 @@ protected:
   virtual bool isInCollision(const std::vector<double>& joint_pose) const;
 
   /**
-   * Update the collision_arm_links_ and collision_arm_robot_links. Used by jaco3_moveit_state_adapter
+   * Update the collision_arm_links_ and collision_arm_robot_links
    */
-  virtual void updateCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links);
+  virtual void setCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links);
 
   /**
    * The IKFast implementation commonly solves between 'base_link' of a robot
