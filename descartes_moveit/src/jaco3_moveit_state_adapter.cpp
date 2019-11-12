@@ -194,6 +194,23 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::hasNaN(const std::vector<double>
   return false;
 }
 
+void descartes_moveit::Jaco3MoveitStateAdapter::updateCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
+  collision_arm_links_ = arm_links;
+  collision_robot_links_ = robot_links;
+
+  std::string msg = "collision_arm_links_ : ";
+  for(const auto& name: collision_arm_links_){
+    msg = msg + "" + name + ",";
+  }
+  ROS_INFO_STREAM(msg);
+
+  msg = "collision_robot_links_ : ";
+  for(const auto& name: collision_robot_links_){
+    msg = msg + "" + name + ",";
+  }
+  ROS_INFO_STREAM(msg);
+}
+
 bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const{
   return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
 }

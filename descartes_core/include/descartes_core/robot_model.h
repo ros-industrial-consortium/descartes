@@ -151,6 +151,16 @@ public:
     return false;
   }
 
+  /**
+   * Update the collision_arm_links_ and collision_arm_robot_links. Used by jaco3_moveit_state_adapter
+   */
+  virtual void updateCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
+    // Adding unused parameters here so compiler does not complain abot unused parameters
+    (void)arm_links;
+    (void)robot_links;
+    ROS_ERROR("updateCollisionLinks() method not implemented");
+  }
+
 protected:
   RobotModel() : check_collisions_(false)
   {
