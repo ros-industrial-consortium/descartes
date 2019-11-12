@@ -147,6 +147,8 @@ public:
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
   virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    // Adding unused parameters here so compiler does not complain abot unused parameters
+    (void)scene;
     ROS_ERROR("updatePlanningScene() method not implemented");
     return false;
   }
