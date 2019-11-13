@@ -194,6 +194,23 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::hasNaN(const std::vector<double>
   return false;
 }
 
+void descartes_moveit::Jaco3MoveitStateAdapter::setCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
+  collision_arm_links_ = arm_links;
+  collision_robot_links_ = robot_links;
+
+  std::string msg = "collision_arm_links_ : ";
+  for(const auto& name: collision_arm_links_){
+    msg = msg + "" + name + ",";
+  }
+  ROS_INFO_STREAM(msg);
+
+  msg = "collision_robot_links_ : ";
+  for(const auto& name: collision_robot_links_){
+    msg = msg + "" + name + ",";
+  }
+  ROS_INFO_STREAM(msg);
+}
+
 bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const{
   return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
 }
@@ -233,7 +250,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<
       collision_detection::CollisionResult::ContactMap::const_iterator it;
       for ( it = collision_result.contacts.begin(); it != collision_result.contacts.end(); it++ )
       {
-        ROS_ERROR("Contact between: %s and %s", it->first.first.c_str(), it->first.second.c_str());
+        ROS_WARN_STREAM_THROTTLE(0.5, "Contact between: "<<it->first.first.c_str()<<" and "<<it->first.second.c_str());
       }
     }
 

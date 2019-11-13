@@ -147,8 +147,20 @@ public:
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
   virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    // Add unused parameters so compiler does not complain about unused parameters
+    (void)scene;
     ROS_ERROR("updatePlanningScene() method not implemented");
     return false;
+  }
+
+  /**
+   * Update the collision_arm_links_ and collision_arm_robot_links. Used by jaco3_moveit_state_adapter
+   */
+  virtual void setCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
+    // Add unused parameters here so compiler does not complain about unused parameters
+    (void)arm_links;
+    (void)robot_links;
+    ROS_ERROR("setCollisionLinks() method not implemented");
   }
 
 protected:
