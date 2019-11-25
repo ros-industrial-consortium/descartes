@@ -215,21 +215,26 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double
   return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
 }
 
-bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const moveit_msgs::PlanningScene &scene){
-    // Initialize planning scene
-    ROS_INFO("Updating descrates planning scene");
-    planning_scene_->setPlanningSceneMsg(scene);
-    
-    // Update ACM
-    acm_ = planning_scene_->getAllowedCollisionMatrix();
-    // Disable all collision checking
-    acm_.setEntry(true);
-    // Collision check selected arm links with selected robot links
-    acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
-
-    // Initialize collision request message. 
-    // Setting this to false could descrease collision checking speed
-    collision_request_.contacts = true;
+bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(){
+  // Initialize planning scene
+  ROS_INFO("Updating descartes planning scene");
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_ptr = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>("robot_description");
+  planning_scene_monitor_ptr->requestPlanningSceneState();
+  planning_scene_monitor::LockedPlanningSceneRO ps(planning_scene_monitor_ptr);
+  planning_scene_ = ps->diff();
+  planning_scene_->decoupleParent();
+  
+  // Update ACM
+  acm_ = planning_scene_->getAllowedCollisionMatrix();
+  // Disable all collision checking
+  acm_.setEntry(true);
+  // Collision check selected arm links with selected robot links
+  acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
+  
+  // Initialize collision request message. 
+  // Setting this to false could descrease collision checking speed
+  collision_request_.contacts = true;
+  return true;
 }
 
 bool descartes_moveit::Jaco3MoveitStateAdapter::isInCollision(const std::vector<double>& joint_pose) const
