@@ -33,7 +33,7 @@ public:
 
   virtual bool isValid(const std::vector<double>& joint_pose) const;
 
-  virtual bool updatePlanningScene();
+  virtual bool updatePlanningScene(const planning_scene_monitor::LockedPlanningSceneRO ps);
 
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,

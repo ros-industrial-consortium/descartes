@@ -215,12 +215,8 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double
   return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
 }
 
-bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(){
+bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const planning_scene_monitor::LockedPlanningSceneRO ps){
   // Initialize planning scene
-  ROS_INFO("Updating descartes planning scene");
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_ptr = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>("robot_description");
-  planning_scene_monitor_ptr->requestPlanningSceneState();
-  planning_scene_monitor::LockedPlanningSceneRO ps(planning_scene_monitor_ptr);
   planning_scene_ = ps->diff();
   planning_scene_->decoupleParent();
   
