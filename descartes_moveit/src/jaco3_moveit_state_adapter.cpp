@@ -215,10 +215,9 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::isValid(const std::vector<double
   return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
 }
 
-bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const planning_scene_monitor::LockedPlanningSceneRO ps){
+bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(planning_scene::PlanningScenePtr ps){
   // Initialize planning scene
-  planning_scene_ = ps->diff();
-  planning_scene_->decoupleParent();
+  planning_scene_ = ps;
   
   // Update ACM
   acm_ = planning_scene_->getAllowedCollisionMatrix();
@@ -226,7 +225,7 @@ bool descartes_moveit::Jaco3MoveitStateAdapter::updatePlanningScene(const planni
   acm_.setEntry(true);
   // Collision check selected arm links with selected robot links
   acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
-  
+
   // Initialize collision request message. 
   // Setting this to false could descrease collision checking speed
   collision_request_.contacts = true;

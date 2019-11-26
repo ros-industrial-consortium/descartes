@@ -147,7 +147,7 @@ public:
 
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
-  virtual bool updatePlanningScene(const planning_scene_monitor::LockedPlanningSceneRO ps){
+  virtual bool updatePlanningScene(planning_scene::PlanningScenePtr ps){
     ROS_ERROR("updatePlanningScene() method not implemented");
     return false;
   }

@@ -33,7 +33,7 @@ public:
 
   virtual bool isValid(const std::vector<double>& joint_pose) const;
 
-  virtual bool updatePlanningScene(const planning_scene_monitor::LockedPlanningSceneRO ps);
+  virtual bool updatePlanningScene(planning_scene::PlanningScenePtr ps);
 
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,
@@ -73,6 +73,7 @@ protected:
   std::string octomap_link_ = "<octomap>";
   std::vector<std::string> collision_arm_links_ = {"half_arm_2_link", "forearm_link"};
   std::vector<std::string> collision_robot_links_ = {"tower_link", "camera_box"};
+  std::vector<std::string> collision_octomap_links_ = {"sprayer"};
 };
 
 }  // end namespace 'descartes_moveit'
