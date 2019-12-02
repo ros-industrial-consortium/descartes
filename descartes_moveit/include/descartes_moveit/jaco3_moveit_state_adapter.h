@@ -73,7 +73,6 @@ protected:
   std::string octomap_link_ = "<octomap>";
   std::vector<std::string> collision_arm_links_ = {"half_arm_2_link", "forearm_link"};
   std::vector<std::string> collision_robot_links_ = {"tower_link", "camera_box"};
-  std::vector<std::string> collision_octomap_links_ = {"sprayer"};
 };
 
 }  // end namespace 'descartes_moveit'
