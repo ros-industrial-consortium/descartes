@@ -23,7 +23,6 @@
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/utils.h"
 #include <moveit_msgs/PlanningScene.h>
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 
 namespace descartes_core
 {
@@ -147,7 +146,9 @@ public:
 
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
 
-  virtual bool updatePlanningScene(planning_scene::PlanningScenePtr ps){
+  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene){
+    // Add unused parameters so compiler does not complain about unused parameters
+    (void)scene;
     ROS_ERROR("updatePlanningScene() method not implemented");
     return false;
   }
