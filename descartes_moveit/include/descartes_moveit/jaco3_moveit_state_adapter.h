@@ -8,6 +8,7 @@
 #include "descartes_moveit/moveit_state_adapter.h"
 #include <peanut_kinematics/jaco3_ik.h>
 #include <moveit_msgs/PlanningScene.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 
 namespace descartes_moveit
 {
@@ -32,7 +33,7 @@ public:
 
   virtual bool isValid(const std::vector<double>& joint_pose) const;
 
-  virtual bool updatePlanningScene(const moveit_msgs::PlanningScene &scene);
+  virtual bool updatePlanningScene(planning_scene::PlanningScenePtr ps);
 
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,
