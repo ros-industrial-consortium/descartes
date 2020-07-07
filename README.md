@@ -1,5 +1,6 @@
 Descartes
 =========
+[![Build Status](https://travis-ci.com/ros-industrial-consortium/descartes.svg?branch=melodic-devel)](https://travis-ci.com/ros-industrial-consortium/descartes)
 
 ROS-Industrial Special Project: Cartesian Path Planner
 
