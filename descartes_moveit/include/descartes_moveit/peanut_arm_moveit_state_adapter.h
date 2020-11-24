@@ -2,8 +2,8 @@
  * Link moveit's robot model with Descartes' robot model and plug in our custom IK solver
  */
 
-#ifndef PEANUT_MOVEIT_STATE_ADAPTER_H
-#define PEANUT_MOVEIT_STATE_ADAPTER_H
+#ifndef PEANUT_ARM_MOVEIT_STATE_ADAPTER_H
+#define PEANUT_ARM_MOVEIT_STATE_ADAPTER_H
 
 #include "descartes_moveit/moveit_state_adapter.h"
 #include <peanut_kinematics/arm_kinematics.h>
@@ -44,6 +44,7 @@ public:
   bool hasNaN(const std::vector<double> &joint_pose) const;
   
 protected:
+  bool computeTransforms();
 
   virtual bool isInCollision(const std::vector<double>& joint_pose) const;
 

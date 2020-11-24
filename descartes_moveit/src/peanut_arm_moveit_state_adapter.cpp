@@ -73,15 +73,15 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
 
   // Transform input pose (given in reference frame world to be reached by the tip, so transform to base and tool)
   // math: pose = H_w_b * tool_pose * H_tip_tool0 (pose = H_w_pose; tool_pose = H_b_tip, with tip st tool is at pose)
-//  Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
+  // Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
   // for now disable the above since we're just going to feed it in exactly what it needs:
   Eigen::Affine3d tool_pose = pose;
+  bool success = arm_kinematics::ik(tool_pose, joint_poses);
 
+  if (!success){
+    ROS_ERROR_STREAM("Could not find ik");
   }
-  if (joint_poses.size() == 0){
-    ROS_ERROR_STREAM("All solutions for pose are invalid \n"<<T);
-  }
-  return joint_poses.size() > 0;
+  return success;
 }
 
 bool descartes_moveit::PeanutMoveitStateAdapter::getIK(const Eigen::Affine3d& pose,
