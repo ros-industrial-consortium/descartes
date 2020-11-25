@@ -76,12 +76,19 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
   // Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
   // for now disable the above since we're just going to feed it in exactly what it needs:
   Eigen::Affine3d tool_pose = pose;
-  bool success = arm_kinematics::ik(tool_pose, joint_poses);
 
-  if (!success){
+  std::vector<std::vector<double>> potential_joint_configs;
+  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs);
+
+  for(auto& joint_config : potential_joint_configs){
+    if(isValid(joint_config)){
+      joint_poses.push_back(std::move(joint_config));
+    }
+  }
+  if (joint_poses.size() == 0){
     ROS_ERROR_STREAM("Could not find ik");
   }
-  return success;
+  return joint_poses.size() > 0;
 }
 
 bool descartes_moveit::PeanutMoveitStateAdapter::getIK(const Eigen::Affine3d& pose,
@@ -113,7 +120,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getFK(const std::vector<double>
     return false;
 
   tf::poseMsgToEigen(output[0], pose);  // pose in frame of IkFast base
-//  pose = world_to_base_.frame * pose * tool0_to_tip_.frame_inv;
+  // pose = world_to_base_.frame * pose * tool0_to_tip_.frame_inv;
   return true;
 }
 
