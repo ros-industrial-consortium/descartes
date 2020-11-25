@@ -78,7 +78,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
   Eigen::Affine3d tool_pose = pose;
 
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs);
+  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, true);
 
   for(auto& joint_config : potential_joint_configs){
     if(isValid(joint_config)){
