@@ -200,9 +200,9 @@ bool descartes_moveit::PeanutMoveitStateAdapter::updatePlanningScene(planning_sc
   // Update ACM
   acm_ = planning_scene_->getAllowedCollisionMatrix();
   // Disable all collision checking
-  acm_.setEntry(true);
+  // acm_.setEntry(true);
   // Collision check selected arm links with selected robot links
-  acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
+  // acm_.setEntry(collision_robot_links_, collision_arm_links_, false);
 
   // Initialize collision request message. 
   // Setting this to false could descrease collision checking speed
