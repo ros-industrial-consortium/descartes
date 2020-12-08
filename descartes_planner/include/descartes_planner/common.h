@@ -25,6 +25,28 @@ namespace descartes_planner
     int point_id;
     typedef typename std::shared_ptr<PointSampleGroup> Ptr;
     typedef typename std::shared_ptr<const PointSampleGroup> ConstPtr;
+
+    /**
+     * @brief gets a single sample
+     * @param sample_idx  sub index within sample group
+     * @return a pointer to sample group, nullptr when out index is out bounds.
+     */
+    virtual typename PointSampleGroup<FloatT>::Ptr at(std::size_t sample_idx)
+    {
+      if(sample_idx >= this->num_samples)
+      {
+        return nullptr;
+      }
+      typename PointSampleGroup<FloatT>::Ptr sample = std::make_shared<PointSampleGroup<FloatT>>();
+      sample->num_samples = 1;
+      sample->num_dofs = this->num_dofs;
+      sample->point_id = this->point_id;
+
+      auto start_loc = std::next(this->values.begin(),sample_idx * this->num_dofs);
+      auto end_loc = std::next(start_loc, this->num_dofs);
+      sample->values.assign(start_loc, end_loc);
+      return sample;
+    }
   };
 
   /**
@@ -40,34 +62,10 @@ namespace descartes_planner
     virtual ~PointSampler(){ }
 
     /**
-     * @brief this method should be called before making any inquiries about the samples
+     * @brief this method generates the samples, does not store them
      */
-    virtual bool generate() = 0;
+    virtual typename PointSampleGroup<FloatT>::Ptr generate() = 0;
 
-    virtual std::size_t getNumSamples() = 0;
-    virtual std::size_t getDofs() = 0;
-
-    /**
-     * @brief Computes the samples
-     * @param g A pointer to the PointSampleGroup that is to be used for storing the sample data.  The values member
-     *  can be preallocated before hand in order to improve the memory efficiency.  If any downcasting is necessary
-     *  then the "std::dynamic_pointer_cast<DerivedType>(g)" can be used.
-     * @return True on success, false otherwise
-     */
-    virtual bool getSamples(typename PointSampleGroup<FloatT>::Ptr g) = 0;
-
-    /**
-     * @brief Computes the samples
-     * @return a pointer to a PointSampleGroup object
-     */
-    virtual typename PointSampleGroup<FloatT>::Ptr getSamples() = 0;
-
-    /**
-     * @brief computes a single sample at the requested index.  This is useful when only one sample is desired
-     * @param idx The index for the sample that is to be computed
-     * @return  A pointer to a PointSampleGroup with just one sample.
-     */
-    virtual typename PointSampleGroup<FloatT>::Ptr getSample(std::size_t idx) = 0;
 
     typedef typename std::shared_ptr<PointSampler<FloatT> > Ptr;
     typedef typename std::shared_ptr<const PointSampler<FloatT> > ConstPtr;
@@ -109,8 +107,35 @@ namespace descartes_planner
     typedef typename std::shared_ptr<const EdgeEvaluator> ConstPtr;
   };
 
+  template <typename FloatT = float>
+  class SamplesContainer
+  {
+  public:
+    SamplesContainer(){}
+    virtual ~SamplesContainer(){ }
+
+    /**
+     * @brief this method should set the size of the internal buffer and clear previous data
+     * @param n
+     */
+    virtual void allocate(std::size_t n) = 0;
+
+    virtual void clear() = 0;
+
+    virtual bool has(std::size_t idx) = 0;
+
+    virtual std::size_t size() = 0;
+
+    virtual typename PointSampleGroup<FloatT>::Ptr& at(std::size_t idx) = 0;
+
+    virtual const typename PointSampleGroup<FloatT>::Ptr& at(std::size_t idx) const = 0;
+
+    virtual typename PointSampleGroup<FloatT>::Ptr& operator[](std::size_t idx) = 0;
+
+    virtual const typename PointSampleGroup<FloatT>::Ptr& operator[](std::size_t idx) const = 0;
+
+  };
+
 }
-
-
 
 #endif /* INCLUDE_DESCARTES_PLANNER_COMMON_H_ */
