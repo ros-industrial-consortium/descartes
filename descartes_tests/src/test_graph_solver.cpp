@@ -11,6 +11,7 @@
 #include <trac_ik/trac_ik.hpp>
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_state/robot_state.h>
 #include <Eigen/Geometry>
 #include <eigen_conversions/eigen_kdl.h>
@@ -35,18 +36,17 @@ using EdgePropertiesF = descartes_planner::EdgeProperties<FloatT>;
 
 static const double POS_TOLERANCE = 1e-4; // meters
 static const double ROT_TOLERANCE = 1e-3; // radians
-static const std::string ROBOT_MODEL_PARAM = "robot_description";
+static const std::string ROBOT_MODEL_PARAM = "/robot_description";
 static const int MAX_ITERATIONS = 50;
 static const double EPS = 1e-5;
 
-moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotModelPtr model, const std::string& group_name, std::vector<PointSampleGroupT::ConstPtr>& sol)
+moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotStatePtr rstate, const std::string& group_name,
+                                                 std::vector<PointSampleGroupT::ConstPtr>& sol)
 {
   moveit_msgs::DisplayTrajectory disp_traj;
   disp_traj.trajectory.resize(1);
   moveit_msgs::RobotTrajectory& traj = disp_traj.trajectory.front();
-  moveit::core::RobotStatePtr rstate = std::make_shared<moveit::core::RobotState>(model);
-  rstate->setToDefaultValues();
-  const moveit::core::JointModelGroup* group = model->getJointModelGroup(group_name);
+  const moveit::core::JointModelGroup* group = rstate->getRobotModel()->getJointModelGroup(group_name);
   traj.joint_trajectory.joint_names = group->getActiveJointModelNames();
   trajectory_msgs::JointTrajectoryPoint jp;
   jp.positions.resize(sol.front()->num_dofs, 0.0);
@@ -55,7 +55,14 @@ moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotModelPtr mod
   jp.effort.resize(sol.front()->num_dofs, 0.0);
   for(std::size_t i =0; i < sol.size(); i++)
   {
+    if(sol[i]->values.size() != sol.front()->num_dofs)
+    {
+      ROS_ERROR("Solution %i with size %lu has fewer than %lu dofs", i, sol[i]->values.size(),
+                sol.front()->num_dofs);
+      throw std::runtime_error("invalid joint size");
+    }
     jp.positions.assign(sol[i]->values.begin(),sol[i]->values.end());
+    jp.time_from_start = ros::Duration(0.1 * i);
     traj.joint_trajectory.points.push_back(jp);
   }
 
@@ -129,13 +136,14 @@ class ZAxixSampler: public PointSamplerT
 {
 public:
   ZAxixSampler(const IsometryT& pose, moveit::core::RobotModelConstPtr model, TracIKPtr ik_solver,
-               const std::vector<FloatT>& seed, std::size_t num_samples = 10):
+               const std::vector<FloatT>& seed, std::size_t num_samples , int index):
      pose_(pose),
      model_(model),
      ik_solver_(ik_solver),
      num_samples_(num_samples),
      seed_(seed),
-     samples_(nullptr)
+     samples_(nullptr),
+     index_(index)
   {
     if(seed_.size() < getDofs())
     {
@@ -150,21 +158,12 @@ public:
     }
   }
 
-  bool generate() override
+  PointSampleGroupT::Ptr generate() override
   {
-    if(samples_ == nullptr)
-    {
-      samples_ = computeSamples();
-    }
-    return samples_ != nullptr;
+    return computeSamples();
   }
 
-  std::size_t getNumSamples() override
-  {
-    return samples_ == nullptr ? 0 : samples_->num_samples;
-  }
-
-  std::size_t getDofs() override
+  std::size_t getDofs()
   {
     KDL::Chain chain;
     if(!ik_solver_->getKDLChain(chain))
@@ -173,55 +172,6 @@ public:
       return 0;
     }
     return chain.getNrOfJoints();
-  }
-
-  bool getSamples(PointSampleGroupT::Ptr g) override
-  {
-    // check if samples have been preallocated
-    if(!generate())
-    {
-      CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
-      g->num_samples = 0;
-      return false;
-    }
-    *g = *samples_;
-    return g->num_samples > 0;
-  }
-
-  PointSampleGroupT::Ptr getSamples() override
-  {
-    if(!generate())
-    {
-      CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
-      return nullptr;
-    }
-    PointSampleGroupT::Ptr samples = std::make_shared<PointSampleGroupT>(*samples_);
-    return std::move(samples);
-  }
-
-  PointSampleGroupT::Ptr getSample(std::size_t idx) override
-  {
-    if(!generate())
-    {
-      CONSOLE_BRIDGE_logError("Failed to compute samples for pose");
-      return nullptr;
-    }
-
-    PointSampleGroupT::Ptr samples = std::make_shared<PointSampleGroupT>();
-    std::size_t start_loc = idx * getDofs();
-    std::size_t end_loc = start_loc + getDofs() - 1;
-    if(end_loc >= samples_->values.size())
-    {
-      CONSOLE_BRIDGE_logError("Requested Index %lu exceeds sample size %lu", idx, samples_->values.size());
-      return nullptr;
-    }
-    samples->values.clear();
-    samples->values.insert(samples->values.end(),samples_->values.begin() + start_loc,
-                    samples_->values.begin() + end_loc);
-    samples->num_dofs = getDofs();
-    samples->num_samples = 1;
-
-    return samples;
   }
 
   virtual ~ZAxixSampler()
@@ -264,7 +214,6 @@ protected:
     KDL::Twist tol(KDL::Vector(POS_TOLERANCE, POS_TOLERANCE, POS_TOLERANCE),
                    KDL::Vector(ROT_TOLERANCE,ROT_TOLERANCE,M_PI));
 
-
     IsometryT sampled_pose;
     KDL::Frame sampled_kdl_pose;
     std::size_t actual_num_samples = 0;
@@ -273,22 +222,33 @@ protected:
       sampled_pose = Translation3f(pos) * AngleAxisf(euler_angles[0],Vector3T::UnitX()) *
           AngleAxisf(euler_angles[1],Vector3T::UnitY()) * AngleAxisf(z_incr * s,Vector3T::UnitZ());
       tf::transformEigenToKDL(sampled_pose.cast<double>(),sampled_kdl_pose);
+      joint_sol = joint_seed;
       int num_sol = ik_solver_->CartToJnt(joint_seed,sampled_kdl_pose,joint_sol, tol);
-      if(num_sol == 0)
+      if(num_sol <= 0)
       {
         continue;
       }
+
+      int mod = joint_sol.data.size() % getDofs();
+      if(mod != 0)
+      {
+       ROS_ERROR("Number of solution vals %lu is not a multiple of dofs %lu",
+                 joint_sol.data.size() , getDofs());
+       return nullptr;
+      }
+
       sol.resize(joint_sol.rows());
       VectorXT::Map(&sol[0],sol.size()) = joint_sol.data.cast<FloatT>();
 
       //sample_group->values.insert(sample_group->values.begin() + actual_num_samples * getDofs(),sol.begin(),sol.end());
       sample_group->values.insert(sample_group->values.end(),sol.begin(),sol.end());
       actual_num_samples += static_cast<int>(joint_sol.rows()/getDofs());
+      //ROS_WARN_COND(num_sol > 1,"Sampler %i found %i solutions for sample %i", index_, num_sol, s);
     }
 
     if(actual_num_samples == 0)
     {
-      CONSOLE_BRIDGE_logError("0 solutions were found for the current waypoint");
+      CONSOLE_BRIDGE_logError("0 solutions were found for the waypoint sampler %i", index_);
       return nullptr;
     }
     else
@@ -296,7 +256,18 @@ protected:
       //CONSOLE_BRIDGE_logInform("Found %lu samples",actual_num_samples);
     }
 
+    int mod = sample_group->values.size() % getDofs();
+    if(mod != 0)
+    {
+      ROS_ERROR("Number of solution vals %lu is not a multiple of dofs %i",
+                sample_group->values.size(), getDofs());
+      return nullptr;
+    }
+
     sample_group->num_samples = actual_num_samples;
+
+    ROS_DEBUG("Sampler %i found %i solutions with %lu values", index_, sample_group->num_samples,
+             sample_group->values.size());
     return sample_group;
   }
 
@@ -306,6 +277,7 @@ protected:
   TracIKPtr ik_solver_;
   moveit::core::RobotModelConstPtr model_;
   PointSampleGroupT::Ptr samples_;
+  int index_;
 };
 
 class SpeedEvaluator: public descartes_planner::EdgeEvaluator<FloatT>
@@ -334,22 +306,23 @@ public:
   {
     using namespace Eigen;
     std::vector< EdgePropertiesF > edges;
-    edges.reserve(s1->num_samples * s2->num_samples);
+    //edges.reserve(s1->num_samples * s2->num_samples);
     EdgePropertiesF edge;
     KDL::JntArray jpos1(s1->num_dofs);
     KDL::JntArray jpos2(s2->num_dofs);
     std::vector<FloatT> jvals1(s1->num_dofs, 0.0), jvals2(s2->num_dofs,0.0);
-    std::size_t idx1, idx2;
     std::array<FloatT,2> cart_time, cart_disp;
     for(std::size_t i1 = 0; i1 < s1->num_samples; i1++)
     {
-      idx1 = i1 * s1->num_dofs;
-      jvals1.assign(s1->values.begin() + idx1, s1->values.begin() + idx1 + s1->num_dofs);
+      auto start1_pos = std::next(s1->values.begin(), i1 * s1->num_dofs);
+      auto end1_pos = std::next(start1_pos, s1->num_dofs);
+      jvals1.assign(start1_pos, end1_pos);
       jpos1.data = Map<VectorXf>(&jvals1[0], jvals1.size()).cast<double>();
       for(std::size_t i2 = 0; i2 < s2->num_samples; i2++)
       {
-        idx2 = i2 * s2->num_dofs;
-        jvals2.assign(s2->values.begin() + idx2, s2->values.begin() + idx2 + s2->num_dofs);
+        auto start2_pos = std::next(s2->values.begin(), i2 * s2->num_dofs);
+        auto end2_pos = std::next(start2_pos, s2->num_dofs);
+        jvals2.assign(start2_pos, end2_pos);
         jpos2.data = Map<VectorXf>(&jvals2[0], jvals2.size()).cast<double>();
 
         // computing time
@@ -364,22 +337,28 @@ public:
         edge.dst_vtx.sample_index = i2;
         edge.valid = true;
         Eigen::VectorXd diff = jpos1.data - jpos2.data;
+        diff.array() = diff.array().abs();
         double sum = std::abs(diff.sum());
-        edge.weight = (sum < 1e-6) ? 0 : diff.norm();
+        //edge.weight = (sum < 1e-6) ? 0 : diff.norm();
+        //edge.weight = diff.maxCoeff();
 
         double min_time = *std::min_element(cart_time.begin(),cart_time.end());
-        if(!isWithinSpeedLimits(jpos1, jpos2, min_time))
+        double cost;
+        if(!isWithinSpeedLimits(jpos1, jpos2, min_time, cost))
         {
           CONSOLE_BRIDGE_logDebug("Velocity exceeded for points (%i: %lu, %i: %lu)",
                                   s1->point_id, i1, s2->point_id, i2);
           edge.valid = false;
+          edge.weight = std::numeric_limits<FloatT>::infinity();
         }
         else
         {
           edge.valid = true;
+          edge.weight = sum; //diff.maxCoeff();
+          //edges.push_back(edge);
         }
-
         edges.push_back(edge);
+
       }
     }
     return std::move(edges);
@@ -405,7 +384,7 @@ protected:
     return std::move(cart_dplc);
   }
 
-  bool isWithinSpeedLimits(const KDL::JntArray& pos1, const KDL::JntArray& pos2, double t) const
+  bool isWithinSpeedLimits(const KDL::JntArray& pos1, const KDL::JntArray& pos2, double t, double &max_cost) const
   {
     using namespace Eigen;
     VectorXd diff = pos2.data - pos1.data;
@@ -416,19 +395,33 @@ protected:
       return false;
     }
 
+    max_cost = 0;
     for(std::size_t i = 0; i < diff.rows(); i++)
     {
-      //CONSOLE_BRIDGE_logInform("Getting joint %s bounds",joint_names_[i].c_str());
       const moveit::core::VariableBounds& bounds = model_->getVariableBounds(joint_names_[i]);
       if(!bounds.velocity_bounded_)
       {
         continue;
       }
 
-      double joint_vel = diff[i]/t;
+      double joint_vel = std::abs(diff[i])/t;
+      double current_cost = bounds.max_velocity_/ joint_vel;
+      //max_cost = max_cost > current_cost ? max_cost : current_cost;
+      max_cost = joint_vel;
+
       if(bounds.max_velocity_ < joint_vel)
       {
+        ROS_DEBUG("Velocity for joint %s was exceeded at speed %f > max (%f)", joint_names_[i].c_str(),joint_vel,
+                  bounds.max_velocity_);
         return false;
+      }
+
+      if(bounds.acceleration_bounded_)
+      {
+        if(bounds.max_acceleration_  < joint_vel/t)
+        {
+          return false;
+        }
       }
     }
     return true;
@@ -491,6 +484,12 @@ int main(int argc, char** argv)
   ros::Publisher traj_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("descartes_test_traj",1);
   ros::Publisher disp_traj_pub = nh.advertise<moveit_msgs::DisplayTrajectory>("descartes_solution",1);
 
+  // load robot model
+  planning_scene_monitor::PlanningSceneMonitor scene_monitor(ROBOT_MODEL_PARAM);
+  scene_monitor.startStateMonitor();
+  scene_monitor.waitForCurrentRobotState(ros::Time::now(),5.0);
+  auto robot_model = scene_monitor.getRobotModel();
+
 
   // loading required robot parameters
   std::string base_link, tip_link, group_name;
@@ -508,12 +507,15 @@ int main(int argc, char** argv)
   std::vector<double> nominal_pose_vals, local_offset_vals;
   std::vector<int> grid_lines; // num lines in x and y
   std::vector<double> grid_dims; // lenth (x) and width (y)
+  std::string traj_frame_id;
   double curvature;
   if((!ph2.getParam("grid_dims",grid_dims) ||
       !ph2.getParam("grid_lines",grid_lines) ||
       !ph2.getParam("nominal_pose",nominal_pose_vals) ||
       !ph2.getParam("local_offset",local_offset_vals) ||
-      !ph2.getParam("curvature",curvature) ))
+      !ph2.getParam("curvature",curvature) ||
+      !ph2.getParam("frame_id", traj_frame_id)
+      ))
   {
     ROS_ERROR("Failed to load traj_generation parameters");
     return -1;
@@ -544,23 +546,43 @@ int main(int argc, char** argv)
   EigenSTL::vector_Isometry3f traj_waypoints = generateTrajectory(nominal_pose, local_offset, radius, angle,
                                                  line_spacing, num_lines, num_points_per_line);
 
-  // loading urdf
-  robot_model_loader::RobotModelLoader model_loader(ROBOT_MODEL_PARAM,false);
+  // transform to robot base link
+  scene_monitor.lockSceneRead();
+  moveit::core::RobotStatePtr state = scene_monitor.getStateMonitor()->getCurrentState();
+  Eigen::Isometry3f traj_frame_pose = state->getFrameTransform(traj_frame_id).cast<float>();
+  Eigen::Isometry3f base_link_pose = state->getFrameTransform(base_link).cast<float>();
+  auto traj_transform = base_link_pose.inverse() * traj_frame_pose;
+  std::for_each(traj_waypoints.begin(), traj_waypoints.end(),[traj_transform](Eigen::Isometry3f& p){
+    p = traj_transform * p;
+  });
+  scene_monitor.unlockSceneRead();
+
 
   // loading solver
   TracIKPtr ik_solver = std::make_shared<TRAC_IK::TRAC_IK>(base_link,
                                                              tip_link,
-                                                             ROBOT_MODEL_PARAM);
+                                                             ROBOT_MODEL_PARAM,
+                                                             0.01);
+
+  KDL::Chain chain;
+  if(!ik_solver->getKDLChain(chain))
+  {
+    CONSOLE_BRIDGE_logError("Failed to get KDL chain");
+    return -1;
+  }
+  ROS_WARN("Solver has %i dofs",chain.getNrOfJoints());
+
+
   std::vector<std::string> joint_names;
-  moveit::core::JointModelGroup* group = model_loader.getModel()->getJointModelGroup(group_name);
+  const moveit::core::JointModelGroup* group = robot_model->getJointModelGroup(group_name);
   // creating planner now
-  SpeedEvaluator::Ptr speed_eval = std::make_shared<SpeedEvaluator>(model_loader.getModel(),
+  SpeedEvaluator::Ptr speed_eval = std::make_shared<SpeedEvaluator>(robot_model,
                                                                     group->getActiveJointModelNames(),
                                                                     ik_solver);
   DescartesGraphPlanner planner(speed_eval);
 
   // visualizing trajectory
-  std::string world_frame = model_loader.getModel()->getRootLinkName();
+  std::string world_frame = robot_model->getRootLinkName();
   geometry_msgs::PoseArray traj_poses;
   std::transform(traj_waypoints.begin(),traj_waypoints.end(),std::back_inserter(traj_poses.poses),[](
       const decltype(traj_waypoints)::value_type& w){
@@ -569,8 +591,8 @@ int main(int argc, char** argv)
     return std::move(pose);
   });
 
-  visualization_msgs::MarkerArray traj_line_markers = descartes_test::toDottedLineMarker({traj_poses},world_frame,"lines");
-  visualization_msgs::MarkerArray traj_axis_markers = descartes_test::toAxisPathMarker({traj_poses},world_frame,"axis");
+  visualization_msgs::MarkerArray traj_line_markers = descartes_test::toDottedLineMarker({traj_poses},base_link,"lines");
+  visualization_msgs::MarkerArray traj_axis_markers = descartes_test::toAxisPathMarker({traj_poses},base_link,"axis");
 
   ros::Timer publish_timer = nh.createTimer(ros::Duration(1.0),[&](const ros::TimerEvent& e){
     traj_marker_pub.publish(traj_line_markers);
@@ -580,11 +602,17 @@ int main(int argc, char** argv)
   // create input trajectory
   std::vector<PointSamplerT::Ptr> samplers;
   std::vector<FloatT> seed_pose;
-  std::transform(reference_joint_pose.begin(), reference_joint_pose.end(),std::back_inserter(seed_pose),[](const double& v){
+  std::transform(reference_joint_pose.begin(), reference_joint_pose.end(),std::back_inserter(seed_pose),
+                 [](const double& v){
     return static_cast<float>(v);
   });
-  std::transform(traj_waypoints.begin(),traj_waypoints.end(),std::back_inserter(samplers),[&](const Eigen::Isometry3f& wp){
-    ZAxixSampler::Ptr sampler = std::make_shared<ZAxixSampler>(wp,model_loader.getModel(),ik_solver,seed_pose, num_samples);
+
+  int idx_counter = 0;
+  std::transform(traj_waypoints.begin(),traj_waypoints.end(),std::back_inserter(samplers),
+                 [&](const Eigen::Isometry3f& wp){
+    ZAxixSampler::Ptr sampler = std::make_shared<ZAxixSampler>(wp,robot_model,
+                                                               ik_solver,seed_pose, num_samples, idx_counter);
+    idx_counter++;
     return sampler;
   });
 
@@ -594,12 +622,16 @@ int main(int argc, char** argv)
   ros::Time start_time = ros::Time::now();
   if(!planner.plan(samplers,sol))
   {
+    ros::waitForShutdown();
    return -1;
   }
   ros::Duration solve_time = ros::Time::now() - start_time;
 
   // publishing trajectory
-  moveit_msgs::DisplayTrajectory disp_traj = toRobotTrajectory(model_loader.getModel(),group_name,sol);
+  ros::Duration(1.0).sleep();
+  auto current_state = scene_monitor.getStateMonitor()->getCurrentState();
+  current_state->updateLinkTransforms();
+  moveit_msgs::DisplayTrajectory disp_traj = toRobotTrajectory(current_state,group_name,sol);
   disp_traj_pub.publish(disp_traj);
   ROS_INFO("Found solution in %f seconds", solve_time.toSec());
 

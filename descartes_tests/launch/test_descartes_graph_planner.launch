@@ -1,36 +1,49 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="rviz" default="true"/>
-  <include file="$(find industrial_moveit_test_moveit_config)/launch/planning_context.launch">
-  	<arg name="load_robot_description" value="true"/>
-  </include>
+  <arg name="moveit_config_pkg"/>
+  <arg name="planning_context_launch" default="launch/planning_context.launch"/>
+  <arg name="run_main" default="false"/>
   
-  <!-- We do not have a robot connected, so publish fake joint states -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-    <param name="/use_gui" value="false"/> 
-    <rosparam param="/source_list">[/move_group/fake_controller_joint_states]</rosparam>
-  </node>
+  <!-- Use this file as a template to adapt to your robot setup -->
   
-  <!-- Given the published joint states, publish tf for the robot links -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+  <group unless="$(arg run_main)">
+	  <include file="$(eval find(arg('moveit_config_pkg')) + '/' + arg('planning_context_launch'))">
+	  	<arg name="load_robot_description" value="true"/>
+	  </include>  
+	  
+    <!-- We do not have a robot connected, so publish fake joint states -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+      <rosparam param="source_list">[move_group/fake_controller_joint_states]</rosparam>
+    </node>
+	  
+	  <!-- Given the published joint states, publish tf for the robot links -->
+	  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+	   respawn="true" output="screen" />
+	   
+    <node if="$(arg rviz)" name="rviz" type="rviz" pkg="rviz" 
+    args="-d $(find descartes_tests)/launch/descartes_test.rviz"/>
+  </group>
   
-  <node name="test_graph_solver" type="test_graph_solver" pkg="descartes_tests" output="screen" launch-prefix="">
-  	<rosparam param="robot_info">
-      base_link: base_link
-      tip_link: tcp_frame
-      group_name: manipulator
-      reference_joint_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    </rosparam>
-    <rosparam param="traj_generation">
-      grid_dims: [1.2, 1.0]
-      grid_lines: [40, 40]
-      nominal_pose: [2.0, 0.0, 0.5, 0.0, 0.2, 0.78]
-      local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
-      curvature: 1.0
-    </rosparam>
-    <rosparam param="planning_config">
-      num_samples: 10
-    </rosparam>
-  </node>
-  <node if="$(arg rviz)" name="rviz" type="rviz" pkg="rviz" args="-d $(find descartes_tests)/launch/descartes_test.rviz"/>
+  <group if="$(arg run_main)" >
+    <node name="test_graph_solver" type="test_graph_solver" pkg="descartes_tests" output="screen" launch-prefix="">
+    	<rosparam param="robot_info">
+        base_link: base_link
+        tip_link: tool0
+        group_name: manipulator
+        reference_joint_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      </rosparam>
+      <rosparam param="traj_generation">
+        frame_id: base_link
+        grid_dims: [1.0, 0.8]
+        grid_lines: [40, 40]
+        nominal_pose: [2.0, -1.0, 2.8, 3.14, 0.0, 0.0]
+        local_offset: [0.0, 0.0, 0.0, 3.14, 0.0, 0.0]
+        curvature: 1.0
+      </rosparam>
+      <rosparam param="planning_config">
+        num_samples: 10
+      </rosparam>
+    </node>
+  </group>
 </launch>
