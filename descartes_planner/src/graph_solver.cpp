@@ -5,9 +5,11 @@
  *      Author: jrgnicho
  */
 
+#include <numeric>
 #include <console_bridge/console.h>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include "descartes_planner/graph_solver.h"
+#include <memory>
 
 
 static const int VIRTUAL_VERTEX_INDEX = -1;
@@ -16,10 +18,16 @@ namespace descartes_planner
 {
 
 template<typename FloatT>
-descartes_planner::GraphSolver<FloatT>::GraphSolver(typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator):
-  edge_evaluator_(edge_evaluator)
+descartes_planner::GraphSolver<FloatT>::GraphSolver(typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator,
+                                                    typename std::shared_ptr< SamplesContainer<FloatT> > container):
+  edge_evaluator_(edge_evaluator),
+  container_(container)
 {
-
+  if(container_ == nullptr)
+  {
+    // if no container is provided then use default implementation
+    container_ = std::make_shared< DefaultSamplesContainer<FloatT> >();
+  }
 }
 
 template<typename FloatT>
@@ -33,39 +41,24 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
 {
   points_.clear();
   std::copy(points.begin(),points.end(),std::back_inserter(points_));
+  container_->clear();
+  container_->allocate(points_.size());
 
   // generating samples now
   for(std::size_t  i = 0; i < points_.size(); i++)
   {
-    if(!points_[i]->generate())
+    typename PointSampleGroup<FloatT>::Ptr samples = points_[i]->generate();
+    if(!samples)
     {
       CONSOLE_BRIDGE_logError("Failed to generate samples for point %lu",i);
       return false;
     }
+    container_->at(i) = samples;
   }
 
   // build the graph now
   typename PointSampleGroup<FloatT>::Ptr samples1 = nullptr;
   typename PointSampleGroup<FloatT>::Ptr samples2 = nullptr;
-
-  auto gather_samples = [](typename PointSampleGroup<FloatT>::Ptr& samples,typename  PointSampler<FloatT>::Ptr sampler) -> bool
-  {
-    if(samples == nullptr)
-    {
-      samples = sampler->getSamples();
-      return samples!=nullptr;
-    }
-
-    // preallocating
-    samples->num_samples = sampler->getNumSamples();
-    samples->num_dofs = sampler->getDofs();
-    if(samples->values.size() < samples->num_samples * samples->num_dofs)
-    {
-      samples->values.resize(samples->num_samples * samples->num_dofs);
-    }
-
-    return sampler->getSamples(samples);
-  };
 
   std::size_t vertex_count = 0;
   bool add_virtual_vertex = true;
@@ -85,32 +78,9 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     std::size_t p1_idx = i -1;
     std::size_t p2_idx = i;
 
-    typename PointSampler<FloatT>::Ptr sampler1 = points_[p1_idx];
-    typename PointSampler<FloatT>::Ptr sampler2 = points_[p2_idx];
-
-    // reuse samples of previous point if they were created
-    if(samples2 != nullptr)
-    {
-      samples1 = samples2;
-    }
-    else
-    {
-      if(!gather_samples(samples1,sampler1))
-      {
-        CONSOLE_BRIDGE_logError("No samples were produced for point 1 with index%lu",p1_idx);
-        return false;
-      }
-    }
-
-    // always recompute samples for the next point
-    samples2.reset();
-    if(!gather_samples(samples2,sampler2))
-    {
-      CONSOLE_BRIDGE_logError("No samples were produced for point 2 with index %lu",p2_idx);
-      return false;
-    }
-
-    samples1->point_id = p1_idx;
+    samples1 = (*container_)[p1_idx];
+    samples2 = (*container_)[p2_idx];
+    samples1->point_id = p1_idx; // TODO: setting ids may not be necessary
     samples2->point_id = p2_idx;
 
     // validating vertex samples
@@ -139,6 +109,12 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     src_vertices_added.clear();
     dst_vertices_added.clear();
 
+    if(edges.empty())
+    {
+      CONSOLE_BRIDGE_logError("Edge evaluation between rungs %lu and %lu failed", samples1->point_id,
+                              samples2->point_id);
+      return false;
+    }
 
     CONSOLE_BRIDGE_logDebug("Found %lu edges between nodes (%i, %i)",edges.size(),samples1->point_id ,samples2->point_id );
 
@@ -161,6 +137,12 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     for(std::size_t v = 0; v < num_vertices; v++)
     {
       boost::add_vertex(graph_);
+    }
+
+    if(i == points_.size() - 1)
+    {
+      boost::add_vertex(graph_);
+      vertex_count++;
     }
 
     // add edges between the current two nodes
@@ -232,20 +214,49 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
   typedef boost::graph_traits<GraphT> GraphTraits;
 
   //current_vertex = virtual_vertex;
-  solution_points.resize(points_.size(), nullptr);
+  solution_points.resize(container_->size(), nullptr);
   bool found_next = false;
   CONSOLE_BRIDGE_logDebug("Predecessor array size %lu",predecessors.size());
+  CONSOLE_BRIDGE_logDebug("Weights array size %lu",weights.size());
+  CONSOLE_BRIDGE_logDebug("End vertices size %lu", end_vertices_.size());
 
-  typename GraphT::vertex_descriptor cheapest_end_vertex;
-  double cost = std::numeric_limits<double>::max();
+  typename GraphT::vertex_descriptor cheapest_end_vertex = -1;
+  double cost = std::numeric_limits<FloatT>::max();
+
   for(std::map<std::size_t, VertexProperties>::value_type& kv: end_vertices_)
   {
-    if(weights[kv.first] < cost)
+    typename GraphT::vertex_descriptor candidate_vertex = kv.first;
+    CONSOLE_BRIDGE_logDebug("Searching end vertex %i with cost %f", candidate_vertex,
+                           weights[candidate_vertex]);
+    if(weights[candidate_vertex] > cost)
     {
-      cheapest_end_vertex = kv.first;
+      CONSOLE_BRIDGE_logDebug("cost too high, skipping to next end vertex");
+      continue;
+    }
+    cost = weights[candidate_vertex];
+
+    // check if it is connected
+    typename GraphT::vertex_descriptor prev_vertex = predecessors[candidate_vertex];
+    typename GraphTraits::out_edge_iterator out_i, out_end;
+    for(boost::tie(out_i, out_end)= boost::out_edges(prev_vertex, graph_); out_i != out_end; out_i++)
+    {
+      typename GraphTraits::edge_descriptor e = *out_i;
+      typename GraphT::vertex_descriptor targ = boost::target(e, graph_);
+      if(targ == candidate_vertex)
+      {
+        cheapest_end_vertex = candidate_vertex;
+        break;
+      }
     }
   }
   current_vertex = cheapest_end_vertex;
+  if(static_cast<int>(current_vertex) < 0 )
+  {
+    CONSOLE_BRIDGE_logError("Found no feasible solution path through graph");
+    return false;
+  }
+
+  CONSOLE_BRIDGE_logInform("Found valid solution end vertex: %i with cost %f", current_vertex, cost);
 
   auto add_solution = [&](VertexProperties& vp) -> bool{
 
@@ -261,7 +272,7 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
       return false;
     }
 
-    typename PointSampler<FloatT>::Ptr  sampler = points_[vp.point_id];
+    typename PointSampleGroup<FloatT>::Ptr  sample_group = container_->at(vp.point_id);
 
     // recompute or retrieve the sample and storing it
     if(solution_points[vp.point_id] != nullptr) // can not have more than one solutions
@@ -270,13 +281,19 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
       return true;
     }
 
-    typename PointSampleGroup<FloatT>::Ptr sample = sampler->getSample(vp.sample_index);
+    typename PointSampleGroup<FloatT>::Ptr sample = sample_group->at(vp.sample_index);
+    if(!sample)
+    {
+      CONSOLE_BRIDGE_logError("SampleGroup %i has no sample %lu", vp.point_id, vp.sample_index);
+      return false;
+    }
     solution_points[vp.point_id] = sample;
     CONSOLE_BRIDGE_logDebug("Added %s solution point %i of %lu points",(sample != nullptr ? "valid" : "null"),
                              vp.point_id, solution_points.size());
     return true;
   };
 
+  int vertex_counter = 0;
   while(current_vertex != virtual_vertex)
   {
     typename GraphT::vertex_descriptor prev_vertex = predecessors[current_vertex];
@@ -289,12 +306,15 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
       if(targ == current_vertex)
       {
         found_next = true;
-        CONSOLE_BRIDGE_logDebug("Found edge (%lu, %lu)",prev_vertex, targ);
         current_vertex = prev_vertex;
 
         // grab sampler
         EdgeProperties<FloatT> edge_props = graph_[e];
-        if(!add_solution(edge_props.src_vtx) || !add_solution(edge_props.dst_vtx))
+        CONSOLE_BRIDGE_logDebug("Points %lu and %lu connected by edge (%lu, %lu)",
+                                 edge_props.src_vtx.point_id, edge_props.dst_vtx.point_id,
+                                 prev_vertex, targ);
+
+        if( !add_solution(edge_props.dst_vtx) || !add_solution(edge_props.src_vtx))
         {
           break;
         }
@@ -305,7 +325,11 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
     {
       break;
     }
+
+    vertex_counter++;
   }
+
+  CONSOLE_BRIDGE_logDebug("Exiting vertex traversing loop with vertex count at %i", vertex_counter);
 
   for(std::size_t i = 0; i < solution_points.size(); i++)
   {
