@@ -8,7 +8,6 @@
 #ifndef INCLUDE_DESCARTES_PLANNER_COMMON_H_
 #define INCLUDE_DESCARTES_PLANNER_COMMON_H_
 
-#include <descartes_core/trajectory_id.h>
 #include <memory>
 
 namespace descartes_planner
@@ -74,17 +73,17 @@ namespace descartes_planner
   struct VertexProperties
   {
     virtual ~VertexProperties(){}
-    int point_id;
-    std::size_t sample_index;
+    int point_id = 0;
+    std::size_t sample_index = 0;
   };
 
   template <typename FloatT = float>
   struct EdgeProperties
   {
+    FloatT weight = 0.0;
+    bool valid;
     VertexProperties src_vtx;
     VertexProperties dst_vtx;
-    bool valid;
-    FloatT weight;
   };
 
   template <typename FloatT = float>

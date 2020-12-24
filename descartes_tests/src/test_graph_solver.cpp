@@ -349,7 +349,7 @@ public:
           CONSOLE_BRIDGE_logDebug("Velocity exceeded for points (%i: %lu, %i: %lu)",
                                   s1->point_id, i1, s2->point_id, i2);
           edge.valid = false;
-          edge.weight = std::numeric_limits<FloatT>::infinity();
+          edge.weight = 1e5;
         }
         else
         {

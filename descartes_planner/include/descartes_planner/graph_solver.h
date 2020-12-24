@@ -98,7 +98,7 @@ private:
   GraphT graph_;
   std::vector< typename PointSampler<FloatT>::Ptr > points_;
   typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator_;
-  std::map<std::size_t, VertexProperties> end_vertices_;
+  std::map<int, VertexProperties> end_vertices_;
   typename std::shared_ptr< SamplesContainer<FloatT> > container_;
 
 
