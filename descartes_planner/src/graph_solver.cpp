@@ -75,11 +75,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
   std::map<int, VertexProperties> src_vertices_added;
   std::map<int, VertexProperties> dst_vertices_added;
 
-
-
-  // c
-  //vertex_count = boost::num_vertices(graph_);
-
   // explore samples and building graph now
   for(std::size_t i = 1; i < points_.size(); i++)
   {
@@ -140,17 +135,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
       CONSOLE_BRIDGE_logDebug("Point (%lu, %lu) has %lu valid edges out of %lu = %i x %i",p1_idx,p2_idx,num_valid_edges,edges.size(),
                                samples1->num_samples, samples2->num_samples);
     }
-    // adding vertices
-/*    int num_vertices = samples1->num_samples;
-    for(std::size_t v = 0; v < num_vertices; v++)
-    {
-      boost::add_vertex(graph_);
-    }*/
-
-    // add edges between the current two nodes
-    //vertex_count = boost::num_vertices(graph_);
-
-    //CONSOLE_BRIDGE_logInform("Vertex Count before iteration %i : %i", i, vertex_count);
 
     for(EdgeProp& edge: edges)
     {
@@ -164,8 +148,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
       int src_vtx_index = edge.src_vtx.sample_index + vertex_count;
       int dst_vtx_index =  edge.dst_vtx.sample_index + vertex_count + samples1->num_samples;
 
-/*      CONSOLE_BRIDGE_logError("Source vertex at iteration %i is %i, si: %i", i, src_vtx_index,
-                              edge.src_vtx.sample_index);*/
       if(src_vtx_index <= 0)
       {
         CONSOLE_BRIDGE_logError("Source vertex is negative at iteration %i", i);
@@ -208,13 +190,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
       {
         // setting edge properties
         graph_[e]= edge;
-/*        if(graph_[e].valid && std::isinf(graph_[e].weight))
-        {
-          CONSOLE_BRIDGE_logError("Valid edge was infinite cost");
-          return false;
-        }*/
-        //graph_[e].weight = edge.weight;
-        //graph_[e].weight = (edge.valid) ? edge.weight : std::numeric_limits<FloatT>::max();
       }
 
       src_vertices_added[src_vtx_index] = edge.src_vtx;
@@ -222,11 +197,6 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     }
 
     vertex_count += samples1->num_samples;
-
-
-    //vertex_count = boost::num_vertices(graph_);
-    //CONSOLE_BRIDGE_logInform("Vertex Count after iteration %i : %i", i, vertex_count);
-
     add_virtual_vertex = false; // do not add edges for the virtual vertex anymore
 
   }
@@ -243,28 +213,21 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
   std::vector<typename GraphT::vertex_descriptor> predecessors(num_vert);
   std::vector<FloatT> weights(num_vert, 0.0);
 
-/*  boost::dijkstra_shortest_paths(graph_, virtual_vertex,
-    weight_map(get(&EdgeProperties<FloatT>::weight, graph_))
-    .predecessor_map(boost::make_iterator_property_map(predecessors.begin(),//property map style
-                                                      boost::get(boost::vertex_index, graph_)))
-    .distance_map(boost::make_iterator_property_map(weights.begin(),get(boost::vertex_index, graph_))));*/
-
   boost::dijkstra_shortest_paths(graph_, virtual_vertex,
     weight_map(get(&EdgeProperties<FloatT>::weight, graph_))
     .distance_map(boost::make_iterator_property_map(weights.begin(),get(boost::vertex_index, graph_)))
     .predecessor_map(&predecessors[0]));
 
-  // iterating through out edges while inspecting the predecessor
-  typedef boost::graph_traits<GraphT> GraphTraits;
-
   //current_vertex = virtual_vertex;
   solution_points.resize(container_->size(), nullptr);
-  bool found_next = false;
-  CONSOLE_BRIDGE_logInform("Num vertices %i", num_vert);
-  CONSOLE_BRIDGE_logInform("Predecessor array size %lu",predecessors.size());
-  CONSOLE_BRIDGE_logInform("Weights array size %lu",weights.size());
-  CONSOLE_BRIDGE_logInform("End vertices size %lu", end_vertices_.size());
 
+  CONSOLE_BRIDGE_logDebug("Num vertices %i", num_vert);
+  CONSOLE_BRIDGE_logDebug("Predecessor array size %lu",predecessors.size());
+  CONSOLE_BRIDGE_logDebug("Weights array size %lu",weights.size());
+  CONSOLE_BRIDGE_logDebug("End vertices size %lu", end_vertices_.size());
+
+  // iterating through out edges while inspecting the predecessor
+  typedef boost::graph_traits<GraphT> GraphTraits;
   typename GraphT::vertex_descriptor cheapest_end_vertex = -1;
   double cost = std::numeric_limits<FloatT>::max();
 
@@ -388,7 +351,7 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
   return true;
 }
 
-// explicit especializations
+// explicit specializations
 template class GraphSolver<float>;
 template class GraphSolver<double>;
 
