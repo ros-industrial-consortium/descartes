@@ -13,6 +13,16 @@
 namespace descartes_planner
 {
   template <typename FloatT = float>
+  struct PointData
+  {
+    int point_id;
+    std::vector<FloatT> values;   /** the values for the point*/
+
+    typedef typename std::shared_ptr<PointData> Ptr;
+    typedef typename std::shared_ptr<const PointData> ConstPtr;
+  };
+
+  template <typename FloatT = float>
   struct PointSampleGroup
   {
     virtual ~PointSampleGroup(){}
@@ -30,15 +40,13 @@ namespace descartes_planner
      * @param sample_idx  sub index within sample group
      * @return a pointer to sample group, nullptr when out index is out bounds.
      */
-    virtual typename PointSampleGroup<FloatT>::Ptr at(std::size_t sample_idx)
+    virtual typename PointData<FloatT>::Ptr at(std::size_t sample_idx)
     {
       if(sample_idx >= this->num_samples)
       {
         return nullptr;
       }
-      typename PointSampleGroup<FloatT>::Ptr sample = std::make_shared<PointSampleGroup<FloatT>>();
-      sample->num_samples = 1;
-      sample->num_dofs = this->num_dofs;
+      typename PointData<FloatT>::Ptr sample = std::make_shared<PointData<FloatT>>();
       sample->point_id = this->point_id;
 
       auto start_loc = std::next(this->values.begin(),sample_idx * this->num_dofs);
@@ -51,7 +59,7 @@ namespace descartes_planner
   /**
    * @class descartes_planner::PointSampler
    * @brief the base class for trajectory point samples,  actual implementations should
-   * know the details of the robot such as ik solvers, joint limits, dofs, etcV
+   * know the details of the robot such as ik solvers, joint limits, dofs, etc
    */
   template <typename FloatT = float>
   class PointSampler

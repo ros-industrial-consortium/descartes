@@ -29,6 +29,7 @@ using FloatT = float;
 using Vector3T = Eigen::Matrix<FloatT, 3, 1>;
 using VectorXT = Eigen::Matrix<FloatT, Eigen::Dynamic, 1>;
 using IsometryT = Eigen::Transform<FloatT,3,Eigen::Isometry>;
+using PointDataT = descartes_planner::PointData<FloatT>;
 using PointSamplerT = descartes_planner::PointSampler<FloatT>;
 using PointSampleGroupT = descartes_planner::PointSampleGroup<FloatT>;
 using EdgePropertiesF = descartes_planner::EdgeProperties<FloatT>;
@@ -41,7 +42,7 @@ static const int MAX_ITERATIONS = 50;
 static const double EPS = 1e-5;
 
 moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotStatePtr rstate, const std::string& group_name,
-                                                 std::vector<PointSampleGroupT::ConstPtr>& sol)
+                                                 std::vector<PointDataT::ConstPtr>& sol)
 {
   moveit_msgs::DisplayTrajectory disp_traj;
   disp_traj.trajectory.resize(1);
@@ -49,18 +50,13 @@ moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotStatePtr rst
   const moveit::core::JointModelGroup* group = rstate->getRobotModel()->getJointModelGroup(group_name);
   traj.joint_trajectory.joint_names = group->getActiveJointModelNames();
   trajectory_msgs::JointTrajectoryPoint jp;
-  jp.positions.resize(sol.front()->num_dofs, 0.0);
-  jp.velocities.resize(sol.front()->num_dofs, 0.0);
-  jp.accelerations.resize(sol.front()->num_dofs, 0.0);
-  jp.effort.resize(sol.front()->num_dofs, 0.0);
+  std::size_t num_dofs = sol.front()->values.size();
+  jp.positions.resize(num_dofs, 0.0);
+  jp.velocities.resize(num_dofs, 0.0);
+  jp.accelerations.resize(num_dofs, 0.0);
+  jp.effort.resize(num_dofs, 0.0);
   for(std::size_t i =0; i < sol.size(); i++)
   {
-    if(sol[i]->values.size() != sol.front()->num_dofs)
-    {
-      ROS_ERROR("Solution %i with size %lu has fewer than %lu dofs", i, sol[i]->values.size(),
-                sol.front()->num_dofs);
-      throw std::runtime_error("invalid joint size");
-    }
     jp.positions.assign(sol[i]->values.begin(),sol[i]->values.end());
     jp.time_from_start = ros::Duration(0.1 * i);
     traj.joint_trajectory.points.push_back(jp);
@@ -450,7 +446,7 @@ public:
   }
 
   bool plan(std::vector<PointSamplerT::Ptr>& samplers, descartes_planner::EdgeEvaluator<FloatT>::Ptr edge_evaluator,
-            std::vector<PointSampleGroupT::ConstPtr>& sol)
+            std::vector<PointDataT::ConstPtr>& sol)
   {
     if(!solver_.build(samplers, edge_evaluator))
     {
@@ -617,7 +613,7 @@ int main(int argc, char** argv)
   });
 
 
-  std::vector<PointSampleGroupT::ConstPtr> sol;
+  std::vector<PointDataT::ConstPtr> sol;
   ROS_INFO("Planning now for traj with %lu points ...", samplers.size());
   ros::Time start_time = ros::Time::now();
   if(!planner.plan(samplers,speed_eval, sol))

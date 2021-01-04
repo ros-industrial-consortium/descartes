@@ -325,7 +325,7 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::getFailedPoints(std::vector<st
 
 template<typename FloatT>
 bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
-    std::vector<typename PointSampleGroup<FloatT>::ConstPtr>& solution_points)
+    std::vector<typename PointData<FloatT>::ConstPtr>& solution_points)
 {
   typename GraphT::vertex_descriptor virtual_vertex = vertex(0, graph_), current_vertex;
   std::size_t num_vert = boost::num_vertices(graph_);
@@ -408,14 +408,14 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
       return true;
     }
 
-    typename PointSampleGroup<FloatT>::Ptr sample = sample_group->at(vp.sample_index);
-    if(!sample)
+    typename PointData<FloatT>::Ptr point_data = sample_group->at(vp.sample_index);
+    if(!point_data)
     {
       CONSOLE_BRIDGE_logError("SampleGroup %i has no sample %lu", vp.point_id, vp.sample_index);
       return false;
     }
-    solution_points[vp.point_id] = sample;
-    CONSOLE_BRIDGE_logDebug("Added %s solution point %i of %lu points",(sample != nullptr ? "valid" : "null"),
+    solution_points[vp.point_id] = point_data;
+    CONSOLE_BRIDGE_logDebug("Added %s solution point %i of %lu points",(point_data != nullptr ? "valid" : "null"),
                              vp.point_id, solution_points.size());
     return true;
   };
@@ -460,8 +460,8 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
 
   for(std::size_t i = 0; i < solution_points.size(); i++)
   {
-    typename PointSampleGroup<FloatT>::ConstPtr sample = solution_points[i];
-    if(sample == nullptr)
+    typename PointData<FloatT>::ConstPtr point_data = solution_points[i];
+    if(point_data == nullptr)
     {
       CONSOLE_BRIDGE_logError("Invalid solution for point %lu was found",i);
       return false;

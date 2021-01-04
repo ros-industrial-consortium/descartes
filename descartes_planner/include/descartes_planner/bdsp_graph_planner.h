@@ -118,7 +118,7 @@ public:
    * @param solution_points  The solution
    * @return True on success, false otherwise
    */
-  bool solve(std::vector< typename PointSampleGroup<FloatT>::ConstPtr >& solution_points);
+  bool solve(std::vector< typename PointData<FloatT>::ConstPtr >& solution_points);
 
   bool getFailedEdges(std::vector<std::size_t>& failed_edges);
   bool getFailedPoints(std::vector<std::size_t>& failed_points);
