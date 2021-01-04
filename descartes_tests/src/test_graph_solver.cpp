@@ -5,7 +5,7 @@
  *      Author: jrgnicho
  */
 #include <memory>
-#include <descartes_planner/graph_solver.h>
+#include <descartes_planner/bdsp_graph_planner.h>
 #include <ros/node_handle.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <trac_ik/trac_ik.hpp>
@@ -342,7 +342,7 @@ public:
         //edge.weight = (sum < 1e-6) ? 0 : diff.norm();
         //edge.weight = diff.maxCoeff();
 
-        double min_time = *std::min_element(cart_time.begin(),cart_time.end());
+        double min_time = cart_time.front();
         double cost;
         if(!isWithinSpeedLimits(jpos1, jpos2, min_time, cost))
         {
@@ -354,8 +354,7 @@ public:
         else
         {
           edge.valid = true;
-          edge.weight = sum; //diff.maxCoeff();
-          //edges.push_back(edge);
+          edge.weight = sum;
         }
         edges.push_back(edge);
 
@@ -439,8 +438,8 @@ protected:
 class DescartesGraphPlanner
 {
 public:
-  DescartesGraphPlanner(descartes_planner::EdgeEvaluator<FloatT>::Ptr edge_evaluator):
-    solver_(edge_evaluator)
+  DescartesGraphPlanner():
+    solver_(nullptr, false)
   {
 
   }
@@ -450,9 +449,10 @@ public:
 
   }
 
-  bool plan(std::vector<PointSamplerT::Ptr>& samplers, std::vector<PointSampleGroupT::ConstPtr>& sol)
+  bool plan(std::vector<PointSamplerT::Ptr>& samplers, descartes_planner::EdgeEvaluator<FloatT>::Ptr edge_evaluator,
+            std::vector<PointSampleGroupT::ConstPtr>& sol)
   {
-    if(!solver_.build(samplers))
+    if(!solver_.build(samplers, edge_evaluator))
     {
       ROS_ERROR("Failed to build graph");
       return false;
@@ -469,7 +469,7 @@ public:
 
 
 protected:
-  descartes_planner::GraphSolver<FloatT> solver_;
+  descartes_planner::BDSPGraphPlanner<FloatT> solver_;
 
 };
 
@@ -579,7 +579,7 @@ int main(int argc, char** argv)
   SpeedEvaluator::Ptr speed_eval = std::make_shared<SpeedEvaluator>(robot_model,
                                                                     group->getActiveJointModelNames(),
                                                                     ik_solver);
-  DescartesGraphPlanner planner(speed_eval);
+  DescartesGraphPlanner planner;
 
   // visualizing trajectory
   std::string world_frame = robot_model->getRootLinkName();
@@ -620,7 +620,7 @@ int main(int argc, char** argv)
   std::vector<PointSampleGroupT::ConstPtr> sol;
   ROS_INFO("Planning now for traj with %lu points ...", samplers.size());
   ros::Time start_time = ros::Time::now();
-  if(!planner.plan(samplers,sol))
+  if(!planner.plan(samplers,speed_eval, sol))
   {
     ros::waitForShutdown();
    return -1;

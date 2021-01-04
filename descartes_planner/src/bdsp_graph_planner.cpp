@@ -2,14 +2,20 @@
  * graph_solver.cpp
  *
  *  Created on: Aug 30, 2019
- *      Author: jrgnicho
+ *      Author: Jorge Nicho
  */
 
 #include <numeric>
-#include <console_bridge/console.h>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include "descartes_planner/graph_solver.h"
+
 #include <memory>
+
+#include <console_bridge/console.h>
+
+#include <boost/format.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+
+#include "descartes_planner/bdsp_graph_planner.h"
+
 
 
 static const int VIRTUAL_VERTEX_INDEX = -1;
@@ -18,10 +24,10 @@ namespace descartes_planner
 {
 
 template<typename FloatT>
-descartes_planner::GraphSolver<FloatT>::GraphSolver(typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator,
-                                                    typename std::shared_ptr< SamplesContainer<FloatT> > container):
-  edge_evaluator_(edge_evaluator),
-  container_(container)
+descartes_planner::BDSPGraphPlanner<FloatT>::BDSPGraphPlanner(typename std::shared_ptr< SamplesContainer<FloatT> > container,
+                                                    bool report_failures):
+  container_(container),
+  report_failures_(report_failures)
 {
   if(container_ == nullptr)
   {
@@ -31,18 +37,72 @@ descartes_planner::GraphSolver<FloatT>::GraphSolver(typename EdgeEvaluator<Float
 }
 
 template<typename FloatT>
-descartes_planner::GraphSolver<FloatT>::~GraphSolver()
+descartes_planner::BDSPGraphPlanner<FloatT>::~BDSPGraphPlanner()
 {
 
 }
 
 template<typename FloatT>
-bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSampler<FloatT>::Ptr>& points)
+typename EdgeEvaluator<FloatT>::ConstPtr descartes_planner::BDSPGraphPlanner<FloatT>::getEdgeEvaluator(std::uint32_t idx)
 {
+  if(edge_evaluators_.size() == 1)
+  {
+    return edge_evaluators_.front();
+  }
+  else
+  {
+    return edge_evaluators_.at(idx);
+  }
+}
+
+template<typename FloatT>
+void descartes_planner::BDSPGraphPlanner<FloatT>::setup(std::vector< typename PointSampler<FloatT>::Ptr >& points,
+                                                   std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators)
+{
+
+  failed_points_.clear();
+  failed_edges_.clear();
+
+  // setting up point sampler container
   points_.clear();
   std::copy(points.begin(),points.end(),std::back_inserter(points_));
   container_->clear();
   container_->allocate(points_.size());
+
+  // setting up edge evaluators
+  edge_evaluators_.clear();
+  if(edge_evaluators.size() == 1)
+  {
+    edge_evaluators_ = edge_evaluators;
+  }
+  else if(edge_evaluators.size() == points_.size() - 1)
+  {
+    std::copy(edge_evaluators.begin(),edge_evaluators.end(),std::back_inserter(edge_evaluators_));
+  }
+  else if(edge_evaluators.empty())
+  {
+    throw std::runtime_error("Edge evaluators vector is empty");
+  }
+  else if(edge_evaluators.size() > 1 && edge_evaluators.size() != points.size() - 1)
+  {
+    throw std::runtime_error("Edge evaluators vector's size must be one less than that of the points vector");
+  }
+}
+
+template<typename FloatT>
+bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>::Ptr >& points,
+           typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator)
+{
+  // setting up edge evaluators
+  std::vector<typename EdgeEvaluator<FloatT>::ConstPtr> edge_evaluators = {edge_evaluator};
+  return build(points, edge_evaluators);
+}
+
+template<typename FloatT>
+bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename PointSampler<FloatT>::Ptr>& points,
+                                                   std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators)
+{
+  setup(points, edge_evaluators);
 
   //// adding virtual vertex
   graph_.clear();
@@ -54,6 +114,12 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     typename PointSampleGroup<FloatT>::Ptr samples = points_[i]->generate();
     if(!samples)
     {
+      if(report_failures_)
+      {
+        failed_points_.push_back(i);
+        continue;
+      }
+
       CONSOLE_BRIDGE_logError("Failed to generate samples for point %lu",i);
       return false;
     }
@@ -66,6 +132,13 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     }
   }
 
+  // no need to proceed if sample generation failed
+  if(!failed_points_.empty())
+  {
+    CONSOLE_BRIDGE_logError("Failed to generate one or more point samples, use getFailedPoints to get the failed points");
+    return false;
+  }
+
   // build the graph now
   typename PointSampleGroup<FloatT>::Ptr samples1 = nullptr;
   typename PointSampleGroup<FloatT>::Ptr samples2 = nullptr;
@@ -75,7 +148,7 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
   std::map<int, VertexProperties> src_vertices_added;
   std::map<int, VertexProperties> dst_vertices_added;
 
-  // explore samples and building graph now
+  // use samples to populate edges in order to build the search graph
   for(std::size_t i = 1; i < points_.size(); i++)
   {
     std::size_t p1_idx = i -1;
@@ -108,15 +181,28 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
 
     // evaluate edges
     using EdgeProp = EdgeProperties<FloatT>;
-    std::vector< EdgeProperties<FloatT> > edges = edge_evaluator_->evaluate(samples1, samples2);
+    auto edge_evaluator = getEdgeEvaluator(p1_idx);
+    std::vector< EdgeProperties<FloatT> > edges = edge_evaluator->evaluate(samples1, samples2);
     src_vertices_added.clear();
     dst_vertices_added.clear();
 
     if(edges.empty())
     {
+      if(report_failures_)
+      {
+        failed_edges_.push_back(p1_idx);
+        continue;
+      }
+
       CONSOLE_BRIDGE_logError("Edge evaluation between rungs %lu and %lu failed", samples1->point_id,
                               samples2->point_id);
       return false;
+    }
+
+    // no need to proceed if an edge has already failed
+    if(!failed_edges_.empty())
+    {
+      continue;
     }
 
     CONSOLE_BRIDGE_logDebug("Found %lu edges between nodes (%i, %i)",edges.size(),samples1->point_id ,samples2->point_id );
@@ -200,12 +286,45 @@ bool descartes_planner::GraphSolver<FloatT>::build(std::vector<typename PointSam
     add_virtual_vertex = false; // do not add edges for the virtual vertex anymore
 
   }
+
+  if(!failed_edges_.empty())
+  {
+    CONSOLE_BRIDGE_logError("Failed to generate one or more point samples, use getFailedEdges to get the failed edges");
+    return false;
+  }
+
   end_vertices_ = dst_vertices_added;
   return true;
 }
 
 template<typename FloatT>
-bool descartes_planner::GraphSolver<FloatT>::solve(
+bool descartes_planner::BDSPGraphPlanner<FloatT>::getFailedEdges(std::vector<std::size_t>& failed_edges)
+{
+ if(!report_failures_)
+ {
+   CONSOLE_BRIDGE_logError("Planner was not configured to report failures");
+   return false;
+ }
+
+ failed_edges = failed_edges_;
+ return true;
+}
+
+template<typename FloatT>
+bool descartes_planner::BDSPGraphPlanner<FloatT>::getFailedPoints(std::vector<std::size_t>& failed_points)
+{
+  if(!report_failures_)
+  {
+    CONSOLE_BRIDGE_logError("Planner was not configured to report failures");
+    return false;
+  }
+
+  failed_points = failed_points_;
+  return true;
+}
+
+template<typename FloatT>
+bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
     std::vector<typename PointSampleGroup<FloatT>::ConstPtr>& solution_points)
 {
   typename GraphT::vertex_descriptor virtual_vertex = vertex(0, graph_), current_vertex;
@@ -352,7 +471,7 @@ bool descartes_planner::GraphSolver<FloatT>::solve(
 }
 
 // explicit specializations
-template class GraphSolver<float>;
-template class GraphSolver<double>;
+template class BDSPGraphPlanner<float>;
+template class BDSPGraphPlanner<double>;
 
 } /* namespace descartes_planner */

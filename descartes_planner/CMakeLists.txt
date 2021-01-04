@@ -59,7 +59,7 @@ add_library(${PROJECT_NAME}
             src/planning_graph.cpp
             src/plugin_init.cpp
             src/sparse_planner.cpp
-            src/graph_solver.cpp
+            src/bdsp_graph_planner.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

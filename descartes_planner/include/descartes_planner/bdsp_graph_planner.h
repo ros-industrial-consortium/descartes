@@ -74,19 +74,62 @@ private:
   std::vector<typename PointSampleGroup<FloatT>::Ptr> sample_groups_;
 };
 
+/**
+ * @class descartes_planner::BDSPGraphPlanner
+ * @brief Planner implementation that uses the dijkstra shortest path algorithm from the boost library *
+ * @tparam FloatT Use float or double
+ *
+ */
 template <typename FloatT>
-class GraphSolver
+class BDSPGraphPlanner
 {
 public:
-  GraphSolver(typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator,
-              typename std::shared_ptr< SamplesContainer<FloatT> > container = nullptr);
 
-  virtual ~GraphSolver();
+  /**
+   * @brief Creates the Graph planner
+   * @param container       The container implementation to use, pass nullptr to use default.
+   * @param report_failures Whether or not to report failed points and edges.  Use getFailedPoints and getFailedEdges in
+   *                        order to get the indices where the planner failed.
+   */
+  BDSPGraphPlanner(typename std::shared_ptr< SamplesContainer<FloatT> > container = nullptr, bool report_failures = false);
 
-  bool build(std::vector< typename PointSampler<FloatT>::Ptr >& points);
+  virtual ~BDSPGraphPlanner();
+
+  /**
+   * @brief Builds the graph
+   * @param points          A vector of point samplers
+   * @param edge_evaluator  A speed evaluator
+   * @return True on success false otherwise
+   */
+  bool build(std::vector< typename PointSampler<FloatT>::Ptr >& points,
+             typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator);
+
+  /**
+   * @brief Builds the graph
+   * @param points          A vector of point samplers
+   * @param edge_evaluator  A vector of speed evaluators, the vector size should be one less than the point samplers vector
+   * @return True on success false otherwise
+   */
+  bool build(std::vector< typename PointSampler<FloatT>::Ptr >& points,
+             std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators);
+
+  /**
+   * @brief solves the plan by searching for the lowest cost solution, use only after calling the build method
+   * @param solution_points  The solution
+   * @return True on success, false otherwise
+   */
   bool solve(std::vector< typename PointSampleGroup<FloatT>::ConstPtr >& solution_points);
 
+  bool getFailedEdges(std::vector<std::size_t>& failed_edges);
+  bool getFailedPoints(std::vector<std::size_t>& failed_points);
+
 private:
+
+  typename EdgeEvaluator<FloatT>::ConstPtr getEdgeEvaluator(std::uint32_t idx);
+
+  void setup(std::vector< typename PointSampler<FloatT>::Ptr >& points,
+             std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators);
+
 
   typedef typename boost::adjacency_list<boost::vecS,         /** @brief  edge container */
                                 boost::vecS,                  /** @brief vertex_container */
@@ -97,9 +140,14 @@ private:
 
   GraphT graph_;
   std::vector< typename PointSampler<FloatT>::Ptr > points_;
-  typename EdgeEvaluator<FloatT>::ConstPtr edge_evaluator_;
+  std::vector< typename EdgeEvaluator<FloatT>::ConstPtr > edge_evaluators_;
   std::map<int, VertexProperties> end_vertices_;
   typename std::shared_ptr< SamplesContainer<FloatT> > container_;
+
+  bool report_failures_;
+  std::vector<std::size_t> failed_points_;
+  std::vector<std::size_t> failed_edges_;
+
 
 
 };
