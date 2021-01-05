@@ -408,7 +408,7 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
       return true;
     }
 
-    typename PointData<FloatT>::Ptr point_data = sample_group->at(vp.sample_index);
+    typename PointData<FloatT>::ConstPtr point_data = sample_group->at(vp.sample_index);
     if(!point_data)
     {
       CONSOLE_BRIDGE_logError("SampleGroup %i has no sample %lu", vp.point_id, vp.sample_index);

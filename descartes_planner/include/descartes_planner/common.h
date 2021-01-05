@@ -8,18 +8,40 @@
 #ifndef INCLUDE_DESCARTES_PLANNER_COMMON_H_
 #define INCLUDE_DESCARTES_PLANNER_COMMON_H_
 
+#include <vector>
+
 #include <memory>
+
+#include <console_bridge/console.h>
 
 namespace descartes_planner
 {
   template <typename FloatT = float>
   struct PointData
   {
+
+    virtual ~PointData()
+    {
+
+    }
+
     int point_id;
     std::vector<FloatT> values;   /** the values for the point*/
 
     typedef typename std::shared_ptr<PointData> Ptr;
     typedef typename std::shared_ptr<const PointData> ConstPtr;
+
+    virtual typename PointData<FloatT>::ConstPtr lerp(FloatT t, typename PointData<FloatT>::ConstPtr p) const
+    {
+      typename PointData<FloatT>::Ptr sample = std::make_shared<PointData<FloatT>>();
+      sample->values.resize(values.size());
+      sample->point_id = -1;
+      for(std::size_t i = 0; i < values.size(); i++)
+      {
+        sample->values[i] = values[i] + t*(p->values[i] - values[i]);
+      }
+      return sample;
+    }
   };
 
   template <typename FloatT = float>
@@ -40,7 +62,7 @@ namespace descartes_planner
      * @param sample_idx  sub index within sample group
      * @return a pointer to sample group, nullptr when out index is out bounds.
      */
-    virtual typename PointData<FloatT>::Ptr at(std::size_t sample_idx)
+    virtual typename PointData<FloatT>::ConstPtr at(std::size_t sample_idx)
     {
       if(sample_idx >= this->num_samples)
       {
@@ -73,6 +95,16 @@ namespace descartes_planner
      */
     virtual typename PointSampleGroup<FloatT>::Ptr generate() = 0;
 
+    /**
+     * @brief method used by the sparse planner, gets the closets samples to the requested point
+     * @param ref_point  The requested point
+     * @return  A sample group containing the closest points
+     */
+    virtual typename PointSampleGroup<FloatT>::Ptr getClosest(typename PointData<FloatT>::ConstPtr ref_point)
+    {
+      CONSOLE_BRIDGE_logWarn("The function %s has not been implemented", __PRETTY_FUNCTION__);
+      return nullptr;
+    }
 
     typedef typename std::shared_ptr<PointSampler<FloatT> > Ptr;
     typedef typename std::shared_ptr<const PointSampler<FloatT> > ConstPtr;
