@@ -85,7 +85,9 @@ void descartes_planner::BDSPGraphPlanner<FloatT>::setup(std::vector< typename Po
   }
   else if(edge_evaluators.size() > 1 && edge_evaluators.size() != points.size() - 1)
   {
-    throw std::runtime_error("Edge evaluators vector's size must be one less than that of the points vector");
+    throw std::runtime_error(boost::str(
+        boost::format("Edge evaluators vector's size (%lu) must be one less than that of the points vector (%lu)") %
+        edge_evaluators.size() % points.size() ) );
   }
 }
 
@@ -229,6 +231,12 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
         continue;
       }
 
+      if(edge.weight >= std::numeric_limits<FloatT>::max())
+      {
+        CONSOLE_BRIDGE_logError("Found edge with very high weight value between points (%lu, %lu)", p1_idx, p2_idx);
+        continue;
+      }
+
       bool added;
 
       int src_vtx_index = edge.src_vtx.sample_index + vertex_count;
@@ -337,9 +345,6 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
     .distance_map(boost::make_iterator_property_map(weights.begin(),get(boost::vertex_index, graph_)))
     .predecessor_map(&predecessors[0]));
 
-  //current_vertex = virtual_vertex;
-  solution_points.resize(container_->size(), nullptr);
-
   CONSOLE_BRIDGE_logDebug("Num vertices %i", num_vert);
   CONSOLE_BRIDGE_logDebug("Predecessor array size %lu",predecessors.size());
   CONSOLE_BRIDGE_logDebug("Weights array size %lu",weights.size());
@@ -348,7 +353,7 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
   // iterating through out edges while inspecting the predecessor
   typedef boost::graph_traits<GraphT> GraphTraits;
   typename GraphT::vertex_descriptor cheapest_end_vertex = -1;
-  double cost = std::numeric_limits<FloatT>::max();
+  double cost = std::numeric_limits<FloatT>::infinity();
 
   for(std::map<int, VertexProperties>::value_type& kv: end_vertices_)
   {
@@ -385,6 +390,7 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
 
   CONSOLE_BRIDGE_logInform("Found valid solution end vertex: %i with cost %f", current_vertex, cost);
 
+  solution_points.resize(container_->size(), nullptr);
   auto add_solution = [&](VertexProperties& vp) -> bool{
 
     if(vp.point_id  == VIRTUAL_VERTEX_INDEX)

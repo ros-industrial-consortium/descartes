@@ -42,7 +42,7 @@ public:
   virtual ~BDSPSparsePlanner();
 
   bool build(std::vector< typename PointSampler<FloatT>::Ptr >& points,
-             float selected_percentage,
+             FloatT sparse_percentage,
              std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators);
 
   /**

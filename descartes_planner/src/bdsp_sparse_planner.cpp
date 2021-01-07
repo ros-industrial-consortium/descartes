@@ -107,16 +107,16 @@ BDSPSparsePlanner<FloatT>::~BDSPSparsePlanner()
 
 template<typename FloatT>
 bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>::Ptr >& points,
-           float selected_percentage,
+           FloatT sparse_percentage,
            std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators)
 {
-  if(selected_percentage >= 1.0 || selected_percentage <= 0.0)
+  if(sparse_percentage >= 1.0 || sparse_percentage <= 0.0)
   {
     throw std::runtime_error("Percentage must be a value in the following range <0,1>");
   }
 
   std::size_t num_total_points = points.size();
-  std::size_t num_selected_points = selected_percentage * points.size();
+  std::size_t num_selected_points = sparse_percentage * points.size();
   std::vector<std::size_t> selected_indices = {0};
   FloatT interval = num_total_points/num_selected_points;
 
@@ -174,10 +174,13 @@ bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>
       return false;
     }
   }
+  CONSOLE_BRIDGE_logInform("Found sparse solution with %lu points", selected_sparse_points.size());
 
   // now build grapsh for sparse and intermediate points
-  std::vector< typename PointSampler<FloatT>::Ptr > sparse_point_samplers;
-  sparse_point_samplers.reserve(points.size());
+  std::vector< typename PointSampler<FloatT>::Ptr > dense_point_samplers;
+  dense_point_samplers.reserve(points.size());
+  typename PointSampler<FloatT>::Ptr sampler_0;
+  typename PointSampler<FloatT>::Ptr sampler_f;
   for(std::size_t i = 1; i < selected_sparse_points_indices.size(); i++)
   {
     std::size_t p0_idx = selected_sparse_points_indices[i - 1];
@@ -186,20 +189,19 @@ bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>
     // initial and final sampler for this segment only return a single point sample
     typename PointData<FloatT>::ConstPtr point_data_0 = sparse_solution_points[i-1];
     typename PointData<FloatT>::ConstPtr point_data_f = sparse_solution_points[i];
-    typename PointSampler<FloatT>::Ptr sampler_0 = std::make_shared<UnarySampler<FloatT>>(point_data_0);
-    typename PointSampler<FloatT>::Ptr sampler_f = std::make_shared<UnarySampler<FloatT>>(point_data_f);
-    sparse_point_samplers.push_back(sampler_0);
+    sampler_0 = std::make_shared<UnarySampler<FloatT>>(point_data_0);
+    sampler_f = std::make_shared<UnarySampler<FloatT>>(point_data_f);
+    dense_point_samplers.push_back(sampler_0);
 
     if(pf_idx - p0_idx <= 1 )
     {
-      // no intermediate points in between initial and final, add and go to next segment
-      sparse_point_samplers.push_back(sampler_f);
+      // no intermediate points in between initial and final, go to next segment, end sampler will be added on next iter
       continue;
     }
 
     // get samples from each intermediate point
     FloatT t;
-    std::size_t segment_length = pf_idx - p0_idx + 1;
+    std::size_t segment_length = pf_idx - p0_idx;
     for(std::size_t ii = p0_idx + 1 ; ii < pf_idx; ii++)
     {
       t = (ii - p0_idx)/segment_length;
@@ -220,19 +222,24 @@ bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>
       }
       // create proxy sampler that just returns the closest samples
       typename PointSampler<FloatT>::Ptr proxy_sampler = std::make_shared<ProxySampler<FloatT>>(closest_sample_group);
-      sparse_point_samplers.push_back(proxy_sampler);
+      dense_point_samplers.push_back(proxy_sampler);
     }
   }
+
+  // adding final point;
+  dense_point_samplers.push_back(sampler_f);
 
   if(!failed_points_.empty())
   {
     return false;
   }
+  CONSOLE_BRIDGE_logInform("Dense interpolated trajectory has %lu points, original had %lu points",
+                           dense_point_samplers.size(), points.size());
 
   // build graph with all points now
   failed_points_.clear();
   failed_edges_.clear();
-  bool succeeded = graph_planner_.build(sparse_point_samplers, edge_evaluators);
+  bool succeeded = graph_planner_.build(dense_point_samplers, edge_evaluators);
   if(!succeeded && report_failures_)
   {
     graph_planner_.getFailedPoints(failed_points_);
