@@ -5,7 +5,7 @@
  *      Author: jrgnicho
  */
 #include <memory>
-#include <descartes_planner/graph_solver.h>
+#include <descartes_planner/bdsp_graph_planner.h>
 #include <ros/node_handle.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <trac_ik/trac_ik.hpp>
@@ -29,6 +29,7 @@ using FloatT = float;
 using Vector3T = Eigen::Matrix<FloatT, 3, 1>;
 using VectorXT = Eigen::Matrix<FloatT, Eigen::Dynamic, 1>;
 using IsometryT = Eigen::Transform<FloatT,3,Eigen::Isometry>;
+using PointDataT = descartes_planner::PointData<FloatT>;
 using PointSamplerT = descartes_planner::PointSampler<FloatT>;
 using PointSampleGroupT = descartes_planner::PointSampleGroup<FloatT>;
 using EdgePropertiesF = descartes_planner::EdgeProperties<FloatT>;
@@ -41,7 +42,7 @@ static const int MAX_ITERATIONS = 50;
 static const double EPS = 1e-5;
 
 moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotStatePtr rstate, const std::string& group_name,
-                                                 std::vector<PointSampleGroupT::ConstPtr>& sol)
+                                                 std::vector<PointDataT::ConstPtr>& sol)
 {
   moveit_msgs::DisplayTrajectory disp_traj;
   disp_traj.trajectory.resize(1);
@@ -49,18 +50,13 @@ moveit_msgs::DisplayTrajectory toRobotTrajectory(moveit::core::RobotStatePtr rst
   const moveit::core::JointModelGroup* group = rstate->getRobotModel()->getJointModelGroup(group_name);
   traj.joint_trajectory.joint_names = group->getActiveJointModelNames();
   trajectory_msgs::JointTrajectoryPoint jp;
-  jp.positions.resize(sol.front()->num_dofs, 0.0);
-  jp.velocities.resize(sol.front()->num_dofs, 0.0);
-  jp.accelerations.resize(sol.front()->num_dofs, 0.0);
-  jp.effort.resize(sol.front()->num_dofs, 0.0);
+  std::size_t num_dofs = sol.front()->values.size();
+  jp.positions.resize(num_dofs, 0.0);
+  jp.velocities.resize(num_dofs, 0.0);
+  jp.accelerations.resize(num_dofs, 0.0);
+  jp.effort.resize(num_dofs, 0.0);
   for(std::size_t i =0; i < sol.size(); i++)
   {
-    if(sol[i]->values.size() != sol.front()->num_dofs)
-    {
-      ROS_ERROR("Solution %i with size %lu has fewer than %lu dofs", i, sol[i]->values.size(),
-                sol.front()->num_dofs);
-      throw std::runtime_error("invalid joint size");
-    }
     jp.positions.assign(sol[i]->values.begin(),sol[i]->values.end());
     jp.time_from_start = ros::Duration(0.1 * i);
     traj.joint_trajectory.points.push_back(jp);
@@ -342,7 +338,7 @@ public:
         //edge.weight = (sum < 1e-6) ? 0 : diff.norm();
         //edge.weight = diff.maxCoeff();
 
-        double min_time = *std::min_element(cart_time.begin(),cart_time.end());
+        double min_time = cart_time.front();
         double cost;
         if(!isWithinSpeedLimits(jpos1, jpos2, min_time, cost))
         {
@@ -354,8 +350,7 @@ public:
         else
         {
           edge.valid = true;
-          edge.weight = sum; //diff.maxCoeff();
-          //edges.push_back(edge);
+          edge.weight = sum;
         }
         edges.push_back(edge);
 
@@ -439,8 +434,8 @@ protected:
 class DescartesGraphPlanner
 {
 public:
-  DescartesGraphPlanner(descartes_planner::EdgeEvaluator<FloatT>::Ptr edge_evaluator):
-    solver_(edge_evaluator)
+  DescartesGraphPlanner():
+    solver_(nullptr, false)
   {
 
   }
@@ -450,9 +445,10 @@ public:
 
   }
 
-  bool plan(std::vector<PointSamplerT::Ptr>& samplers, std::vector<PointSampleGroupT::ConstPtr>& sol)
+  bool plan(std::vector<PointSamplerT::Ptr>& samplers, descartes_planner::EdgeEvaluator<FloatT>::Ptr edge_evaluator,
+            std::vector<PointDataT::ConstPtr>& sol)
   {
-    if(!solver_.build(samplers))
+    if(!solver_.build(samplers, edge_evaluator))
     {
       ROS_ERROR("Failed to build graph");
       return false;
@@ -469,7 +465,7 @@ public:
 
 
 protected:
-  descartes_planner::GraphSolver<FloatT> solver_;
+  descartes_planner::BDSPGraphPlanner<FloatT> solver_;
 
 };
 
@@ -579,7 +575,7 @@ int main(int argc, char** argv)
   SpeedEvaluator::Ptr speed_eval = std::make_shared<SpeedEvaluator>(robot_model,
                                                                     group->getActiveJointModelNames(),
                                                                     ik_solver);
-  DescartesGraphPlanner planner(speed_eval);
+  DescartesGraphPlanner planner;
 
   // visualizing trajectory
   std::string world_frame = robot_model->getRootLinkName();
@@ -617,10 +613,10 @@ int main(int argc, char** argv)
   });
 
 
-  std::vector<PointSampleGroupT::ConstPtr> sol;
+  std::vector<PointDataT::ConstPtr> sol;
   ROS_INFO("Planning now for traj with %lu points ...", samplers.size());
   ros::Time start_time = ros::Time::now();
-  if(!planner.plan(samplers,sol))
+  if(!planner.plan(samplers,speed_eval, sol))
   {
     ros::waitForShutdown();
    return -1;
