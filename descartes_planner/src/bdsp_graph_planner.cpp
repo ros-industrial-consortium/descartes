@@ -108,30 +108,22 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
 
   //// adding virtual vertex
   graph_.clear();
-  boost::add_vertex(graph_);
 
   // generating samples now
   for(std::size_t  i = 0; i < points_.size(); i++)
   {
     typename PointSampleGroup<FloatT>::Ptr samples = points_[i]->generate();
-    if(!samples)
+    if(!samples || samples->values.empty())
     {
+      CONSOLE_BRIDGE_logError("Failed to generate samples for point %lu",i);
       if(report_failures_)
       {
         failed_points_.push_back(i);
         continue;
       }
-
-      CONSOLE_BRIDGE_logError("Failed to generate samples for point %lu",i);
       return false;
     }
     container_->at(i) = samples;
-
-    // adding vertices
-    for(std::size_t s = 0; s < samples->num_samples; s++)
-    {
-      boost::add_vertex(graph_);
-    }
   }
 
   // no need to proceed if sample generation failed
