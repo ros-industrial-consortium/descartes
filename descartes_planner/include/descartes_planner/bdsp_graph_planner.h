@@ -138,6 +138,9 @@ private:
                                 EdgeProperties<FloatT>        /** @brief edge structure */
                                 > GraphT;
 
+  void writeGraphLogs(const std::vector<FloatT>& weights,
+                    const std::vector<typename GraphT::vertex_descriptor>& predecessors);
+
   GraphT graph_;
   std::vector< typename PointSampler<FloatT>::Ptr > points_;
   std::vector< typename EdgeEvaluator<FloatT>::ConstPtr > edge_evaluators_;

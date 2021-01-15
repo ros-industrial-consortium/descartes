@@ -7,16 +7,18 @@
 
 #include <numeric>
 
+#include <fstream>
+
 #include <memory>
 
 #include <console_bridge/console.h>
 
 #include <boost/format.hpp>
+#include <boost/graph/graph_utility.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/dijkstra_shortest_paths_no_color_map.hpp>
 
 #include "descartes_planner/bdsp_graph_planner.h"
-
-
 
 static const int VIRTUAL_VERTEX_INDEX = -1;
 
@@ -182,14 +184,13 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
 
     if(edges.empty())
     {
+      CONSOLE_BRIDGE_logError("Edge evaluation between rungs %lu and %lu failed", samples1->point_id,
+                              samples2->point_id);
       if(report_failures_)
       {
         failed_edges_.push_back(p1_idx);
         continue;
       }
-
-      CONSOLE_BRIDGE_logError("Edge evaluation between rungs %lu and %lu failed", samples1->point_id,
-                              samples2->point_id);
       return false;
     }
 
@@ -233,6 +234,12 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
 
       int src_vtx_index = edge.src_vtx.sample_index + vertex_count;
       int dst_vtx_index =  edge.dst_vtx.sample_index + vertex_count + samples1->num_samples;
+
+      if(src_vtx_index >= dst_vtx_index)
+      {
+        CONSOLE_BRIDGE_logError("Found equal source and destination vertices values at iteration", i);
+        return false;
+      }
 
       if(src_vtx_index <= 0)
       {
@@ -282,6 +289,12 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
       dst_vertices_added[dst_vtx_index] = edge.dst_vtx;
     }
 
+    if(src_vertices_added.empty() || dst_vertices_added.empty())
+    {
+      CONSOLE_BRIDGE_logError("Failed to add any valid egdes between points %i and %i",p1_idx, p2_idx);
+      return false;
+    }
+
     vertex_count += samples1->num_samples;
     add_virtual_vertex = false; // do not add edges for the virtual vertex anymore
 
@@ -324,6 +337,65 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::getFailedPoints(std::vector<st
 }
 
 template<typename FloatT>
+void descartes_planner::BDSPGraphPlanner<FloatT>::writeGraphLogs(const std::vector<FloatT>& weights,
+                                                               const std::vector<typename GraphT::vertex_descriptor>& predecessors)
+{
+  typedef boost::graph_traits<GraphT> GraphTraits;
+
+  // declare file names
+  const std::string dot_file_name = "dijkstra-no-color-map-eg.dot";
+  const std::string txt_file_name = "dijkstra_shortest_path_dump.txt";
+
+  // writing dot file
+  std::ofstream dot_file(dot_file_name);
+
+  dot_file << "digraph D {\n"
+    << "  rankdir=LR\n"
+    << "  size=\"4,3\"\n"
+    << "  ratio=\"fill\"\n"
+    << "  edge[style=\"bold\"]\n" << "  node[shape=\"circle\"]\n";
+
+  typename GraphTraits::edge_iterator  ei, ei_end;
+  for (boost::tie(ei, ei_end) = edges(graph_); ei != ei_end; ++ei) {
+    typename GraphTraits::edge_descriptor e = *ei;
+    typename GraphTraits::vertex_descriptor u = source(e, graph_), v = target(e, graph_);
+    EdgeProperties<FloatT> edge_props = graph_[e];
+    VertexProperties u_vertex = edge_props.src_vtx;
+    VertexProperties v_vertex = edge_props.dst_vtx;
+
+    if(u_vertex.point_id < 0 || v_vertex.point_id < 0)
+    {
+      continue;
+    }
+
+    dot_file << "\tP" << u_vertex.point_id << "_S" << u_vertex.sample_index <<"_G" << u << " -> ";
+    dot_file << "P" << v_vertex.point_id << "_S" << v_vertex.sample_index <<"_G" << v;
+
+    //dot_file << u << " -> " << v;
+    dot_file << " [label=\"" << int(1e3 * edge_props.weight)  << "\"";
+    if (predecessors[v] == u)
+      dot_file << ", color=\"black\"";
+    else
+      dot_file << ", color=\"red\"";
+    dot_file << "];\n";
+  }
+  dot_file << "}";
+
+  // writing text file
+  std::ofstream graph_file(txt_file_name);
+  std::ostream& ref = graph_file;
+  boost::print_graph(graph_, ref);
+  graph_file.close();
+
+  // print log names
+  const auto log_file_names = {dot_file_name, txt_file_name};
+  for(const auto& f : log_file_names)
+  {
+    CONSOLE_BRIDGE_logInform("wrote graph log file %s", f.c_str());
+  }
+}
+
+template<typename FloatT>
 bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
     std::vector<typename PointData<FloatT>::ConstPtr>& solution_points)
 {
@@ -332,10 +404,15 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
   std::vector<typename GraphT::vertex_descriptor> predecessors(num_vert);
   std::vector<FloatT> weights(num_vert, 0.0);
 
-  boost::dijkstra_shortest_paths(graph_, virtual_vertex,
+/*  boost::dijkstra_shortest_paths(graph_, virtual_vertex,
     weight_map(get(&EdgeProperties<FloatT>::weight, graph_))
     .distance_map(boost::make_iterator_property_map(weights.begin(),get(boost::vertex_index, graph_)))
-    .predecessor_map(&predecessors[0]));
+    .predecessor_map(&predecessors[0]));*/
+
+  boost::dijkstra_shortest_paths_no_color_map(graph_, virtual_vertex,
+   weight_map(get(&EdgeProperties<FloatT>::weight, graph_))
+   .distance_map(boost::make_iterator_property_map(weights.begin(),get(boost::vertex_index, graph_)))
+   .predecessor_map(boost::make_iterator_property_map(predecessors.begin(),get(boost::vertex_index, graph_))));
 
   CONSOLE_BRIDGE_logDebug("Num vertices %i", num_vert);
   CONSOLE_BRIDGE_logDebug("Predecessor array size %lu",predecessors.size());
@@ -376,11 +453,12 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::solve(
   current_vertex = cheapest_end_vertex;
   if(static_cast<int>(current_vertex) < 0 )
   {
-    CONSOLE_BRIDGE_logError("Found no feasible solution path through graph");
+    CONSOLE_BRIDGE_logError("Found no continuous solution path through graph");
+    writeGraphLogs(weights, predecessors);
     return false;
   }
 
-  CONSOLE_BRIDGE_logInform("Found valid solution end vertex: %i with cost %f", current_vertex, cost);
+  CONSOLE_BRIDGE_logInform("Found valid shortest path with end vertex: %i and cost %f", current_vertex, cost);
 
   solution_points.resize(container_->size(), nullptr);
   auto add_solution = [&](VertexProperties& vp) -> bool{
