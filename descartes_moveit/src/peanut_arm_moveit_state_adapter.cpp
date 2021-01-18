@@ -86,7 +86,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
     }
   }
   if (joint_poses.size() == 0){
-    ROS_ERROR_STREAM("Could not find ik");
+    ROS_DEBUG_STREAM_THROTTLE(0.25, "Could not find ik");
   }
   return joint_poses.size() > 0;
 }
