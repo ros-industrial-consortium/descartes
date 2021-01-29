@@ -43,13 +43,13 @@ struct Frame
 {
   Frame(){};
   Frame(const Eigen::Isometry3d &a) : frame(a), frame_inv(a.inverse()){};
-  Frame(const Eigen::Affine3d& a)
-  {
-    Eigen::Isometry3d t;
-    frame.translation() = a.translation();
-    frame.linear() = a.rotation();
-    frame_inv = frame.inverse();
-  }
+  // Frame(const Eigen::Isometry3d& a)
+  // {
+  //   Eigen::Isometry3d t;
+  //   frame.translation() = a.translation();
+  //   frame.linear() = a.rotation();
+  //   frame_inv = frame.inverse();
+  // }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   Eigen::Isometry3d frame;

@@ -20,10 +20,12 @@
   <build_depend>roscpp</build_depend>
   <build_depend>cmake_modules</build_depend>
   <build_depend>eigen</build_depend>
+  <build_depend>moveit_msgs</build_depend>
 
   <run_depend>boost</run_depend>
   <run_depend>moveit_core</run_depend>
   <run_depend>roscpp</run_depend>
+  <run_depend>moveit_msgs</run_depend>
 
   <test_depend>rosunit</test_depend>
 

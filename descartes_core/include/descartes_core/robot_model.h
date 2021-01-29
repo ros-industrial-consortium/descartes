@@ -22,6 +22,8 @@
 // TODO: The include below picks up Eigen::Isometry3d, but there is probably a better way
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
 #include "descartes_core/utils.h"
+#include <moveit_msgs/PlanningScene.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 
 namespace descartes_core
 {
@@ -115,6 +117,7 @@ public:
    */
   virtual void setCheckCollisions(bool check_collisions)
   {
+    ROS_INFO_STREAM("Check collisions set to "<<check_collisions);
     check_collisions_ = check_collisions;
   }
 
@@ -143,6 +146,21 @@ public:
   }
 
   virtual bool isValidMove(const double* s, const double* f, double dt) const = 0;
+
+  virtual bool updatePlanningScene(planning_scene::PlanningScenePtr ps){
+    ROS_ERROR("updatePlanningScene() method not implemented");
+    return false;
+  }
+
+  /**
+   * Update the collision_arm_links_ and collision_arm_robot_links. Used by jaco3_moveit_state_adapter
+   */
+  virtual void setCollisionLinks(std::vector<std::string> arm_links, std::vector<std::string> robot_links){
+    // Add unused parameters here so compiler does not complain about unused parameters
+    (void)arm_links;
+    (void)robot_links;
+    ROS_ERROR("setCollisionLinks() method not implemented");
+  }
 
 protected:
   RobotModel() : check_collisions_(false)

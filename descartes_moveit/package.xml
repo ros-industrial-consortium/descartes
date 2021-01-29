@@ -22,6 +22,8 @@
   <depend>descartes_trajectory</depend>
   <depend>moveit_ros_planning</depend>
   <depend>pluginlib</depend>
+  <depend>peanut_kinematics</depend>
+  <depend>moveit_msgs</depend>
   <build_depend>eigen</build_depend>
 
   <export>

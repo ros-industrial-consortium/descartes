@@ -135,11 +135,18 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
   if (world_frame_ != model_frame)
   {
     CONSOLE_BRIDGE_logInform("%s: World frame '%s' does not match model root frame '%s', all poses will be"
-              " transformed to world frame '%s'",
+              " transformed to world frame '%s'. Bummerrrr...",
               __FUNCTION__, world_frame_.c_str(), model_frame.c_str(), world_frame_.c_str());
 
-    Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
-    world_to_root_ = descartes_core::Frame(root_to_world.inverse());
+    // FIXME: This was commented out in the first peanut commit after branching from kinetic-devel
+    // need to understand why and add a comment here, or undo the change...
+    // <<<<<<< HEAD (upstream version of melodic-devel)
+    //     Eigen::Isometry3d root_to_world = toIsometry(robot_state_->getFrameTransform(world_frame_));
+    //     world_to_root_ = descartes_core::Frame(root_to_world.inverse());
+    // =======
+    // //    Eigen::Affine3d root_to_world = robot_state_->getFrameTransform(world_frame_);
+    // //    world_to_root_ = descartes_core::Frame(root_to_world.inverse());
+    // >>>>>>> kinetic-devel (peanut version)
   }
 
   return true;
@@ -157,7 +164,15 @@ bool MoveitStateAdapter::getIK(const Eigen::Isometry3d& pose, std::vector<double
   bool rtn = false;
 
   // transform to group base
-  Eigen::Isometry3d tool_pose = world_to_root_.frame * pose;
+    // FIXME: This was changed in the first peanut commit after branching from kinetic-devel
+    // need to understand why and add a comment here, or undo the change...
+    // <<<<<<< HEAD (upstream melodic-devel)
+    //   Eigen::Isometry3d tool_pose = world_to_root_.frame * pose;
+    // =======
+    // //  Eigen::Affine3d tool_pose = world_to_root_.frame * pose;
+    //   Eigen::Affine3d tool_pose = pose;
+    // >>>>>>> kinetic-devel (peanut version)
+    Eigen::Isometry3d tool_pose = pose;
 
   if (robot_state_->setFromIK(joint_group_, tool_pose, tool_frame_))
   {
