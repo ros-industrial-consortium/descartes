@@ -103,6 +103,23 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector< typename Po
 }
 
 template<typename FloatT>
+std::vector< EdgeProperties<FloatT> > descartes_planner::BDSPGraphPlanner<FloatT>::filterDisconnectedEdges(
+    const std::vector< EdgeProperties<FloatT> >& edges,const std::map<int, VertexProperties>& connected_src_vertices,
+    std::uint32_t current_vertex_count) const
+{
+  auto new_edges = edges;
+  auto start_loc = new_edges.begin();
+  auto end_loc = new_edges.end();
+  auto new_end_loc = std::remove_if(new_edges.begin(), new_edges.end(), [&](const EdgeProperties<FloatT>& edge){
+    int src_idx = edge.src_vtx.sample_index + current_vertex_count;
+    return connected_src_vertices.count(src_idx) == 0;
+  });
+
+  new_edges.erase(new_end_loc, end_loc);
+  return new_edges;
+}
+
+template<typename FloatT>
 bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename PointSampler<FloatT>::Ptr>& points,
                                                    std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators)
 {
@@ -179,12 +196,10 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
     using EdgeProp = EdgeProperties<FloatT>;
     auto edge_evaluator = getEdgeEvaluator(p1_idx);
     std::vector< EdgeProperties<FloatT> > edges = edge_evaluator->evaluate(samples1, samples2);
-    src_vertices_added.clear();
-    dst_vertices_added.clear();
 
     if(edges.empty())
     {
-      CONSOLE_BRIDGE_logError("Edge evaluation between rungs %lu and %lu failed", samples1->point_id,
+      CONSOLE_BRIDGE_logError("Edge evaluation between points %lu and %lu failed", samples1->point_id,
                               samples2->point_id);
       if(report_failures_)
       {
@@ -217,6 +232,25 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
                                samples1->num_samples, samples2->num_samples);
     }
 
+    // filtering disconnected edges
+    if(!dst_vertices_added.empty())
+    {
+      edges = filterDisconnectedEdges(edges, dst_vertices_added, vertex_count);
+      if(edges.empty())
+      {
+        CONSOLE_BRIDGE_logError("Edge between points %lu and %lu has no continuous path", samples1->point_id,
+                                samples2->point_id);
+        if(report_failures_)
+        {
+          failed_edges_.push_back(p1_idx);
+          continue;
+        }
+        return false;
+      }
+    }
+
+    src_vertices_added.clear();
+    dst_vertices_added.clear();
     for(EdgeProp& edge: edges)
     {
       if(!edge.valid)
@@ -232,8 +266,8 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
 
       bool added;
 
-      int src_vtx_index = edge.src_vtx.sample_index + vertex_count;
-      int dst_vtx_index =  edge.dst_vtx.sample_index + vertex_count + samples1->num_samples;
+      std::uint32_t src_vtx_index = edge.src_vtx.sample_index + vertex_count;
+      std::uint32_t dst_vtx_index =  edge.dst_vtx.sample_index + vertex_count + samples1->num_samples;
 
       if(src_vtx_index >= dst_vtx_index)
       {
@@ -291,7 +325,7 @@ bool descartes_planner::BDSPGraphPlanner<FloatT>::build(std::vector<typename Poi
 
     if(src_vertices_added.empty() || dst_vertices_added.empty())
     {
-      CONSOLE_BRIDGE_logError("Failed to add any valid egdes between points %i and %i",p1_idx, p2_idx);
+      CONSOLE_BRIDGE_logError("No continuous path could be found between points %i and %i",p1_idx, p2_idx);
       return false;
     }
 

@@ -28,11 +28,14 @@
 
 #include <descartes_planner/bdsp_sparse_planner.h>
 
-
-
 namespace descartes_planner
 {
-
+/**
+ *
+ * @tparam FloatT
+ * @class descartes_planner::UnarySampler: public PointSampler<FloatT>
+ * @brief Utility class used by the sparse planner to store a single sample point data computed during the sparse solving stage
+ */
 template<typename FloatT>
 class UnarySampler: public PointSampler<FloatT>
 {
@@ -49,7 +52,7 @@ public:
   }
 
   /**
-   * @brief this method generates the samples, does not store them
+   * @brief this method generates the samples
    */
   typename PointSampleGroup<FloatT>::Ptr generate() override
   {
@@ -176,7 +179,7 @@ bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>
   }
   CONSOLE_BRIDGE_logInform("Found sparse solution with %lu points", selected_sparse_points.size());
 
-  // now build grapsh for sparse and intermediate points
+  // now build graph for sparse and intermediate points
   std::vector< typename PointSampler<FloatT>::Ptr > dense_point_samplers;
   dense_point_samplers.reserve(points.size());
   typename PointSampler<FloatT>::Ptr sampler_0;
@@ -226,7 +229,7 @@ bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>
     }
   }
 
-  // adding final point;
+  // adding final point in segment
   dense_point_samplers.push_back(sampler_f);
 
   if(!failed_points_.empty())

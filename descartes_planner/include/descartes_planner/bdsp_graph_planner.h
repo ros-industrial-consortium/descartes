@@ -127,6 +127,10 @@ private:
 
   typename EdgeEvaluator<FloatT>::ConstPtr getEdgeEvaluator(std::uint32_t idx);
 
+  std::vector< EdgeProperties<FloatT> > filterDisconnectedEdges(const std::vector< EdgeProperties<FloatT> >& edges,
+                                                                const std::map<int, VertexProperties>& connected_src_vertices,
+                                                                std::uint32_t current_vertex_count) const;
+
   void setup(std::vector< typename PointSampler<FloatT>::Ptr >& points,
              std::vector<typename EdgeEvaluator<FloatT>::ConstPtr>& edge_evaluators);
 
