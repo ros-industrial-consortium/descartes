@@ -31,7 +31,7 @@ namespace descartes_planner
     typedef typename std::shared_ptr<PointData> Ptr;
     typedef typename std::shared_ptr<const PointData> ConstPtr;
 
-    virtual typename PointData<FloatT>::ConstPtr lerp(FloatT t, typename PointData<FloatT>::ConstPtr p) const
+    virtual typename PointData<FloatT>::ConstPtr interpolate(FloatT t, typename PointData<FloatT>::ConstPtr p) const
     {
       typename PointData<FloatT>::Ptr sample = std::make_shared<PointData<FloatT>>();
       sample->values.resize(values.size());

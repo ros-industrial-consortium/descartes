@@ -209,7 +209,7 @@ bool BDSPSparsePlanner<FloatT>::build(std::vector< typename PointSampler<FloatT>
     {
       t = (ii - p0_idx)/segment_length;
       typename PointSampler<FloatT>::Ptr intermediate_sampler = points[ii];
-      auto interpolated_point_data = point_data_0->lerp(t, point_data_f);
+      auto interpolated_point_data = point_data_0->interpolate(t, point_data_f);
       typename PointSampleGroup<FloatT>::Ptr closest_sample_group = intermediate_sampler->getClosest(interpolated_point_data);
 
       if(!closest_sample_group)
