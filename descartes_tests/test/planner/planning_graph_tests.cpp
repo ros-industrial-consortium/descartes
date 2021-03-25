@@ -60,7 +60,7 @@ static std::vector<descartes_core::TrajectoryPtPtr> threePoints()
   auto vec = twoPoints();
   vec.push_back(pt);
   return vec;
-} 
+}
 
 TEST(PlanningGraph, setup)
 {
@@ -70,11 +70,11 @@ TEST(PlanningGraph, setup)
   descartes_planner::PlanningGraph graph {robot};
   // Add a trajectory
   auto points = threePoints();
-  ASSERT_TRUE(graph.insertGraph(points));
+  ASSERT_TRUE(graph.insertGraph(points) == points.size());
 
   double cost;
   std::list<descartes_trajectory::JointTrajectoryPt> out;
-  EXPECT_TRUE(graph.getShortestPath(cost, out)); 
+  EXPECT_TRUE(graph.getShortestPath(cost, out));
 }
 
 TEST(PlanningGraph, custom_cost_fn)
@@ -92,7 +92,7 @@ TEST(PlanningGraph, custom_cost_fn)
   // Create planner
   descartes_planner::PlanningGraph graph {robot, custom_cost_fn};
 
-  ASSERT_TRUE(graph.insertGraph(points));
+  ASSERT_TRUE(graph.insertGraph(points) == points.size());
   double cost;
   std::list<descartes_trajectory::JointTrajectoryPt> out;
   EXPECT_TRUE(graph.getShortestPath(cost, out));
@@ -108,12 +108,12 @@ TEST(PlanningGraph, insert_then_add_point)
   descartes_planner::PlanningGraph graph {robot};
 
   // initialize graph
-  ASSERT_TRUE(graph.insertGraph(points));
+  ASSERT_TRUE(graph.insertGraph(points) == points.size());
 
   auto new_pt = thirdTestPoint();
 
   ASSERT_TRUE(graph.addTrajectory( new_pt, points.back()->getID(), descartes_core::TrajectoryPt::ID::make_nil() ));
-  
+
   double cost;
   std::list<descartes_trajectory::JointTrajectoryPt> out;
   ASSERT_TRUE(graph.getShortestPath(cost, out));
@@ -132,7 +132,7 @@ TEST(PlanningGraph, insert_then_remove_point)
   descartes_planner::PlanningGraph graph {robot};
 
   // initialize graph
-  ASSERT_TRUE(graph.insertGraph(points));
+  ASSERT_TRUE(graph.insertGraph(points) == points.size());
 
   // Now remove the last point
   ASSERT_TRUE( graph.removeTrajectory(points.back()->getID()) );
@@ -155,7 +155,7 @@ TEST(PlanningGraph, insert_then_modify_all_points)
   descartes_planner::PlanningGraph graph {robot};
 
   // initialize graph
-  ASSERT_TRUE(graph.insertGraph(points));
+  ASSERT_TRUE(graph.insertGraph(points) == points.size());
 
   // modify each of the points to mimic itself
   ASSERT_TRUE( graph.modifyTrajectory(points[0]) );

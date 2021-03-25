@@ -84,7 +84,7 @@ TYPED_TEST_P(PathPlannerTest, preservesTiming)
     dt *= 1.5;
   }
   // // Solve
-  ASSERT_TRUE(planner->planPath(input));
+  ASSERT_TRUE(planner->planPath(input) == input.size());
   // Get the result
   ASSERT_TRUE(planner->getPath(output));
   // Compare timing
@@ -110,13 +110,13 @@ TYPED_TEST_P(PathPlannerTest, simpleVelocityCheck)
                                                           10);  // samples
   ASSERT_TRUE(!input.empty());
   // The nominal trajectory (0.9 m/s) is less than max tool speed of 1.0 m/s
-  EXPECT_TRUE(planner->planPath(input));
+  EXPECT_TRUE(planner->planPath(input) == input.size());
   // Unconstraining a point should still succeed
   input.back().get()->setTiming(descartes_core::TimingConstraint());
-  EXPECT_TRUE(planner->planPath(input));
+  EXPECT_TRUE(planner->planPath(input) == input.size());
   // Making a dt for a segment very small should induce failure
   input.back().get()->setTiming(descartes_core::TimingConstraint(0.001));
-  EXPECT_FALSE(planner->planPath(input)) << "Trajectory pt has very small dt; planner should fail for velocity out of "
+  EXPECT_FALSE(planner->planPath(input) == input.size()) << "Trajectory pt has very small dt; planner should fail for velocity out of "
                                             "bounds";
 }
 
@@ -134,7 +134,7 @@ TYPED_TEST_P(PathPlannerTest, zigzagTrajectory)
                                                 10);  // samples
   ASSERT_TRUE(!input.empty());
   // The nominal trajectory (0.9 m/s) is less than max tool speed of 1.0 m/s
-  EXPECT_TRUE(planner->planPath(input));
+  EXPECT_TRUE(planner->planPath(input) == input.size());
 }
 
 REGISTER_TYPED_TEST_CASE_P(PathPlannerTest, construction, basicConfigure, preservesTiming, simpleVelocityCheck,

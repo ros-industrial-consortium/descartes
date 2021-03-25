@@ -148,12 +148,12 @@ void SparsePlanner::setSampling(double sampling)
   sampling_ = sampling;
 }
 
-bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
+std::size_t SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
 {
   if (error_code_ == descartes_core::PlannerError::UNINITIALIZED)
   {
     ROS_ERROR_STREAM("Planner has not been initialized");
-    return false;
+    return 0;
   }
 
   ros::Time start_time = ros::Time::now();
@@ -164,7 +164,8 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
   ROS_INFO_STREAM("Sampled trajectory contains " << sparse_trajectory_array.size() << " points from "
                                                  << cart_points_.size() << " points in the dense trajectory");
 
-  if (planning_graph_->insertGraph(sparse_trajectory_array) && plan())
+  std::size_t success_count = planning_graph_->insertGraph(sparse_trajectory_array);
+  if (success_count == sparse_trajectory_array.size() && plan())
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size() - sparse_solution_array_.size();
@@ -175,10 +176,9 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
   else
   {
     error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
-    return false;
   }
 
-  return true;
+  return success_count;
 }
 
 bool SparsePlanner::addAfter(const TrajectoryPt::ID& ref_id, TrajectoryPtPtr cp)
@@ -790,7 +790,7 @@ int SparsePlanner::interpolateSparseTrajectory(const SolutionArray& sparse_solut
               sparse_index = k;
               return static_cast<int>(InterpolationResult::REPLAN);
             }
-            
+
             joint_points_map_.insert(std::make_pair(cart_point->getID(), JointTrajectoryPt(aprox_interp, tm)));
           }
           else

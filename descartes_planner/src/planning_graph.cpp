@@ -38,21 +38,25 @@ PlanningGraph::PlanningGraph(RobotModelConstPtr model, CostFunction cost_functio
   : graph_(model->getDOF()), robot_model_(std::move(model)), custom_cost_function_(cost_function_callback)
 {}
 
-bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
+std::size_t PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 {
+  // return number of points planning was successful for
   if (points.size() < 2)
   {
     ROS_ERROR_STREAM(__FUNCTION__ << ": must provide at least 2 input trajectory points.");
-    return false;
+    return 0;
   }
 
   if (graph_.size() > 0) clear();
 
   // generate solutions for this point
   std::vector<std::vector<std::vector<double>>> all_joint_sols;
-  if (!calculateJointSolutions(points.data(), points.size(), all_joint_sols))
+  std::size_t success_count = calculateJointSolutions(points.data(), points.size(), all_joint_sols);
+  if (success_count < points.size())
   {
-    return false;
+    ROS_INFO_STREAM("calculateJointSolutions failed");
+    ROS_INFO_STREAM("calculateJointSolutions points: " << points.size() << " success: " << success_count);
+    return success_count;
   }
 
   // insert into graph as vertices
@@ -69,7 +73,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
     computeAndAssignEdges(i, i + 1);
   }
 
-  return true;
+  return points.size();
 }
 
 bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previous_id, TrajectoryPt::ID next_id)
@@ -186,7 +190,7 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
   return true;
 }
 
-bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const std::size_t count,
+std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const std::size_t count,
                                             std::vector<std::vector<std::vector<double>>>& poses) const
 {
   poses.resize(count);
@@ -202,15 +206,30 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 
       if (joint_poses.empty())
       {
-        ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
+        ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with index = " << i << " ID = " << points[i]->getID());
         success = false;
       }
 
       poses[i] = std::move(joint_poses);
     }
   }
+  if (success) {
+    return count;
+  }
+  else {
+    // redo calculation to find first point of failure
+    std::size_t i = 0;
+    for (; i < count; ++i)
+    {
+      std::vector<std::vector<double>> joint_poses;
+      points[i]->getJointPoses(*robot_model_, joint_poses);
 
-  return success;
+      if (joint_poses.empty()) {
+        break;
+      }
+    }
+    return i;
+  }
 }
 
 void PlanningGraph::computeAndAssignEdges(const std::size_t start_idx, const std::size_t end_idx)
