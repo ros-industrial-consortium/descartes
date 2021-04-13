@@ -172,6 +172,7 @@ std::size_t SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
     ROS_INFO("Sparse planner succeeded with %i planned point and %i interpolated points in %f seconds", planned_count,
              interp_count, (ros::Time::now() - start_time).toSec());
     error_code_ = descartes_core::PlannerError::OK;
+    success_count = planned_count + interp_count;
   }
   else
   {
