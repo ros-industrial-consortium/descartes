@@ -148,12 +148,12 @@ descartes_core::TrajectoryPtPtr DensePlanner::get(const descartes_core::Trajecto
   return p;
 }
 
-std::size_t DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj)
+std::pair<bool, std::size_t> DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj)
 {
   if (error_code_ == descartes_core::PlannerError::UNINITIALIZED)
   {
     ROS_ERROR("Planner has not been initialized");
-    return 0;
+    return {false, 0};
   }
 
   path_.clear();
@@ -170,7 +170,7 @@ std::size_t DensePlanner::planPath(const std::vector<descartes_core::TrajectoryP
     ROS_ERROR_STREAM("IK not available " << success_count << " < " << traj.size());
   }
 
-  return success_count;
+  return {descartes_core::PlannerError::OK==error_code_, success_count};
 }
 
 bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const

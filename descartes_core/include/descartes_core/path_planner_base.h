@@ -82,7 +82,7 @@ public:
    * @param traj the points used to plan the robot path
    * @error_code Returns traj.size() on success. Number of partial points on failure.
    */
-  virtual std::size_t planPath(const std::vector<TrajectoryPtPtr>& traj) = 0;
+  virtual std::pair<bool, std::size_t> planPath(const std::vector<TrajectoryPtPtr>& traj) = 0;
 
   /**
    * @brief Returns the last robot path generated from the input trajectory

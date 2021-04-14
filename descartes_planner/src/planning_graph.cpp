@@ -52,6 +52,7 @@ std::size_t PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& point
   // generate solutions for this point
   std::vector<std::vector<std::vector<double>>> all_joint_sols;
   std::size_t success_count = calculateJointSolutions(points.data(), points.size(), all_joint_sols);
+  ROS_INFO_STREAM("calculateJointSolutions " << success_count << " of " << points.size());
   if (success_count < points.size())
   {
     ROS_INFO_STREAM("calculateJointSolutions failed");
@@ -214,6 +215,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
     }
   }
   if (success) {
+    ROS_INFO_STREAM("calculateJointSolutions success " << count);
     return count;
   }
   else {
@@ -228,6 +230,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
         break;
       }
     }
+    ROS_INFO_STREAM("calculateJointSolutions failed " << i);
     return i;
   }
 }
