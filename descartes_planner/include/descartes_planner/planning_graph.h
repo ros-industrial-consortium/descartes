@@ -49,9 +49,9 @@ public:
 
   /** @brief initial population of graph trajectory elements
    * @param points list of trajectory points to be used to construct the graph
-   * @return True if the graph was successfully created
+   * @return points.size() on success. Partial number of points that were vaid on failure.
    */
-  bool insertGraph(const std::vector<descartes_core::TrajectoryPtPtr>& points);
+  std::size_t insertGraph(const std::vector<descartes_core::TrajectoryPtPtr>& points);
 
   /** @brief adds a single trajectory point to the graph
    * @param point The new point to add to the graph
@@ -79,7 +79,7 @@ protected:
    * @brief A pair indicating the validity of the edge, and if valid, the cost associated
    *        with that edge
    */
-  bool calculateJointSolutions(const descartes_core::TrajectoryPtPtr* points, const std::size_t count,
+  std::size_t calculateJointSolutions(const descartes_core::TrajectoryPtPtr* points, const std::size_t count,
                                std::vector<std::vector<std::vector<double>>>& poses) const;
 
   /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */

@@ -47,7 +47,7 @@ public:
                           descartes_planner::CostFunction cost_function_callback);
   virtual bool setConfig(const descartes_core::PlannerConfig& config);
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
-  virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
+  virtual std::pair<bool, std::size_t> planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
   virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr cp);
   virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr cp);
   virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr cp);
