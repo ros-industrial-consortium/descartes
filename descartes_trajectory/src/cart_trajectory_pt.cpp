@@ -83,7 +83,7 @@ EigenSTL::vector_Isometry3d uniform(const TolerancedFrame &frame, const double o
   // Estimating the number of samples base on tolerance zones and sampling increment.
   size_t est_num_samples = ntx * nty * ntz * nrx * nry * nrz;
 
-  ROS_DEBUG_STREAM("Estimated number of samples: " << est_num_samples << ", reserving space");
+  // ROS_DEBUG_STREAM("Estimated number of samples: " << est_num_samples << ", reserving space");
   rtn.reserve(est_num_samples);
 
   // TODO: The following for loops do not ensure that the rull range is sample (lower to upper)
@@ -397,8 +397,8 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
   }
   else
   {
-    ROS_DEBUG_STREAM("Get joint poses, sampled: " << poses.size() << ", with " << joint_poses.size()
-                                                  << " valid(returned) poses");
+    // ROS_DEBUG_STREAM("Get joint poses, sampled: " << poses.size() << ", with " << joint_poses.size()
+                                                  // << " valid(returned) poses");
   }
 }
 
