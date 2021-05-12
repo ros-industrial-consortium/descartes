@@ -398,7 +398,7 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
   else
   {
     // ROS_DEBUG_STREAM("Get joint poses, sampled: " << poses.size() << ", with " << joint_poses.size()
-                                                  << " valid(returned) poses");
+                                                  // << " valid(returned) poses");
   }
 }
 
