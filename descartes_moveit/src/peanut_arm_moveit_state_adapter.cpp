@@ -47,6 +47,30 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
     return false;
   }
 
+  // Get joint limits
+  ros::NodeHandle nh;
+  min_pos_.clear();
+  max_pos_.clear();
+  joint_names_ = {"elevator_joint", "arm_joint_1", "arm_joint_2", "wrist_joint_1", "wrist_joint_2", "wrist_joint_3"};
+  for(unsigned int i = 0; i < joint_names_.size(); i++){
+    double limit;
+    if(nh.getParam("/robot_description_planning/joint_limits/" + joint_names_[i] + "/min_position", limit)){
+      min_pos_.push_back(limit);
+    }
+    else{
+      ROS_ERROR_STREAM("Could not find min limits for " << joint_names_[i]);
+      return false;
+    }
+    if(nh.getParam("/robot_description_planning/joint_limits/" + joint_names_[i] + "/max_position", limit)){
+     max_pos_.push_back(limit);
+    }
+    else{
+      ROS_ERROR_STREAM("Could not find max limits for " << joint_names_[i]);
+      return false;
+    }
+    joint_limits_dict_[joint_names_[i]] = {min_pos_[i], max_pos_[i]};
+  }
+
   return computeTransforms();
 }
 
@@ -78,7 +102,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   Eigen::Isometry3d tool_pose = pose;
 
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, true);
+  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true);
 
   for(auto& joint_config : potential_joint_configs){
     if(isValid(joint_config)){
@@ -190,7 +214,31 @@ void descartes_moveit::PeanutMoveitStateAdapter::setCollisionLinks(std::vector<s
 }
 
 bool descartes_moveit::PeanutMoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const{
-  return !hasNaN(joint_pose) && descartes_moveit::MoveitStateAdapter::isValid(joint_pose);
+  // Logical check on input sizes
+  if (joint_group_->getActiveJointModels().size() != joint_pose.size())
+  {
+    CONSOLE_BRIDGE_logError("Size of joint pose: %lu doesn't match robot state variable size: %lu",
+             static_cast<unsigned long>(joint_pose.size()),
+             static_cast<unsigned long>(joint_group_->getActiveJointModels().size()));
+    return false;
+  }
+
+  return !hasNaN(joint_pose) && isInLimits(joint_pose) && !isInCollision(joint_pose);
+}
+
+bool descartes_moveit::PeanutMoveitStateAdapter::isInLimits(const std::vector<double> &joint_pose) const{
+ const std::vector<const moveit::core::JointModel*> joints = joint_group_->getActiveJointModels();
+ int i = 0;
+ for(const moveit::core::JointModel* j : joints){
+   std::string name = j->getName();
+   const double min_limit = joint_limits_dict_.at(name)[0];
+   const double max_limit = joint_limits_dict_.at(name)[1];
+   if(joint_pose[i] < min_limit || joint_pose[i] > max_limit){
+     return false;
+   }
+   i++;
+ }
+ return true;
 }
 
 bool descartes_moveit::PeanutMoveitStateAdapter::updatePlanningScene(planning_scene::PlanningScenePtr ps){
