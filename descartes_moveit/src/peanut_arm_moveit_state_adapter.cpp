@@ -49,25 +49,18 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
 
   // Get joint limits
   ros::NodeHandle nh;
+  std::vector<std::vector<double>> joint_limits;
   min_pos_.clear();
   max_pos_.clear();
-  joint_names_ = {"elevator_joint", "arm_joint_1", "arm_joint_2", "wrist_joint_1", "wrist_joint_2", "wrist_joint_3"};
+  joint_names_ = peanut_common_util::getArmElevatorJointNames();
+  if(!peanut_common_util::getArmElevatorLimits(joint_limits)){
+    ROS_ERROR("Could not find get arm elevator limits");
+    return false;
+  }
+
   for(unsigned int i = 0; i < joint_names_.size(); i++){
-    double limit;
-    if(nh.getParam("/robot_description_planning/joint_limits/" + joint_names_[i] + "/min_position", limit)){
-      min_pos_.push_back(limit);
-    }
-    else{
-      ROS_ERROR_STREAM("Could not find min limits for " << joint_names_[i]);
-      return false;
-    }
-    if(nh.getParam("/robot_description_planning/joint_limits/" + joint_names_[i] + "/max_position", limit)){
-     max_pos_.push_back(limit);
-    }
-    else{
-      ROS_ERROR_STREAM("Could not find max limits for " << joint_names_[i]);
-      return false;
-    }
+    min_pos_.push_back(joint_limits[i][0]);
+    max_pos_.push_back(joint_limits[i][1]);
     joint_limits_dict_[joint_names_[i]] = {min_pos_[i], max_pos_[i]};
   }
 
@@ -108,7 +101,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   //           const bool debug=false);
 
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, true);
+  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
 
   for(auto& joint_config : potential_joint_configs){
     if(isValid(joint_config)){
