@@ -101,8 +101,14 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   // for now disable the above since we're just going to feed it in exactly what it needs:
   Eigen::Isometry3d tool_pose = pose;
 
+  // bool ik(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &qs,
+  //           const std::vector<std::string> joint_names, const std::vector<float> min_pos, const std::vector<float> max_pos,
+  //           const bool check_limits=true,
+  //           const bool check_cord_wrap=false,
+  //           const bool debug=false);
+
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true);
+  bool success = arm_kinematics::ik(tool_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, true);
 
   for(auto& joint_config : potential_joint_configs){
     if(isValid(joint_config)){
