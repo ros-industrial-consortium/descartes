@@ -9,6 +9,7 @@
 #include <peanut_kinematics/arm_kinematics.h>
 #include <moveit_msgs/PlanningScene.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <peanut_common_util/peanut_common_util.h>
 
 namespace descartes_moveit
 {

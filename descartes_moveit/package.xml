@@ -7,7 +7,7 @@
   <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
   <maintainer email="jonathan.meyer@swri.org">Jonathan Meyer</maintainer>
   <maintainer email="sedwards@swri.org">Shaun Edwards</maintainer>
-  
+
   <license>Apache2</license>
 
   <author >Shaun Edwards</author>
@@ -24,6 +24,7 @@
   <depend>pluginlib</depend>
   <depend>peanut_kinematics</depend>
   <depend>moveit_msgs</depend>
+  <depend>peanut_common</depend>
   <build_depend>eigen</build_depend>
 
   <export>
