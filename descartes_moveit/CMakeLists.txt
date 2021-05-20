@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosconsole_bridge
   tf
   peanut_kinematics
+  peanut_common
 )
 
 find_package(Boost REQUIRED)
@@ -37,6 +38,7 @@ catkin_package(
     tf
     peanut_kinematics
     moveit_msgs
+    peanut_common
   DEPENDS
     Boost
     EIGEN3

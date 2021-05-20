@@ -9,6 +9,7 @@
 #include <peanut_kinematics/arm_kinematics.h>
 #include <moveit_msgs/PlanningScene.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <peanut_common_util/peanut_common_util.h>
 
 namespace descartes_moveit
 {
@@ -34,6 +35,8 @@ public:
   virtual bool isValid(const std::vector<double>& joint_pose) const;
 
   virtual bool updatePlanningScene(planning_scene::PlanningScenePtr ps);
+
+  virtual bool isInLimits(const std::vector<double> &joint_pose) const;
 
   /**
    * @brief Sets the internal state of the robot model to the argument. For the IKFast impl,
@@ -73,6 +76,10 @@ protected:
   std::string octomap_link_ = "<octomap>";
   std::vector<std::string> collision_arm_links_ = {"arm_upper_link", "arm_lower_link"};
   std::vector<std::string> collision_robot_links_ = {"tower_link"};
+  std::vector<float> min_pos_;
+  std::vector<float> max_pos_;
+  std::vector<std::string> joint_names_;
+  std::map<std::string, std::vector<double>> joint_limits_dict_;
 };
 
 }  // end namespace 'descartes_moveit'
