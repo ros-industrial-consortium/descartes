@@ -197,7 +197,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
   poses.resize(count);
   bool success = true;
 
-  #pragma omp parallel for shared(success)
+  // xx!! #pragma omp parallel for shared(success)
   for (std::size_t i = 0; i < count; ++i)
   {
     if (success)
@@ -209,6 +209,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
       {
         ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with index = " << i << " ID = " << points[i]->getID());
         success = false;
+        break; // xx!!
       }
 
       poses[i] = std::move(joint_poses);

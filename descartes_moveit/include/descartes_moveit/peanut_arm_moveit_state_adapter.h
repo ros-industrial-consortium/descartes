@@ -49,6 +49,9 @@ public:
 protected:
   bool computeTransforms();
 
+  bool getAllIKSprayer(const Eigen::Isometry3d& pose, std::vector<std::vector<double> >& joint_poses) const;
+  bool getAllIKBrushContact(const Eigen::Isometry3d& pose, std::vector<std::vector<double> >& joint_poses) const;
+
   virtual bool isInCollision(const std::vector<double>& joint_pose) const;
 
   /**
@@ -64,6 +67,8 @@ protected:
    * account for this.
    */
   descartes_core::Frame tool0_to_tip_;
+
+  std::string tool_frame_ = "";
 
   /**
    * Likewise this parameter is used to accomodate transformations between the base
