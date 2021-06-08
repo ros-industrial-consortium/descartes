@@ -202,7 +202,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM("getAllIKSprayer(): Invalid joints");
+    ROS_DEBUG_STREAM("getAllIKSprayer(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -215,7 +215,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   const auto contact_pos = pose.translation();
   const auto rot = pose.rotation();
   Eigen::Vector3d rpy = rot.eulerAngles(0, 1, 2);
-  ROS_INFO_STREAM("brush rpy " << rpy.x() << " " << rpy.y() << " " << rpy.z());
+  // ROS_INFO_STREAM("brush rpy " << rpy.x() << " " << rpy.y() << " " << rpy.z());
   Eigen::Quaterniond q_yaw(Eigen::AngleAxisd(rpy.z(), Eigen::Vector3d::UnitZ())); // effector yaw
   const double brush_yaw = rpy.x();
 
@@ -246,22 +246,22 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   }
   auto eff_to_brush = eff_to_axis + BRUSH_DISC_RADIUS * brush_axis + BRUSH_AXIS_OFFSET * axis_dir;
 
-  ROS_INFO_STREAM("q_eff " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
+  // ROS_INFO_STREAM("q_eff " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   Eigen::Matrix3d eff_rot(q_eff);
   Eigen::Vector3d eff_trans(pose.translation() - eff_to_brush);
   Eigen::Vector3d iscale(1.0, 1.0, 1.0); // identity scale
   Eigen::Isometry3d eff_pose;
   eff_pose.fromPositionOrientationScale(eff_trans, eff_rot, iscale);
-  ROS_INFO_STREAM("eff_pose.translation " << eff_pose.translation().x() << " " << eff_pose.translation().y() << " " << eff_trans.x() << " " << eff_trans.y());
+  // ROS_INFO_STREAM("eff_pose.translation " << eff_pose.translation().x() << " " << eff_pose.translation().y() << " " << eff_trans.x() << " " << eff_trans.y());
   Eigen::Quaterniond q_test(eff_pose.rotation());
-  ROS_INFO_STREAM("eff_pose.rotation " << q_test.x() << " " << q_test.y() << " " << q_test.z() << " " << q_test.w());
+  // ROS_INFO_STREAM("eff_pose.rotation " << q_test.x() << " " << q_test.y() << " " << q_test.z() << " " << q_test.w());
 
   joint_poses.clear();
   std::vector<std::vector<double>> potential_joint_configs;
   bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
 
   if (!success){
-    ROS_WARN_STREAM("Could not find ik");
+    // ROS_WARN_STREAM("Could not find ik");
     // this is not necessarily a fatal error, as Descartes will try many orientations
     return false;
   }
@@ -273,7 +273,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM("getAllIKBrushContact(): Invalid joints");
+    ROS_DEBUG_STREAM("getAllIKBrushContact(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -403,11 +403,11 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isValid(const std::vector<doubl
         return true;
       }
       else {
-        ROS_WARN_STREAM("in collision");
+        // ROS_WARN_STREAM("in collision");
       }
     }
     else {
-      ROS_WARN_STREAM("out of limits");
+      // ROS_WARN_STREAM("out of limits");
     }
   }
   else {

@@ -44,8 +44,7 @@ bool getJointVelocityLimits(const moveit::core::RobotState& state, const std::st
     // Check to see if there is a single bounds constraint (more might indicate
     // not revolute joint)
     if (model->getType() != moveit::core::JointModel::REVOLUTE &&
-        model->getType() != moveit::core::JointModel::PRISMATIC &&
-        model->getType() != moveit::core::JointModel::FLOATING) // xx!!
+        model->getType() != moveit::core::JointModel::PRISMATIC)
     {
       ROS_ERROR_STREAM(__FUNCTION__ << " Unexpected joint type. Currently works only"
                                        " with single axis prismatic or revolute joints.");
