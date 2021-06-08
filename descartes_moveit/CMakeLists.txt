@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   peanut_kinematics
   peanut_common
+  eigen_conversions
 )
 
 find_package(Boost REQUIRED)
@@ -39,6 +40,7 @@ catkin_package(
     peanut_kinematics
     moveit_msgs
     peanut_common
+    eigen_conversions
   DEPENDS
     Boost
     EIGEN3

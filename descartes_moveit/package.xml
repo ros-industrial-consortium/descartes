@@ -25,6 +25,7 @@
   <depend>peanut_kinematics</depend>
   <depend>moveit_msgs</depend>
   <depend>peanut_common</depend>
+  <depend>eigen_conversions</depend>
   <build_depend>eigen</build_depend>
 
   <export>
