@@ -211,7 +211,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
   // brush_yaw = pose roll
-  const double brush_pitch = 10.0 * M_PI / 180.0;
+  const double brush_pitch = 25.0 * M_PI / 180.0; // 25 degrees
   const auto contact_pos = pose.translation();
   const auto rot = pose.rotation();
   Eigen::Vector3d rpy = rot.eulerAngles(0, 1, 2);
