@@ -394,26 +394,19 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isValid(const std::vector<doubl
     return false;
   }
 
-  bool has_nan = hasNaN(joint_pose);
-  if (!has_nan) {
-    bool limits_ok = isInLimits(joint_pose);
-    if (limits_ok) {
-      bool in_collision = isInCollision(joint_pose);
-      if (!in_collision) {
-        return true;
-      }
-      else {
-        // ROS_WARN_STREAM("in collision");
-      }
-    }
-    else {
-      // ROS_WARN_STREAM("out of limits");
-    }
+  if (hasNaN(joint_pose)) {
+    ROS_WARN_STREAM("NaN joints shouldn't happen");
+    return false;
   }
-  else {
-    ROS_WARN_STREAM("joint_pose has NaN");
+  if (!isInLimits(joint_pose)) {
+    ROS_WARN_STREAM("invalid joints = " << joint_pose[0] << " " << joint_pose[1] << " " << joint_pose[2]
+                    << " " << joint_pose[3] << " " << joint_pose[4] << " " << joint_pose[5]);
+    return false;
   }
-  return false;
+  if (isInCollision(joint_pose)) {
+    return false;
+  }
+  return true;
 }
 
 bool descartes_moveit::PeanutMoveitStateAdapter::isInLimits(const std::vector<double> &joint_pose) const{

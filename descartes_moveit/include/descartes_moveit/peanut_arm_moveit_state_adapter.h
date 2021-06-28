@@ -81,8 +81,8 @@ protected:
   std::string octomap_link_ = "<octomap>";
   std::vector<std::string> collision_arm_links_ = {"arm_upper_link", "arm_lower_link"};
   std::vector<std::string> collision_robot_links_ = {"tower_link"};
-  std::vector<float> min_pos_;
-  std::vector<float> max_pos_;
+  std::vector<double> min_pos_;
+  std::vector<double> max_pos_;
   std::vector<std::string> joint_names_;
   std::map<std::string, std::vector<double>> joint_limits_dict_;
 };
