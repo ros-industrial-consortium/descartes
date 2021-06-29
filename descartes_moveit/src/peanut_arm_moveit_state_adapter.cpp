@@ -170,22 +170,22 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
 
   // IK is done in eff pose
   const auto raw_pos = pose.translation();
-  ROS_INFO_STREAM_THROTTLE(0.25, "ZZZ Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
+  ROS_DEBUG_STREAM_THROTTLE(0.25, "Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
 
   const auto pos = tool0_to_tip_.frame.translation();
-  ROS_INFO_STREAM_THROTTLE(0.25, "Eff to sprayer " << pos[0] << " " << pos[1] << " " << pos[2]);
+  ROS_DEBUG_STREAM_THROTTLE(0.25, "Eff to sprayer " << pos[0] << " " << pos[1] << " " << pos[2]);
 
   const auto rot = tool0_to_tip_.frame.rotation();
   Eigen::Quaterniond q_eff_to_sprayer(rot);
-  ROS_INFO_STREAM_THROTTLE(0.25, "Q Eff to sprayer " << q_eff_to_sprayer.x() << " " << q_eff_to_sprayer.y() << " " << q_eff_to_sprayer.z() << " " << q_eff_to_sprayer.w());
+  ROS_DEBUG_STREAM_THROTTLE(0.25, "Q Eff to sprayer " << q_eff_to_sprayer.x() << " " << q_eff_to_sprayer.y() << " " << q_eff_to_sprayer.z() << " " << q_eff_to_sprayer.w());
 
   Eigen::Isometry3d eff_pose = pose * tool0_to_tip_.frame_inv;
   const auto eff_rot = eff_pose.rotation();
   Eigen::Quaterniond q_eff(eff_rot);
 
-  ROS_INFO_STREAM_THROTTLE(0.25, "Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
+  ROS_DEBUG_STREAM_THROTTLE(0.25, "Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   const auto eff_pos = eff_pose.translation();
-  ROS_INFO_STREAM_THROTTLE(0.25, "YYY Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
+  ROS_DEBUG_STREAM_THROTTLE(0.25, "Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
   bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
