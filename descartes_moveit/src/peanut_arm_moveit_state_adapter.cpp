@@ -234,7 +234,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   // implement compute_eff_to_brush_offsets from TablePlanner.py
   const double BRUSH_DISC_RADIUS = 0.22;
   const double BRUSH_AXIS_OFFSET = 0.01; // brush is slightly down the axis
-  const Eigen::Vector3d EFF_TO_AXIS(0.0175, 0.0, -0.0175); // effector is slightly above brush axis
+  const Eigen::Vector3d EFF_TO_AXIS(0.0175, 0.0, 0.0); // effector is slightly above brush axis
   Eigen::Vector3d eff_to_axis = q_eff * EFF_TO_AXIS;
   const Eigen::Vector3d AXIS_DIR(0.707, 0.0, 0.707); //axis is midway between effector's Z and X
   Eigen::Vector3d axis_dir = q_eff * AXIS_DIR;
