@@ -47,7 +47,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
     return false;
   }
 
-  ROS_INFO_STREAM("PeanutMoveitStateAdapter::initialize: " << group_name << " " << "tcp_frame");
+  ROS_INFO_STREAM("PeanutMoveitStateAdapter::initialize: " << group_name << " " << "tcp_frame " << tcp_frame);
   // can initialize here to set spray vs wipe vs other?
   this->tool_frame_ = tcp_frame;
 
@@ -100,12 +100,6 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   // default implemenetation
   joint_poses.clear();
 
-  // Transform input pose (given in reference frame world to be reached by the tip, so transform to base and tool)
-  // math: pose = H_w_b * tool_pose * H_tip_tool0 (pose = H_w_pose; tool_pose = H_b_tip, with tip st tool is at pose)
-  // Eigen::Isometry3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
-  // for now disable the above since we're just going to feed it in exactly what it needs:
-  Eigen::Isometry3d tool_pose = pose;
-
   // bool ik(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &qs,
   //           const std::vector<std::string> joint_names, const std::vector<float> min_pos, const std::vector<float> max_pos,
   //           const bool check_limits=true,
@@ -129,7 +123,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
 
   ROS_INFO_STREAM_THROTTLE(0.25, "Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   const auto eff_pos = eff_pose.translation();
-  ROS_INFO_STREAM_THROTTLE(0.25, "YYY Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
+  ROS_INFO_STREAM_THROTTLE(0.25, "Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
   bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
@@ -155,12 +149,6 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
   joint_poses.clear();
-
-  // Transform input pose (given in reference frame world to be reached by the tip, so transform to base and tool)
-  // math: pose = H_w_b * tool_pose * H_tip_tool0 (pose = H_w_pose; tool_pose = H_b_tip, with tip st tool is at pose)
-  // Eigen::Isometry3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
-  // for now disable the above since we're just going to feed it in exactly what it needs:
-  Eigen::Isometry3d tool_pose = pose;
 
   // bool ik(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &qs,
   //           const std::vector<std::string> joint_names, const std::vector<float> min_pos, const std::vector<float> max_pos,
@@ -210,13 +198,18 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
 bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eigen::Isometry3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
-  // brush_yaw = pose roll
-  const double brush_pitch = 25.0 * M_PI / 180.0; // 25 degrees
-  const auto contact_pos = pose.translation();
+  double brush_pitch = 10.0 * M_PI / 180.0; // MUST be set to match table_plannner TODO: should be in MoveArmGoal
+  ros::NodeHandle nh;
+  if (!nh.getParam("brush_pitch", brush_pitch)) { // xx!! should be /brush_pitch ?
+    ROS_WARN_STREAM_THROTTLE(0.5, "Unable to load brush_pitch param. Using " << brush_pitch);
+  }
+
+  // const auto contact_pos = pose.translation();
   const auto rot = pose.rotation();
   Eigen::Vector3d rpy = rot.eulerAngles(0, 1, 2);
   // ROS_INFO_STREAM("brush rpy " << rpy.x() << " " << rpy.y() << " " << rpy.z());
   Eigen::Quaterniond q_yaw(Eigen::AngleAxisd(rpy.z(), Eigen::Vector3d::UnitZ())); // effector yaw
+  // brush_yaw = pose roll
   const double brush_yaw = rpy.x();
 
   // implement q_eff_for_brush_yaw from arm_kinematics.py, probably not efficient
@@ -343,10 +336,12 @@ bool descartes_moveit::PeanutMoveitStateAdapter::computeTransforms()
   }
 
   // calculate frames
-  // tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform(tool_frame_).inverse() *
-  //                                       robot_state_->getFrameTransform(peanut_tool_frame));
+  tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform(peanut_tool_frame).inverse() *
+                                        robot_state_->getFrameTransform(tool_frame_));
+  ROS_ERROR_STREAM("tool_frame_ " << tool_frame_ << " peanut_tool_frame " << peanut_tool_frame);
   tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform("end_effector_link").inverse()
                                         * robot_state_->getFrameTransform("sprayer_link"));
+  ROS_ERROR_STREAM("tool_frame_ " << "sprayer_link" << " peanut_tool_frame " << "end_effector_link");
 
   world_to_base_ = descartes_core::Frame(world_to_root_.frame * robot_state_->getFrameTransform(robot_base_frame));
 
