@@ -140,7 +140,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM("getAllIK(): Invalid joints");
+    ROS_WARN_STREAM_THROTTLE(0.25, "getAllIK(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -190,7 +190,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
     }
   }
   if (joint_poses.size() == 0){
-    ROS_DEBUG_STREAM("getAllIKSprayer(): Invalid joints");
+    ROS_WARN_STREAM_THROTTLE(0.25, "getAllIKSprayer(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -266,7 +266,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
     }
   }
   if (joint_poses.size() == 0){
-    ROS_DEBUG_STREAM("getAllIKBrushContact(): Invalid joints");
+    ROS_WARN_STREAM_THROTTLE(0.25, "getAllIKBrushContact(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -338,10 +338,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::computeTransforms()
   // calculate frames
   tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform(peanut_tool_frame).inverse() *
                                         robot_state_->getFrameTransform(tool_frame_));
-  ROS_ERROR_STREAM("tool_frame_ " << tool_frame_ << " peanut_tool_frame " << peanut_tool_frame);
-  tool0_to_tip_ = descartes_core::Frame(robot_state_->getFrameTransform("end_effector_link").inverse()
-                                        * robot_state_->getFrameTransform("sprayer_link"));
-  ROS_ERROR_STREAM("tool_frame_ " << "sprayer_link" << " peanut_tool_frame " << "end_effector_link");
+  ROS_INFO_STREAM("tool_frame_ " << tool_frame_ << " peanut_tool_frame " << peanut_tool_frame);
 
   world_to_base_ = descartes_core::Frame(world_to_root_.frame * robot_state_->getFrameTransform(robot_base_frame));
 
@@ -378,7 +375,7 @@ void descartes_moveit::PeanutMoveitStateAdapter::setCollisionLinks(std::vector<s
 
 bool descartes_moveit::PeanutMoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const{
   // Logical check on input sizes
-  if (false) // joint_group_->getActiveJointModels().size() != joint_pose.size())
+  if (joint_group_->getActiveJointModels().size() != joint_pose.size())
   {
     for (const auto& model : joint_group_->getActiveJointModels()) {
       ROS_INFO_STREAM(model->getName());
