@@ -111,11 +111,9 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   ROS_DEBUG_STREAM_THROTTLE(0.25, "Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
 
   const auto pos = tool0_to_tip_.frame.translation();
-  ROS_DEBUG_STREAM_THROTTLE(0.25, "Eff to sprayer " << pos[0] << " " << pos[1] << " " << pos[2]);
 
   const auto rot = tool0_to_tip_.frame.rotation();
   Eigen::Quaterniond q_eff_to_sprayer(rot);
-  ROS_DEBUG_STREAM_THROTTLE(0.25, "Q Eff to sprayer " << q_eff_to_sprayer.x() << " " << q_eff_to_sprayer.y() << " " << q_eff_to_sprayer.z() << " " << q_eff_to_sprayer.w());
 
   Eigen::Isometry3d eff_pose = pose * tool0_to_tip_.frame_inv;
   const auto eff_rot = eff_pose.rotation();
@@ -190,7 +188,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM_THROTTLE(0.25, "getAllIKSprayer(): Invalid joints");
+    ROS_DEBUG_STREAM_THROTTLE(0.25, "getAllIKSprayer(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -201,7 +199,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   double brush_pitch = 10.0 * M_PI / 180.0; // MUST be set to match table_plannner TODO: should be in MoveArmGoal
   ros::NodeHandle nh;
   if (!nh.getParam("brush_pitch", brush_pitch)) { // xx!! should be /brush_pitch ?
-    ROS_WARN_STREAM_THROTTLE(0.5, "Unable to load brush_pitch param. Using " << brush_pitch);
+    ROS_DEBUG_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << brush_pitch);
   }
 
   // const auto contact_pos = pose.translation();
@@ -266,7 +264,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM_THROTTLE(0.25, "getAllIKBrushContact(): Invalid joints");
+    ROS_DEBUG_STREAM_THROTTLE(0.25, "getAllIKBrushContact(): Invalid joints");
   }
   return joint_poses.size() > 0;
 }
@@ -391,7 +389,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isValid(const std::vector<doubl
     return false;
   }
   if (!isInLimits(joint_pose)) {
-    ROS_WARN_STREAM("invalid joints = " << joint_pose[0] << " " << joint_pose[1] << " " << joint_pose[2]
+    ROS_DEBUG_STREAM("invalid joints = " << joint_pose[0] << " " << joint_pose[1] << " " << joint_pose[2]
                     << " " << joint_pose[3] << " " << joint_pose[4] << " " << joint_pose[5]);
     return false;
   }
