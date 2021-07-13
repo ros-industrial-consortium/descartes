@@ -50,7 +50,7 @@ TEST(CartTrajPt, zeroTolerance)
 
 TEST(CartTrajPt, closestJointPose)
 {
-  const double POS_TOL = 0.5f;
+  const double POS_TOL = 0.5;
   const double POS_INC = 0.2;
   const double ORIENT_TOL = 1.0;
   const double ORIENT_INC = 0.2;

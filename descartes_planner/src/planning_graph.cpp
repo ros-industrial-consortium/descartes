@@ -203,6 +203,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
     if (success)
     {
       std::vector<std::vector<double>> joint_poses;
+      // ROS_INFO_STREAM("getJointPoses " << i << " of " << count);
       points[i]->getJointPoses(*robot_model_, joint_poses);
 
       if (joint_poses.empty())
@@ -215,7 +216,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
     }
   }
   if (success) {
-    ROS_INFO_STREAM("calculateJointSolutions success " << count);
+    // ROS_INFO_STREAM("calculateJointSolutions success " << count);
     return count;
   }
   else {
@@ -230,7 +231,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
         break;
       }
     }
-    ROS_INFO_STREAM("calculateJointSolutions failed " << i);
+    // ROS_INFO_STREAM("calculateJointSolutions failed " << i);
     return i;
   }
 }
