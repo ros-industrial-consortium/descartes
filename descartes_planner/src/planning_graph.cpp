@@ -215,6 +215,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
       poses[i] = std::move(joint_poses);
     }
   }
+
   if (success) {
     // ROS_INFO_STREAM("calculateJointSolutions success " << count);
     return count;
@@ -231,7 +232,7 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
         break;
       }
     }
-    // ROS_INFO_STREAM("calculateJointSolutions failed " << i);
+    ROS_INFO_STREAM("calculateJointSolutions failed at index " << i);
     return i;
   }
 }
