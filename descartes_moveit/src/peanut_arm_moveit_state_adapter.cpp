@@ -178,7 +178,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
   bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
 
   if (!success){
-    ROS_WARN_STREAM("Could not find ik");
+    // ROS_WARN_STREAM("Could not find ik");
     // this is not necessarily a fatal error, as Descartes will try many orientations
     return false;
   }
