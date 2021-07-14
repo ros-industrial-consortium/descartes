@@ -74,6 +74,9 @@ bool MoveitStateAdapter::initialize(const std::string& robot_description, const 
   // Initialize MoveIt state objects
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
   auto model = robot_model_loader_->getModel();
+
+  ROS_INFO_STREAM("initialize (1): group " << group_name << " tcp " << tcp_frame);
+
   if (!model)
   {
     CONSOLE_BRIDGE_logError("Failed to load robot model from robot description parameter: %s", robot_description.c_str());
@@ -91,6 +94,8 @@ bool MoveitStateAdapter::initialize(robot_model::RobotModelConstPtr robot_model,
   robot_state_->setToDefaultValues();
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model));
   joint_group_ = robot_model_ptr_->getJointModelGroup(group_name);
+
+  ROS_INFO_STREAM("initialize (2): group " << group_name << " tcp " << tcp_frame);
 
   // Assign robot frames
   group_name_ = group_name;
