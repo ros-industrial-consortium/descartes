@@ -198,8 +198,8 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
 {
   double brush_pitch = 10.0 * M_PI / 180.0; // MUST be set to match table_plannner TODO: should be in MoveArmGoal
   ros::NodeHandle nh;
-  if (!nh.getParam("brush_pitch", brush_pitch)) { // xx!! should be /brush_pitch ?
-    ROS_DEBUG_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << brush_pitch);
+  if (!nh.getParam("/oil/manipulation/control/brush_pitch", brush_pitch)) {
+    ROS_WARN_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << brush_pitch);
   }
 
   // const auto contact_pos = pose.translation();
