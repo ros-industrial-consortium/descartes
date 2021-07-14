@@ -100,13 +100,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   // default implemenetation
   joint_poses.clear();
 
-  // bool ik(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &qs,
-  //           const std::vector<std::string> joint_names, const std::vector<float> min_pos, const std::vector<float> max_pos,
-  //           const bool check_limits=true,
-  //           const bool check_cord_wrap=false,
-  //           const bool debug=false);
-
-  // IK is done in eff pose
+  // IK is done using end_effector pose
   const auto raw_pos = pose.translation();
   // ROS_INFO_STREAM("Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
 
@@ -143,13 +137,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
 {
   joint_poses.clear();
 
-  // bool ik(const Eigen::Isometry3d &pose, std::vector<std::vector<double> > &qs,
-  //           const std::vector<std::string> joint_names, const std::vector<float> min_pos, const std::vector<float> max_pos,
-  //           const bool check_limits=true,
-  //           const bool check_cord_wrap=false,
-  //           const bool debug=false);
-
-  // IK is done in eff pose
+  // IK is done using end_effector pose
   const auto raw_pos = pose.translation();
   // ROS_INFO_STREAM("Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
 
@@ -226,7 +214,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   // implement compute_eff_to_brush_offsets from TablePlanner.py
   const double BRUSH_DISC_RADIUS = 0.22;
   const double BRUSH_AXIS_OFFSET = 0.01; // brush is slightly down the axis
-  const Eigen::Vector3d EFF_TO_AXIS(0.0175, 0.0, 0.0); // effector is slightly above brush axis
+  const Eigen::Vector3d EFF_TO_AXIS(0.0175, 0.0, -0.0175); // effector is slightly above brush axis
   Eigen::Vector3d eff_to_axis = q_eff * EFF_TO_AXIS;
   const Eigen::Vector3d AXIS_DIR(0.707, 0.0, 0.707); //axis is midway between effector's Z and X
   Eigen::Vector3d axis_dir = q_eff * AXIS_DIR;
@@ -290,8 +278,6 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getFK(const std::vector<double>
   const auto& solver = joint_group_->getSolverInstance();
 
   std::vector<std::string> tip_frame = { solver->getTipFrame() };
-
-  ROS_WARN_STREAM_THROTTLE(0.25, "getFK tip_frame " << tip_frame[0]);
 
   std::vector<geometry_msgs::Pose> output;
 
@@ -451,7 +437,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isInCollision(const std::vector
       collision_detection::CollisionResult::ContactMap::const_iterator it;
       for ( it = collision_result.contacts.begin(); it != collision_result.contacts.end(); it++ )
       {
-        ROS_WARN_STREAM("Contact between: "<<it->first.first.c_str()<<" and "<<it->first.second.c_str());
+        ROS_WARN_STREAM_THROTTLE(0.5, "Contact between: "<<it->first.first.c_str()<<" and "<<it->first.second.c_str());
       }
     }
 
