@@ -251,12 +251,12 @@ void CartTrajectoryPt::getCartesianPoses(const RobotModel &model, EigenSTL::vect
   }
   else
   {
-    ROS_ERROR("Failed for find ANY cartesian poses");
+    ROS_ERROR("Failed to find ANY cartesian poses");
   }
 
   if (poses.empty())
   {
-    ROS_WARN("Failed for find VALID cartesian poses, returning");
+    ROS_WARN("Failed to find VALID cartesian poses, returning");
   }
   else
   {
@@ -376,24 +376,29 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
   EigenSTL::vector_Isometry3d poses;
   if (computeCartesianPoses(poses))
   {
-    poses.reserve(poses.size());
+    joint_poses.reserve(poses.size());
     for (const auto &pose : poses)
     {
       std::vector<std::vector<double> > local_joint_poses;
-      if (model.getAllIK(pose, local_joint_poses))
+      bool success = model.getAllIK(pose, local_joint_poses);
+      if (success)
       {
         joint_poses.insert(joint_poses.end(), local_joint_poses.begin(), local_joint_poses.end());
+        ROS_DEBUG_STREAM("getAllIK success +" << local_joint_poses.size() << " => " << joint_poses.size());
+      }
+      else {
+        ROS_DEBUG_STREAM("getAllIK failed, still at " << joint_poses.size());
       }
     }
   }
   else
   {
-    ROS_ERROR("Failed for find ANY cartesian poses");
+    ROS_ERROR_STREAM("computeCartesianPoses failed for find ANY cartesian poses of " << poses.size());
   }
 
   if (joint_poses.empty())
   {
-    ROS_WARN("Failed for find ANY joint poses, returning");
+    ROS_WARN_STREAM("getAllIK failed to find ANY joint poses of " << poses.size());
   }
   else
   {
