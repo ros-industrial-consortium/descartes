@@ -187,8 +187,17 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
 {
   double brush_pitch = 10.0 * M_PI / 180.0; // MUST be set to match table_plannner TODO: should be in MoveArmGoal
   ros::NodeHandle nh;
-  if (!nh.getParam("brush_pitch", brush_pitch)) { // maybe should be /brush_pitch ?
-    ROS_DEBUG_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << brush_pitch);
+  if (nh.getParam("/oil/manipulation/control/brush_pitch_override", brush_pitch)) {
+    ROS_INFO_STREAM_THROTTLE(1.0, "Override brush_pitch param. Using " << brush_pitch);
+  }
+  else {
+    if (!nh.getParam("/oil/manipulation/control/brush_pitch", brush_pitch)) {
+      ROS_WARN_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << brush_pitch);
+    }
+  }
+  double z_offset_debug = 0.0;
+  if (nh.getParam("/oil/manipulation/control/brush_z_offset", z_offset_debug)) {
+    ROS_INFO_STREAM_THROTTLE(1.0, "Offset brush Z by " << z_offset_debug);
   }
 
   // const auto contact_pos = pose.translation();
@@ -229,6 +238,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   // ROS_INFO_STREAM("q_eff " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   Eigen::Matrix3d eff_rot(q_eff);
   Eigen::Vector3d eff_trans(pose.translation() - eff_to_brush);
+  eff_trans[2] += z_offset_debug;
   Eigen::Vector3d iscale(1.0, 1.0, 1.0); // identity scale
   Eigen::Isometry3d eff_pose;
   eff_pose.fromPositionOrientationScale(eff_trans, eff_rot, iscale);
