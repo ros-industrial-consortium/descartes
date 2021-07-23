@@ -101,7 +101,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   joint_poses.clear();
 
   // IK is done using end_effector pose
-  const auto raw_pos = pose.translation();
+  // const auto raw_pos = pose.translation();
   // ROS_INFO_STREAM("Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
 
   Eigen::Isometry3d eff_pose = pose * tool0_to_tip_.frame_inv;
@@ -109,7 +109,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   Eigen::Quaterniond q_eff(eff_rot);
 
   // ROS_INFO_STREAM("Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
-  const auto eff_pos = eff_pose.translation();
+  // const auto eff_pos = eff_pose.translation();
   // ROS_INFO_STREAM("Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
@@ -127,7 +127,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM_THROTTLE(0.25, "getAllIK(): Invalid joints");
+    ROS_DEBUG_STREAM_THROTTLE(0.25, "getAllIK(): No valid joints in configs " << potential_joint_configs.size());
   }
   return joint_poses.size() > 0;
 }
@@ -138,16 +138,16 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
   joint_poses.clear();
 
   // IK is done using end_effector pose
-  const auto raw_pos = pose.translation();
+  // const auto raw_pos = pose.translation();
   // ROS_INFO_STREAM("Raw pos " << raw_pos[0] << " " << raw_pos[1] << " " << raw_pos[2]);
 
-  Eigen::Quaterniond raw_q(pose.rotation());
+  // Eigen::Quaterniond raw_q(pose.rotation());
   // ROS_WARN_STREAM("Raw Q " << raw_q.x() << " " << raw_q.y() << " " << raw_q.z() << " " << raw_q.w());
 
-  Eigen::Vector3d facing_axis = raw_q * Eigen::Vector3d::UnitZ();
+  // Eigen::Vector3d facing_axis = raw_q * Eigen::Vector3d::UnitZ();
   // ROS_INFO_STREAM("Facing " << facing_axis[0] << " " << facing_axis[1] << " " << facing_axis[2]);
 
-  const auto pos = tool0_to_tip_.frame.translation();
+  // const auto pos = tool0_to_tip_.frame.translation();
   // ROS_DEBUG_STREAM("Eff to sprayer " << pos[0] << " " << pos[1] << " " << pos[2]);
 
   const auto rot = tool0_to_tip_.frame.rotation();
@@ -159,7 +159,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
   Eigen::Quaterniond q_eff(eff_rot);
 
   // ROS_WARN_STREAM("Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
-  const auto eff_pos = eff_pose.translation();
+  // const auto eff_pos = eff_pose.translation();
   // ROS_INFO_STREAM("Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
@@ -177,7 +177,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
     }
   }
   if (joint_poses.size() == 0){
-    ROS_WARN_STREAM("getAllIKSprayer(): No valid joints in configs " << potential_joint_configs.size());
+    ROS_DEBUG_STREAM_THROTTLE(0.25, "getAllIKSprayer(): No valid joints in configs " << potential_joint_configs.size());
   }
   return joint_poses.size() > 0;
 }
@@ -253,7 +253,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
     }
   }
   if (joint_poses.size() == 0){
-    ROS_DEBUG_STREAM_THROTTLE(0.25, "getAllIKBrushContact(): Invalid joints");
+    ROS_DEBUG_STREAM_THROTTLE(0.25, "getAllIKBrushContact(): No valid joints in configs " << potential_joint_configs.size());
   }
   return joint_poses.size() > 0;
 }
