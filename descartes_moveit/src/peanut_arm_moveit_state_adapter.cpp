@@ -226,6 +226,11 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
 bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eigen::Isometry3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
+  static const double deg45 = 45.0 * M_PI / 180.0;
+  static const Eigen::Quaterniond q_axis_base(Eigen::AngleAxisd(deg45, Eigen::Vector3d::UnitY()));
+  static const Eigen::Quaterniond q_axis_to_eff(Eigen::AngleAxisd(deg45, Eigen::Vector3d::UnitY()));
+  static const Eigen::Quaterniond q_axis_to_down(Eigen::AngleAxisd(deg45, Eigen::Vector3d::UnitY()));
+
   double brush_pitch = this->brush_pitch;
   double z_offset_debug = 0.0;
 
@@ -238,10 +243,6 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   const double brush_yaw = rpy.x();
 
   // implement q_eff_for_brush_yaw from arm_kinematics.py, probably not efficient
-  const double deg45 = 45.0 * M_PI / 180.0;
-  Eigen::Quaterniond q_axis_base(Eigen::AngleAxisd(deg45, Eigen::Vector3d::UnitY()));
-  Eigen::Quaterniond q_axis_to_eff(Eigen::AngleAxisd(deg45, Eigen::Vector3d::UnitY()));
-  Eigen::Quaterniond q_axis_to_down(Eigen::AngleAxisd(deg45, Eigen::Vector3d::UnitY()));
   Eigen::Vector3d facing_axis(cos(brush_yaw), sin(brush_yaw), 0.0);
   Eigen::Vector3d left_axis = Eigen::Vector3d::UnitZ().cross(facing_axis);
   Eigen::Quaterniond q_tilt(Eigen::AngleAxisd(brush_pitch, left_axis));
