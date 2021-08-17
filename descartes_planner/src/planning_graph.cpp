@@ -210,6 +210,8 @@ std::size_t PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points
       {
         ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with index = " << i << " ID = " << points[i]->getID());
         success = false;
+        // poses[i] = std::move(joint_poses);
+        // break;
       }
 
       poses[i] = std::move(joint_poses);

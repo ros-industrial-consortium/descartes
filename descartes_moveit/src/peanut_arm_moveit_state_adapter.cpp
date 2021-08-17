@@ -7,6 +7,18 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/node_handle.h>
 
+long gIkCount = 0;
+double gIkTime = 0.0;
+double gIkTimeTot = 0.0;
+
+long gAllIkCount = 0;
+double gAllIkTime = 0.0;
+double gAllIkTimeTot = 0.0;
+
+long gCollCount = 0;
+double gCollTime = 0.0;
+double gCollTimeTot = 0.0;
+
 const static std::string default_base_frame = "arm_shoulder_link";
 const static std::string default_tool_frame = "end_effector_link";
 
@@ -52,7 +64,6 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
   this->tool_frame_ = tcp_frame;
 
   // Get joint limits
-  ros::NodeHandle nh;
   std::vector<std::vector<double>> joint_limits;
   min_pos_.clear();
   max_pos_.clear();
@@ -66,6 +77,22 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
     min_pos_.push_back(joint_limits[i][0]);
     max_pos_.push_back(joint_limits[i][1]);
     joint_limits_dict_[joint_names_[i]] = {min_pos_[i], max_pos_[i]};
+  }
+
+  ros::NodeHandle nh;
+  if (nh.getParam("/oil/manipulation/control/brush_pitch_override", this->brush_pitch)) {
+    ROS_INFO_STREAM_THROTTLE(1.0, "Override brush_pitch param. Using " << brush_pitch);
+  }
+  else {
+    if (!nh.getParam("/oil/manipulation/control/brush_pitch", this->brush_pitch)) {
+      ROS_WARN_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << this->brush_pitch);
+    }
+    else {
+      ROS_INFO_STREAM_THROTTLE(1.0, "Got brush_pitch param " << this->brush_pitch);
+    }
+  }
+  if (nh.getParam("/oil/manipulation/control/brush_z_offset", this->z_offset_debug)) {
+    ROS_INFO_STREAM_THROTTLE(1.0, "Offset brush Z by " << this->z_offset_debug);
   }
 
   return computeTransforms();
@@ -107,13 +134,20 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   Eigen::Isometry3d eff_pose = pose * tool0_to_tip_.frame_inv;
   const auto eff_rot = eff_pose.rotation();
   Eigen::Quaterniond q_eff(eff_rot);
+  const auto eff_pos = eff_pose.translation();
 
   // ROS_INFO_STREAM("Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   // const auto eff_pos = eff_pose.translation();
   // ROS_INFO_STREAM("Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
+  ros::Time start_tm = ros::Time::now();
+  bool success = arm_kinematics::ik(eff_rot, eff_pos, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
+  ros::Time end_tm = ros::Time::now();
+  auto ik_time = (end_tm - start_tm).toSec();
+  gIkCount++;
+  gIkTime += ik_time;
+  gIkTimeTot += ik_time;
 
   if (!success){
     // ROS_WARN_STREAM("Could not find ik");
@@ -157,13 +191,20 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
   Eigen::Isometry3d eff_pose = pose * tool0_to_tip_.frame_inv;
   const auto eff_rot = eff_pose.rotation();
   Eigen::Quaterniond q_eff(eff_rot);
+  const auto eff_pos = eff_pose.translation();
 
   // ROS_WARN_STREAM("Eff Q " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   // const auto eff_pos = eff_pose.translation();
   // ROS_INFO_STREAM("Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
+  ros::Time start_tm = ros::Time::now();
+  bool success = arm_kinematics::ik(eff_rot, eff_pos, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
+  ros::Time end_tm = ros::Time::now();
+  auto ik_time = (end_tm - start_tm).toSec();
+  gIkCount++;
+  gIkTime += ik_time;
+  gIkTimeTot += ik_time;
 
   if (!success){
     // ROS_WARN_STREAM("Could not find ik");
@@ -185,20 +226,8 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
 bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eigen::Isometry3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
-  double brush_pitch = 10.0 * M_PI / 180.0; // MUST be set to match table_plannner TODO: should be in MoveArmGoal
-  ros::NodeHandle nh;
-  if (nh.getParam("/oil/manipulation/control/brush_pitch_override", brush_pitch)) {
-    ROS_INFO_STREAM_THROTTLE(1.0, "Override brush_pitch param. Using " << brush_pitch);
-  }
-  else {
-    if (!nh.getParam("/oil/manipulation/control/brush_pitch", brush_pitch)) {
-      ROS_WARN_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << brush_pitch);
-    }
-  }
+  double brush_pitch = this->brush_pitch;
   double z_offset_debug = 0.0;
-  if (nh.getParam("/oil/manipulation/control/brush_z_offset", z_offset_debug)) {
-    ROS_INFO_STREAM_THROTTLE(1.0, "Offset brush Z by " << z_offset_debug);
-  }
 
   // const auto contact_pos = pose.translation();
   const auto rot = pose.rotation();
@@ -238,17 +267,22 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   // ROS_INFO_STREAM("q_eff " << q_eff.x() << " " << q_eff.y() << " " << q_eff.z() << " " << q_eff.w());
   Eigen::Matrix3d eff_rot(q_eff);
   Eigen::Vector3d eff_trans(pose.translation() - eff_to_brush);
-  eff_trans[2] += z_offset_debug;
+  eff_trans[2] += this->z_offset_debug;
   Eigen::Vector3d iscale(1.0, 1.0, 1.0); // identity scale
-  Eigen::Isometry3d eff_pose;
-  eff_pose.fromPositionOrientationScale(eff_trans, eff_rot, iscale);
   // ROS_INFO_STREAM("eff_pose.translation " << eff_pose.translation().x() << " " << eff_pose.translation().y() << " " << eff_trans.x() << " " << eff_trans.y());
-  Eigen::Quaterniond q_test(eff_pose.rotation());
+  Eigen::Quaterniond q_test(eff_rot);
   // ROS_INFO_STREAM("eff_pose.rotation " << q_test.x() << " " << q_test.y() << " " << q_test.z() << " " << q_test.w());
+  // Eigen::Matrix<double, 3,1> pos = eff_pose.translation();
 
   joint_poses.clear();
   std::vector<std::vector<double>> potential_joint_configs;
-  bool success = arm_kinematics::ik(eff_pose, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
+  ros::Time start_tm = ros::Time::now();
+  bool success = arm_kinematics::ik(eff_rot, eff_trans, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
+  ros::Time end_tm = ros::Time::now();
+  auto ik_time = (end_tm - start_tm).toSec();
+  gIkCount++;
+  gIkTime += ik_time;
+  gIkTimeTot += ik_time;
 
   if (!success){
     // ROS_WARN_STREAM("Could not find ik");
@@ -274,7 +308,16 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getIK(const Eigen::Isometry3d& 
 {
   // Descartes Robot Model interface calls for 'closest' point to seed position
   std::vector<std::vector<double>> joint_poses;
-  if (!getAllIK(pose, joint_poses))
+
+  ros::Time start_tm = ros::Time::now();
+  bool success = getAllIK(pose, joint_poses);
+  ros::Time end_tm = ros::Time::now();
+  auto ik_time = (end_tm - start_tm).toSec();
+  gAllIkCount++;
+  gAllIkTime += ik_time;
+  gAllIkTimeTot += ik_time;
+
+  if (!success)
     return false;
   // Find closest joint pose; getAllIK() does isValid checks already
   joint_pose = joint_poses[closestJointPose(seed_state, joint_poses)];
@@ -435,6 +478,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isInCollision(const std::vector
 
   if (check_collisions_)
   {
+    auto start_tm = ros::Time::now();
     collision_detection::CollisionResult collision_result;
 
     moveit::core::RobotState state = planning_scene_->getCurrentStateNonConst();
@@ -442,6 +486,12 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isInCollision(const std::vector
 
     planning_scene_->checkCollision(collision_request_, collision_result, state, acm_);
     in_collision = collision_result.collision;
+
+    auto end_tm = ros::Time::now();
+    auto coll_time = (end_tm - start_tm).toSec();
+    gCollCount++;
+    gCollTime += coll_time;
+    gCollTimeTot += coll_time;
 
     if (in_collision){
       collision_detection::CollisionResult::ContactMap::const_iterator it;
