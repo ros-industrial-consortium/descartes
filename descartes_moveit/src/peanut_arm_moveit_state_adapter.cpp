@@ -84,15 +84,19 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
     ROS_INFO_STREAM_THROTTLE(1.0, "Override brush_pitch param. Using " << brush_pitch);
   }
   else {
-    if (!nh.getParam("/oil/manipulation/control/brush_pitch", this->brush_pitch)) {
-      ROS_WARN_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << this->brush_pitch);
+    if (nh.getParam("/oil/manipulation/control/brush_pitch", this->brush_pitch)) {
+      ROS_INFO_STREAM_THROTTLE(1.0, "Got brush_pitch param " << this->brush_pitch);
     }
     else {
-      ROS_INFO_STREAM_THROTTLE(1.0, "Got brush_pitch param " << this->brush_pitch);
+      this->brush_pitch = 10.0 * M_PI / 180.0;
+      ROS_WARN_STREAM_THROTTLE(1.0, "Unable to load brush_pitch param. Using " << this->brush_pitch);
     }
   }
   if (nh.getParam("/oil/manipulation/control/brush_z_offset", this->z_offset_debug)) {
     ROS_INFO_STREAM_THROTTLE(1.0, "Offset brush Z by " << this->z_offset_debug);
+  }
+  else {
+    this->z_offset_debug = 0.0;
   }
 
   return computeTransforms();
