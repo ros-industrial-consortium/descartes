@@ -318,9 +318,9 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getIK(const Eigen::Isometry3d& 
   bool success = getAllIK(pose, joint_poses);
   ros::Time end_tm = ros::Time::now();
   auto ik_time = (end_tm - start_tm).toSec();
-  gAllIkCount++;
-  gAllIkTime += ik_time;
-  gAllIkTimeTot += ik_time;
+  // gAllIkCount++;
+  // gAllIkTime += ik_time;
+  // gAllIkTimeTot += ik_time;
 
   if (!success)
     return false;

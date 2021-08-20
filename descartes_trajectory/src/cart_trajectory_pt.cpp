@@ -31,9 +31,9 @@
 #include "descartes_trajectory/cart_trajectory_pt.h"
 #include <descartes_core/utils.h>
 
-extern long gAllIkCount;
-extern double gAllIkTime;
-extern double gAllIkTimeTot;
+// extern long gAllIkCount;
+// extern double gAllIkTime;
+// extern double gAllIkTimeTot;
 
 #define NOT_IMPLEMENTED_ERR(ret)                                                                                       \
   CONSOLE_BRIDGE_logError("%s not implemented", __PRETTY_FUNCTION__);                                                                 \
@@ -388,9 +388,9 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
       bool success = model.getAllIK(pose, local_joint_poses);
       ros::Time end_tm = ros::Time::now();
       auto ik_time = (end_tm - start_tm).toSec();
-      gAllIkCount++;
-      gAllIkTime += ik_time;
-      gAllIkTimeTot += ik_time;
+      // gAllIkCount++;
+      // gAllIkTime += ik_time;
+      // gAllIkTimeTot += ik_time;
       if (success)
       {
         joint_poses.insert(joint_poses.end(), local_joint_poses.begin(), local_joint_poses.end());
