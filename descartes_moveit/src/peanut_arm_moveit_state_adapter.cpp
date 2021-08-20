@@ -149,9 +149,9 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   bool success = arm_kinematics::ik(eff_rot, eff_pos, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
   ros::Time end_tm = ros::Time::now();
   auto ik_time = (end_tm - start_tm).toSec();
-  gIkCount++;
-  gIkTime += ik_time;
-  gIkTimeTot += ik_time;
+  // gIkCount++;
+  // gIkTime += ik_time;
+  // gIkTimeTot += ik_time;
 
   if (!success){
     // ROS_WARN_STREAM("Could not find ik");
@@ -206,9 +206,9 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
   bool success = arm_kinematics::ik(eff_rot, eff_pos, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
   ros::Time end_tm = ros::Time::now();
   auto ik_time = (end_tm - start_tm).toSec();
-  gIkCount++;
-  gIkTime += ik_time;
-  gIkTimeTot += ik_time;
+  // gIkCount++;
+  // gIkTime += ik_time;
+  // gIkTimeTot += ik_time;
 
   if (!success){
     // ROS_WARN_STREAM("Could not find ik");
@@ -285,9 +285,9 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   bool success = arm_kinematics::ik(eff_rot, eff_trans, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
   ros::Time end_tm = ros::Time::now();
   auto ik_time = (end_tm - start_tm).toSec();
-  gIkCount++;
-  gIkTime += ik_time;
-  gIkTimeTot += ik_time;
+  // gIkCount++;
+  // gIkTime += ik_time;
+  // gIkTimeTot += ik_time;
 
   if (!success){
     // ROS_WARN_STREAM("Could not find ik");

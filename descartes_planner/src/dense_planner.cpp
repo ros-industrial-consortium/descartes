@@ -18,17 +18,17 @@
 #include <descartes_planner/dense_planner.h>
 #include <boost/make_shared.hpp>
 
-extern long gIkCount;
-extern double gIkTime;
-extern double gIkTimeTot;
+// extern long gIkCount;
+// extern double gIkTime;
+// extern double gIkTimeTot;
 
 // extern long gAllIkCount;
 // extern double gAllIkTime;
 // extern double gAllIkTimeTot;
 
-extern long gCollCount;
-extern double gCollTime;
-extern double gCollTimeTot;
+// extern long gCollCount;
+// extern double gCollTime;
+// extern double gCollTimeTot;
 
 namespace descartes_planner
 {
@@ -182,12 +182,12 @@ std::pair<bool, std::size_t> DensePlanner::planPath(const std::vector<descartes_
     ROS_ERROR_STREAM("IK not available " << success_count << " < " << traj.size());
   }
 
-  ROS_INFO_STREAM("Collision: " << gCollCount << " " << gCollTime << " / " << gCollTimeTot);
-  gCollCount = 0; gCollTime = 0.0;
+  // ROS_INFO_STREAM("Collision: " << gCollCount << " " << gCollTime << " / " << gCollTimeTot);
+  // gCollCount = 0; gCollTime = 0.0;
   // ROS_INFO_STREAM("allIK: " << gAllIkCount << " " << gAllIkTime << " / " << gAllIkTimeTot);
   // gAllIkCount = 0; gAllIkTime = 0.0;
-  ROS_INFO_STREAM("::ik: " << gIkCount << " " << gIkTime << " / " << gIkTimeTot);
-  gIkCount = 0; gIkTime = 0.0;
+  // ROS_INFO_STREAM("::ik: " << gIkCount << " " << gIkTime << " / " << gIkTimeTot);
+  // gIkCount = 0; gIkTime = 0.0;
 
   return {descartes_core::PlannerError::OK==error_code_, success_count};
 }
