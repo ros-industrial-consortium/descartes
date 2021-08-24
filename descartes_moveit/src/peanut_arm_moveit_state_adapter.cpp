@@ -145,10 +145,10 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIK(const Eigen::Isometry3
   // ROS_INFO_STREAM("Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
-  ros::Time start_tm = ros::Time::now();
+  // ros::Time start_tm = ros::Time::now();
   bool success = arm_kinematics::ik(eff_rot, eff_pos, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
-  ros::Time end_tm = ros::Time::now();
-  auto ik_time = (end_tm - start_tm).toSec();
+  // ros::Time end_tm = ros::Time::now();
+  // auto ik_time = (end_tm - start_tm).toSec();
   // gIkCount++;
   // gIkTime += ik_time;
   // gIkTimeTot += ik_time;
@@ -202,10 +202,10 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKSprayer(const Eigen::Is
   // ROS_INFO_STREAM("Eff pos " << eff_pos[0] << " " << eff_pos[1] << " " << eff_pos[2]);
 
   std::vector<std::vector<double>> potential_joint_configs;
-  ros::Time start_tm = ros::Time::now();
+  // ros::Time start_tm = ros::Time::now();
   bool success = arm_kinematics::ik(eff_rot, eff_pos, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
-  ros::Time end_tm = ros::Time::now();
-  auto ik_time = (end_tm - start_tm).toSec();
+  // ros::Time end_tm = ros::Time::now();
+  // auto ik_time = (end_tm - start_tm).toSec();
   // gIkCount++;
   // gIkTime += ik_time;
   // gIkTimeTot += ik_time;
@@ -281,10 +281,10 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
 
   joint_poses.clear();
   std::vector<std::vector<double>> potential_joint_configs;
-  ros::Time start_tm = ros::Time::now();
+  // ros::Time start_tm = ros::Time::now();
   bool success = arm_kinematics::ik(eff_rot, eff_trans, potential_joint_configs, joint_names_, min_pos_, max_pos_, true, false);
-  ros::Time end_tm = ros::Time::now();
-  auto ik_time = (end_tm - start_tm).toSec();
+  // ros::Time end_tm = ros::Time::now();
+  // auto ik_time = (end_tm - start_tm).toSec();
   // gIkCount++;
   // gIkTime += ik_time;
   // gIkTimeTot += ik_time;
@@ -314,10 +314,10 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getIK(const Eigen::Isometry3d& 
   // Descartes Robot Model interface calls for 'closest' point to seed position
   std::vector<std::vector<double>> joint_poses;
 
-  ros::Time start_tm = ros::Time::now();
+  // ros::Time start_tm = ros::Time::now();
   bool success = getAllIK(pose, joint_poses);
-  ros::Time end_tm = ros::Time::now();
-  auto ik_time = (end_tm - start_tm).toSec();
+  // ros::Time end_tm = ros::Time::now();
+  // auto ik_time = (end_tm - start_tm).toSec();
   // gAllIkCount++;
   // gAllIkTime += ik_time;
   // gAllIkTimeTot += ik_time;
@@ -483,7 +483,7 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isInCollision(const std::vector
 
   if (check_collisions_)
   {
-    auto start_tm = ros::Time::now();
+    // auto start_tm = ros::Time::now();
     collision_detection::CollisionResult collision_result;
 
     moveit::core::RobotState state = planning_scene_->getCurrentStateNonConst();
@@ -492,11 +492,11 @@ bool descartes_moveit::PeanutMoveitStateAdapter::isInCollision(const std::vector
     planning_scene_->checkCollision(collision_request_, collision_result, state, acm_);
     in_collision = collision_result.collision;
 
-    auto end_tm = ros::Time::now();
-    auto coll_time = (end_tm - start_tm).toSec();
-    gCollCount++;
-    gCollTime += coll_time;
-    gCollTimeTot += coll_time;
+    // auto end_tm = ros::Time::now();
+    // auto coll_time = (end_tm - start_tm).toSec();
+    // gCollCount++;
+    // gCollTime += coll_time;
+    // gCollTimeTot += coll_time;
 
     if (in_collision){
       collision_detection::CollisionResult::ContactMap::const_iterator it;

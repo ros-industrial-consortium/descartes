@@ -384,10 +384,10 @@ void CartTrajectoryPt::getJointPoses(const RobotModel &model, std::vector<std::v
     for (const auto &pose : poses)
     {
       std::vector<std::vector<double> > local_joint_poses;
-      ros::Time start_tm = ros::Time::now();
+      // ros::Time start_tm = ros::Time::now();
       bool success = model.getAllIK(pose, local_joint_poses);
-      ros::Time end_tm = ros::Time::now();
-      auto ik_time = (end_tm - start_tm).toSec();
+      // ros::Time end_tm = ros::Time::now();
+      // auto ik_time = (end_tm - start_tm).toSec();
       // gAllIkCount++;
       // gAllIkTime += ik_time;
       // gAllIkTimeTot += ik_time;
