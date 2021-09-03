@@ -73,9 +73,25 @@ bool descartes_moveit::PeanutMoveitStateAdapter::initialize(const std::string& r
     return false;
   }
 
+  double trajectory_tol; // unused
+  if(!peanut_common_util::getIkTolerances(ik_tol_, trajectory_tol)){
+    ROS_ERROR("Could not find arm ik tolerances");
+    return false;
+  }
+
   for(unsigned int i = 0; i < joint_names_.size(); i++){
-    min_pos_.push_back(joint_limits[i][0]);
-    max_pos_.push_back(joint_limits[i][1]);
+    // apply tolerances
+    // handle case where min and max are identicall
+    double min_joint = joint_limits[i][0] + ik_tol_;
+    if (min_joint > joint_limits[i][1]) {
+      min_joint = joint_limits[i][1];
+    }
+    double max_joint = joint_limits[i][1] - ik_tol_;
+    if (max_joint < joint_limits[i][0]) {
+      max_joint = joint_limits[i][0];
+    }
+    min_pos_.push_back(min_joint);
+    max_pos_.push_back(max_joint);
     joint_limits_dict_[joint_names_[i]] = {min_pos_[i], max_pos_[i]};
   }
 

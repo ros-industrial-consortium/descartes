@@ -85,6 +85,7 @@ protected:
   std::vector<double> max_pos_;
   std::vector<std::string> joint_names_;
   std::map<std::string, std::vector<double>> joint_limits_dict_;
+  double ik_tol_;
 
   double brush_pitch = 10.0 * M_PI / 180.0;
   double z_offset_debug = 0.0;
