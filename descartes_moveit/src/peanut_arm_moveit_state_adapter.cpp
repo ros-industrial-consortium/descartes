@@ -257,16 +257,15 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   const auto rot = pose.rotation();
   // Eigen::Vector3d rpy = rot.eulerAngles(0, 1, 2); // does not give the expected results!
   Eigen::Vector3d facing_axis = rot * Eigen::Vector3d::UnitX();
-  const double brush_yaw = atan2(facing_axis.y(), facing_axis.x());
+  const double eff_yaw = atan2(facing_axis.y(), facing_axis.x());
   Eigen::Vector3d left_axis = rot * Eigen::Vector3d::UnitY();
   const double brush_roll = asin(left_axis.z()); // gives brush_yaw (i.e. pitch/tilt)
   facing_axis = Eigen::Vector3d(cos(brush_roll), sin(brush_roll), 0.0);
   left_axis = Eigen::Vector3d::UnitZ().cross(facing_axis);
 
-  // ROS_WARN_STREAM_THROTTLE(0.25, "brush roll " << brush_roll << " yaw: " << brush_yaw);
-  Eigen::Quaterniond q_yaw(Eigen::AngleAxisd(brush_yaw, Eigen::Vector3d::UnitZ())); // effector yaw
+  // ROS_WARN_STREAM_THROTTLE(0.25, "brush roll " << brush_roll << " yaw: " << eff_yaw);
+  Eigen::Quaterniond q_yaw(Eigen::AngleAxisd(eff_yaw, Eigen::Vector3d::UnitZ())); // effector yaw
 
-  // implement q_eff_for_brush_yaw from arm_kinematics.py, probably not efficient
   Eigen::Quaterniond q_tilt(Eigen::AngleAxisd(brush_pitch, left_axis));
   // ROS_WARN_STREAM_THROTTLE(0.25, "left_axis " << left_axis.x() << " " << left_axis.y() << " " << left_axis.z() << " pitch " << brush_pitch);
   // Eigen::Quaterniond q_axis = q_tilt * q_axis_to_down;
@@ -278,8 +277,8 @@ bool descartes_moveit::PeanutMoveitStateAdapter::getAllIKBrushContact(const Eige
   const double BRUSH_AXIS_OFFSET = 0.01; // brush is slightly down the axis
   const Eigen::Vector3d EFFECTOR_TO_BRUSH_AXIS(-0.0175, 0.0, -0.0175); // effector is slightly above brush axis
   Eigen::Vector3d eff_to_axis = q_eff * EFFECTOR_TO_BRUSH_AXIS;
-  const Eigen::Vector3d AXIS_DIR(0.707, 0.0, -0.707); //axis is midway between effector's Z and X
-  Eigen::Vector3d axis_dir = q_eff * AXIS_DIR;
+  const Eigen::Vector3d BRUSH_AXIS_DIR(0.707, 0.0, -0.707); //axis is midway between effector's Z and X
+  Eigen::Vector3d axis_dir = q_eff * BRUSH_AXIS_DIR;
   // ROS_WARN_STREAM_THROTTLE(0.25, "axis_dir " << axis_dir.x() << " " << axis_dir.y() << " " << axis_dir.z());
 
   Eigen::Vector3d side_axis = axis_dir.cross(Eigen::Vector3d::UnitZ());
