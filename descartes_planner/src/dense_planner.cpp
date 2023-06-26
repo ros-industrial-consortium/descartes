@@ -28,7 +28,8 @@ DensePlanner::DensePlanner() : planning_graph_(), error_code_(descartes_core::Pl
                  { PlannerError::INVALID_ID, "ID is nil or isn't part of the path" },
                  { PlannerError::IK_NOT_AVAILABLE, "One or more ik solutions could not be found" },
                  { PlannerError::UNINITIALIZED, "Planner has not been initialized with a robot model" },
-                 { PlannerError::INCOMPLETE_PATH, "Input trajectory and output path point cound differ" } };
+                 { PlannerError::INCOMPLETE_PATH, "Input trajectory and output path point cound differ" },
+                 { PlannerError::UKNOWN, "DAGSearch returns inf cost for shortest path search" } };
 }
 
 DensePlanner::~DensePlanner()
